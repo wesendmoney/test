@@ -1,0 +1,693 @@
+* {
+    box-sizing: border-box; /* Asegura que el padding y el borde se incluyan en el ancho total */
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #121212; /* Fondo oscuro */
+    color: #e0e0e0; /* Texto claro */
+    margin: 0; /* Eliminar márgenes del body */
+    padding: 0; /* Eliminar padding del body */
+    display: flex;
+    flex-direction: column; /* Cambia la dirección a columna */
+    align-items: center; /* Centra el contenido horizontalmente */
+    height: 100vh; /* Asegúrate de que ocupe toda la altura de la ventana */
+    overflow-x: hidden; /* Evita el desbordamiento horizontal */
+}
+
+.containerOut {
+    display: flex;
+    flex-direction: column; /* Alineación vertical */
+    align-items: center; /* Centrar horizontalmente */
+    justify-content: center; /* Centrar verticalmente */
+    width: 95%; /* Asegúrate de que ocupe todo el ancho */
+}
+
+.container, #authContainer {
+    background-color: #1e1e1e; /* Fondo de la caja */
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); /* Sombra más intensa */
+    padding: 30px;
+    width: 95%; /* Ajusta el ancho según lo necesites */
+    max-width: 400px; /* Ancho máximo para pantallas grandes */
+    margin: 20px auto; /* Centra el contenedor y añade margen superior e inferior */
+}
+
+#authContainer {
+            display: none; /* Inicialmente oculto */
+        }
+
+        @media (max-width: 600px) {
+            .container, #authContainer {
+                width: 95%; /* Aumenta el ancho en pantallas pequeñas */
+                padding: 15px; /* Reduce el padding en pantallas pequeñas */
+            }
+              .toolbar-text {
+        font-size: 18px; /* Ajusta el tamaño del texto para pantallas pequeñas */
+    }
+
+    .toolbar-text i {
+        font-size: 20px; /* Ajusta el tamaño del icono para pantallas pequeñas */
+    }
+        }
+      
+        .input-group {
+            margin-bottom: 15px; /* Reduce el espaciado entre grupos de inputs */
+        }
+
+        .input-group label {
+            display: block; /* Asegura que las etiquetas ocupen toda la línea */
+            margin-bottom: 5px; /* Espaciado entre la etiqueta y el input */
+            font-weight: bold; /* Negrita para las etiquetas */
+            color: #e0e0e0; /* Color de las etiquetas */
+        }
+
+        .input-group input,
+        .input-group select,
+        .input-group textarea {
+            width: 100%; /* Asegura que los inputs ocupen el 100% del ancho */
+            padding: 12px; /* Espaciado interno */
+            border: 1px solid #444; /* Borde oscuro */
+            border-radius: 5px; /* Bordes redondeados */
+            transition: border-color 0.3s; /* Transición para el borde */
+            box-sizing: border-box; /* Asegura que el padding y el borde se incluyan en el ancho total */
+            background-color: #2a2a2a; /* Fondo de los inputs */
+            color: #e0e0e0; /* Texto en inputs */
+            margin-bottom: 10px; /* Espaciado uniforme entre inputs */
+        }
+
+        .input-group button {
+            width: 100%; /* Asegura que el botón ocupe todo el ancho del contenedor */
+            padding: 12px; /* Padding uniforme, igual al de los inputs */
+            background-color: #4c975f; /* Color de fondo */
+            color: #1e1e1e; /* Color del texto (color del fondo del contenedor) */
+            border: none; /* Sin borde */
+            border-radius: 5px; /* Bordes redondeados */
+            cursor: pointer; /* Cambia el cursor al pasar sobre el botón */
+            transition: background-color 0.3s; /* Transiciones suaves */
+            margin-top: 25px; /* Margen superior para separación */
+            font-size: 16px; /* Tamaño de fuente consistente */
+            line-height: 1.5; /* Asegura que el texto esté centrado verticalmente */
+            font-weight: bold; /* Texto en negrita */
+        }
+
+        .input-group button:hover {
+            background-color: #388e3c; /* Color más oscuro al pasar el mouse */
+        }
+
+        /* Estilo para el enlace de "¿Ya tienes una cuenta?" */
+        .register-link {
+            display: block; /* Asegura que ocupe toda la línea */
+            color: #4c975f; /* Color del texto */
+            font-size: 16px; /* Tamaño de fuente */
+            text-align: center; /* Centra el texto */
+            margin-top: 25px; /* Margen superior para separación */
+            cursor: pointer; /* Cambia el cursor al pasar sobre el enlace */
+            text-decoration: none; /* Sin subrayado */
+        }
+
+        .register-link:hover {
+            text-decoration: underline; /* Subrayado al pasar el mouse */
+            color: #388e3c; /* Cambia el color al pasar el mouse */
+        }
+
+        hr {
+            margin: 25px 0; /* Espaciado uniforme entre la línea y los elementos adyacentes */
+            border: 1px solid #444; /* Estilo de la línea */
+        }
+
+        h1 {
+            text-align: center;
+            color: #4c975f; /* Color del título */
+            margin-bottom: 20px;
+        }
+
+        .exchange-rate {
+            margin-top: 20px;
+                        font-size: 1.2em;
+            text-align: center;
+            color: #b0bec5; /* Color del texto de la tasa */
+        }
+
+        .currency-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .currency-input select,
+        .currency-input input[type="number"] {
+            padding: 10px;
+            border: 1px solid #444; /* Borde oscuro */
+            border-radius: 5px;
+            flex: 1;
+            background-color: #2a2a2a; /* Fondo de los inputs */
+            color: #e0e0e0; /* Texto en inputs */
+            transition: border-color 0.3s;
+        }
+
+        .currency-input input[type="number"]:focus,
+        .currency-input select:focus {
+            border-color: #4a90e2; /* Color del borde al enfocar */
+            outline: none;
+        }
+
+        /* Estilo para el icono del menú */
+        .menu-icon {
+            cursor: pointer;
+            font-size: 24px;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        /* Menú hamburguesa */
+        .menu {
+            display: none; /* Oculto por defecto */
+            position: absolute;
+            top: 60px; /* Ajusta según sea necesario */
+            right: 15px;
+            background-color: #1e1e1e; /* Fondo oscuro */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); /* Sombra más intensa */
+            border-radius: 8px;
+            z-index: 10;
+            width: 200px; /* Ajusta el ancho del menú */
+        }
+
+        .menu a {
+            display: block; /* Asegúrate de que cada enlace ocupe toda la línea */
+            padding: 12px 15px;
+            color: #4c975f; /* Color del enlace */
+            text-decoration: none;
+            border-bottom: 1px solid #444; /* Línea entre elementos */
+            transition: background-color 0.3s;
+        }
+
+        .menu a:last-child {
+            border-bottom: none; /* Elimina la línea del último elemento */
+        }
+
+        .menu a:hover {
+            background-color: #2a2a2a; /* Fondo oscuro al pasar el ratón */
+        }
+
+       .modal {
+    display: none; /* Oculto por defecto */
+    position: fixed; /* Fijo en la pantalla */
+    z-index: 2000; /* Asegúrate de que esté por encima de otros elementos */
+    left: 0;
+    top: 0;
+    width: 100%; /* Ancho completo */
+    height: 100%; /* Alto completo */
+    overflow: auto; /* Habilitar el desplazamiento si es necesario */
+    background-color: rgba(0, 0, 0, 0.6); /* Fondo negro con opacidad */
+    padding-top: 60px;
+}
+
+        .modal-content {
+            background-color: #1e1e1e; /* Fondo oscuro para el modal */
+            margin: 5% auto; /* 5% desde la parte superior y centrado */
+            padding: 20px;
+            border: 1px solid #888; /* Borde */
+            width: 90%; /* Podrías ajustar el ancho */
+            max-width: 600px; /* Máximo ancho del modal */
+        }
+
+        /* Estilos de la vista previa de la imagen */
+        #imagePreview {
+            max-width: 100%;
+            height: auto;
+            margin-top: 10px;
+        }
+
+        /* Mensajes de éxito o error */
+        .success-message {
+            color: #4caf50; /* Color verde */
+            margin-top: 20px;
+        }
+
+        .error-message {
+            color: red;
+            margin-top: 20px;
+        }
+
+        /* Estilos para el botón de cerrar */
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: white; /* Color blanco al pasar el ratón */
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+      #takerContainer,
+  #cashierContainer,    
+ #ordersContainer {
+    position: fixed; /* Fija el contenedor para que ocupe toda la ventana */
+    top: 0; /* Alinea en la parte superior */
+    left: 0; /* Alinea a la izquierda */
+    width: 100%; /* Ocupa todo el ancho de la pantalla */
+    height: 100%; /* Ocupa toda la altura de la pantalla */
+    background-color: #121212; /* Fondo oscuro */
+    color: #e0e0e0; /* Texto claro */
+    overflow-y: auto; /* Permite el desplazamiento vertical */
+    padding: 20px; /* Espaciado interno */
+    z-index: 1000; /* Asegúrate de que esté por encima de otros elementos */
+}
+
+        /* Listas de órdenes y pagos */
+        #ordersList,
+        #pendingPaymentsList,
+        #validatedPaymentsList {
+            list-style-type: none; /* Elimina los puntos de la lista */
+            padding: 0; /* Elimina el padding */
+            margin: 0; /* Elimina el margen */
+        }
+
+
+        #ordersList li,
+        #pendingPaymentsList li,
+        #validatedPaymentsList li {
+            background: #2a2a2a; /* Color de fondo oscuro */
+            padding: 15px; /* Espaciado interno */
+            color: #e0e0e0; /* Color del texto */
+            border-bottom: 1px solid #444; /* Línea de separación */
+            width: 100%; /* Asegura que cada elemento de la lista ocupe todo el ancho */
+      }
+      
+
+        /* Estilos para elementos ocultos */
+        .hidden {
+            display: none;
+        }
+
+        /* Estilo para el mensaje de error/success */
+        #message {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        /* Estilos del contenido del menú */
+        .menu-content {
+            padding: 15px; /* Espaciado interno */
+            background-color: #1e1e1e; /* Fondo oscuro */
+        }
+
+        .menu-content div {
+            margin-bottom: 10px; /* Espaciado entre líneas */
+            font-size: 16px; /* Tamaño de fuente */
+            color: #e0e0e0; /* Color del texto */
+        }
+
+        .menu-content strong {
+            display: inline-block; /* Permite que el texto fuerte y el texto normal estén en la misma línea */
+            width: 120px; /* Ancho fijo para alinear el texto */
+        }
+
+        .menu-content button {
+            background-color: #4c975f; /* Color de fondo */
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 15px; /* Añadir margen superior para separar el botón */
+        }
+
+        .menu-content button:hover {
+            background-color: #388e3c; /* Color más oscuro al pasar el mouse */
+        }
+
+        /* Estilos para las pestañas */
+        .tabs {
+            display: flex;
+            flex-direction: column; /* Cambia a columna para alinear verticalmente */
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: transparent; /* Cambia a transparente */
+            margin-bottom: 5px; /* Margen inferior para separación */
+            text-align: left; /* Alinear a la izquierda */
+            cursor: pointer; /* Cambiar el cursor para que no parezca un botón */
+            font-size: 1.2em; /* Aumenta el tamaño de la fuente */
+            font-weight: bold; /* Negrita para destacar el título */
+            color: #e0e0e0; /* Color del texto */
+            border-bottom: 2px solid #444; /* Línea inferior para separar títulos */
+        }
+
+        .tab.active {
+            color: #4c975f; /* Color del texto para la pestaña activa */
+            border-bottom: 2px solid #4c975f; /* Línea inferior de color para la pestaña activa */
+        }
+
+        .tab-content {
+            display: none;
+            border: 1px solid #444; /* Borde oscuro */
+            border-radius: 5px;
+            padding: 20px;
+            background-color: #1e1e1e; /* Fondo oscuro para el contenido */
+            color: #e0e0e0; /* Texto claro */
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Estilos para la vista previa de la imagen */
+        .image-preview {
+            display: none; /* Oculto por defecto */
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #444; /* Borde oscuro */
+            border-radius: 5px;
+            text-align: center;
+            background-color: #2a2a2a; /* Fondo oscuro */
+        }
+
+        /* Estilos para el botón de subir imagen */
+        #uploadButtonModal {
+            margin-right: 10px;
+        }
+
+        /* Estilos para el contenedor de los pagos */
+        #cashierSection, #takerSection {
+            display: none; /* Inicialmente oculto */
+        }
+
+        /* Estilos para los botones de acción en la sección de pagos */
+        #submitPayment, #rejectOrderButton {
+                       background-color: #4c975f; /* Color de fondo */
+            color: white; /* Color del texto */
+            border: none; /* Sin borde */
+            border-radius: 5px; /* Bordes redondeados */
+            padding: 10px 15px; /* Espaciado interno */
+            cursor: pointer; /* Cambia el cursor al pasar sobre el botón */
+            transition: background-color 0.3s; /* Transición suave */
+            margin-top: 10px; /* Margen superior para separación */
+        }
+
+        #submitPayment:hover, #rejectOrderButton:hover {
+            background-color: #388e3c; /* Color más oscuro al pasar el mouse */
+        }
+
+        /* Estilos para el contenedor de la calculadora */
+        #calculatorContainer {
+            display: flex;
+            flex-direction: column; /* Alineación vertical */
+            align-items: center; /* Centrar horizontalmente */
+            margin-top: 20px; /* Margen superior */
+        }
+
+        /* Estilos para los resultados de la calculadora */
+        #calculatorResult {
+            margin-top: 20px; /* Margen superior */
+            font-size: 1.5em; /* Tamaño de fuente más grande */
+            color: #4caf50; /* Color verde para el resultado */
+        }
+  
+          
+          
+         header {
+         color: #4c975f;
+         }
+        
+
+        
+       
+  .image-container {
+    text-align: center; /* Centra la imagen */
+    margin-bottom: 0px; /* Espacio debajo de la imagen */
+    width: 100%; /* Asegura que ocupe el ancho completo */
+    height: 100%; /* Ajusta la altura del contenedor para recortar */
+    overflow: hidden; /* Oculta el contenido que se desborda */
+}
+
+.image-container img {
+    width: 100%; /* Asegura que la imagen ocupe el ancho completo */
+    height: 60%; /* Mantiene la proporción de la imagen */
+    transform: translateY(15%); /* Desplaza la imagen hacia arriba para recortar el 20% superior */
+}
+
+
+
+
+
+
+         /* Estilos del botón */
+         button {
+         background-color: #4c975f; /* Color de WhatsApp */
+         color: white;
+         border: none;
+         padding: 12px 20px;
+         border-radius: 5px;
+         cursor: pointer;
+         transition: background-color 0.3s;
+         }
+         button:disabled {
+         background-color: #ccc;
+         cursor: not-allowed;
+         }
+         button:hover:not(:disabled) {
+         background-color: #128C7E; /* Color más oscuro al pasar el ratón */
+         }
+
+
+         /* Estilos para el botón de cerrar sesión */
+         #logoutButton {
+         display: none; /* Inicialmente oculto */
+         }
+         /* Estilos para el botón de enviar a WhatsApp */
+         #send-whatsapp {
+         margin-top: 20px;
+         }
+         /* Estilos para el mensaje de error/success */
+         #message {
+         margin-top: 10px;
+         font-weight: bold;
+         color: #e0e0e0; /* Texto claro para mensajes */
+         }
+         /* Estilos para el contenedor de notificaciones */
+         #notificationBell {
+         cursor: pointer;
+         font-size: 20px;
+         color: #4c975f; /* Color del icono de notificación */
+         }
+         /* Estilos para los mensajes de notificación */
+         .notification-message {
+         color: #4caf50; /* Color verde */
+         margin-top: 20px;
+         }
+         /* Estilos para el contenedor de la calculadora */
+         .containerOut {
+         display: block; /* Inicialmente visible */
+         }
+         /* Estilos para el contenedor de la sección de reseller */
+         #resellerSection {
+         display: none; /* Inicialmente oculto */
+         }
+         /* Estilos para el contenedor de la sección de cashier */
+         #cashierSection {
+         display: none; /* Inicialmente oculto */
+         }
+         /* Estilos para el contenedor de la sección de taker */
+         #takerSection {
+         display: none; /* Inicialmente oculto */
+         }
+         /* Estilos para el contenedor de los pagos */
+        
+
+.toolbar {
+    display: flex; /* Usa flexbox para alinear los iconos */
+    justify-content: space-between; /* Espacia los iconos uniformemente */
+    position: fixed; /* Fija la barra en la parte inferior */
+    bottom: 0; /* Posición desde la parte inferior */
+    left: 0; /* Alineación a la izquierda */
+    right: 0; /* Alineación a la derecha */
+    background-color: #1e1e1e; /* Color de fondo oscuro */
+    height: 50px; /* Altura fija para la barra */
+    z-index: 1000; /* Asegúrate de que esté por encima de otros elementos */
+}
+
+.toolbar-text {
+    flex: 1; /* Permite que cada icono ocupe el mismo espacio */
+    text-align: center; /* Alinea el texto al centro */
+    line-height: 50px; /* Centra verticalmente el texto */
+    color: white; /* Color del texto */
+    cursor: pointer; /* Cambia el cursor al pasar el mouse */
+}
+
+.toolbar-text:hover {
+    color: #4c975f; /* Cambia el color al pasar el mouse */
+}
+
+.toolbar-text i {
+    font-size: 24px; /* Tamaño del icono */
+    transition: color 0.3s; /* Transición suave para el color */
+}
+      
+       .rejection-button {
+    background-color: transparent; /* Fondo transparente */
+    color: white; /* Color del texto en blanco */
+    border: 2px solid white; /* Borde blanco */
+    padding: 10px 15px; /* Espaciado interno */
+    margin: 5px 0; /* Margen entre botones */
+    cursor: pointer; /* Cambia el cursor al pasar sobre el botón */
+    transition: background-color 0.3s, color 0.3s; /* Transición suave */
+    font-size: 16px; /* Tamaño de fuente */
+    border-radius: 5px; /* Bordes redondeados */
+    width: 100%; /* Asegura que el botón ocupe el 100% del ancho del contenedor */
+    text-align: center; /* Alinea el texto al centro */
+}
+
+.rejection-button:hover {
+    background-color: white; /* Cambia el fondo a blanco al pasar el mouse */
+    color: black; /* Cambia el color del texto a negro al pasar el mouse */
+}
+
+/* Estilo para el contenedor de rechazo */
+#rejectionOptions {
+    display: flex;
+    flex-direction: column; /* Asegura que los botones estén uno debajo del otro */
+    justify-content: center; /* Centra los botones verticalmente */
+    align-items: stretch; /* Asegura que los botones ocupen el ancho completo */
+} 
+.image-upload {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 2px dashed #4c975f; /* Borde punteado */
+    border-radius: 10px; /* Bordes redondeados */
+    padding: 20px; /* Espaciado interno */
+    background-color: #1e1e1e; /* Fondo oscuro */
+    cursor: pointer; /* Cambia el cursor al pasar sobre el área */
+    transition: background-color 0.3s; /* Transición suave para el fondo */
+    position: relative; /* Para posicionar el input de archivo */
+}
+
+ #openReceiptButton,      
+#imageUpload {
+    position: absolute; /* Posiciona absolutamente */
+    left: 0; /* Alinea a la izquierda */
+    top: 0; /* Alinea a la parte superior */
+    width: 100%; /* Ocupa todo el ancho del contenedor */
+    height: 100%; /* Ocupa toda la altura del contenedor */
+    opacity: 0; /* Hazlo invisible */
+    cursor: pointer; /* Mantiene el cursor de puntero */
+}
+        
+.image-upload:hover {
+    background-color: #2a2a2a; /* Cambia el fondo al pasar el ratón */
+}
+        
+.image-upload-label {
+    text-align: center; /* Centra el texto */
+    color: #e0e0e0; /* Color del texto */
+    font-size: 1.2em; /* Tamaño de fuente */
+}
+
+#imageInput {
+    position: absolute; /* Posiciona absolutamente */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0; /* Hazlo invisible */
+    cursor: pointer; /* Mantiene el cursor de puntero */
+}
+
+#uploadText {
+    opacity: 1; /* Asegúrate de que el texto sea visible inicialmente */
+    transition: opacity 0.3s; /* Transición suave */
+}
+        .button-container {
+    display: flex; /* Establece un contenedor flexible */
+    justify-content: space-between; /* Justifica los elementos horizontalmente */
+    margin-top: 20px; /* Espacio entre los botones y el contenido anterior */
+}
+
+.validate-button, .reject-button {
+    background-color: #4c975f; /* Color de fondo verde */
+    color: white; /* Color del texto */
+    border: none; /* Sin borde */
+    padding: 10px 15px; /* Espaciado interno */
+    border-radius: 5px; /* Bordes redondeados */
+    cursor: pointer; /* Cambia el cursor al pasar sobre el botón */
+    transition: background-color 0.3s, transform 0.2s; /* Transiciones suaves */
+    flex: 1; /* Asigna un tamaño igual a los botones */
+    margin: 0 5px; /* Espacio entre los botones */
+}
+
+.validate-button:hover {
+    background-color: #388e3c; /* Color más oscuro al pasar el mouse */
+    transform: scale(1.05); /* Efecto de aumento al pasar el mouse */
+}
+
+.reject-button {
+    background-color: #f44336; /* Color de fondo rojo */
+    color: white; /* Color del texto */
+    border: none; /* Sin borde */
+    padding: 10px 15px; /* Espaciado interno */
+    border-radius: 5px; /* Bordes redondeados */
+    cursor: pointer; /* Cambia el cursor al pasar sobre el botón */
+    transition: background-color 0.3s, transform 0.2s; /* Transiciones suaves */
+    flex: 1; /* Asigna un tamaño igual a los botones */
+    margin: 0 5px; /* Espacio entre los botones */
+}
+
+        button.reject-button:hover {
+    background-color: #c62828; /* Color más oscuro al pasar el mouse */
+          transform: scale(1.05); /* Efecto de aumento al pasar el mouse */
+}
+
+  .button-container {
+    display: flex; /* Utiliza flexbox para alinear los botones en una fila */
+    justify-content: space-between; /* Justifica el espacio entre los botones */
+    margin-top: 20px; /* Espacio entre los botones y el contenido anterior */
+}
+
+.rejection-button {
+    background-color: transparent; /* Fondo transparente */
+    color: white; /* Color del texto en blanco */
+    border: 2px solid white; /* Borde blanco */
+    padding: 10px 15px; /* Espaciado interno */
+    margin: 5px 0; /* Margen superior e inferior entre botones */
+    cursor: pointer; /* Cambia el cursor al pasar sobre el botón */
+    transition: background-color 0.3s, color 0.3s; /* Transición suave */
+    font-size: 16px; /* Tamaño de fuente */
+    border-radius: 5px; /* Bordes redondeados */
+    width: 100%; /* Asegura que el botón ocupe el 100% del ancho del contenedor */
+    text-align: center; /* Alinea el texto al centro */
+}
+
+.rejection-button:hover {
+    background-color: white; /* Cambia el fondo a blanco al pasar el mouse */
+    color: black; /* Cambia el color del texto a negro al pasar el mouse */
+}  
+       
+      .send-button {
+    transition: background-color 0.3s, transform 0.3s; /* Transiciones suaves */
+}
+
+.send-button:hover {
+    background-color: #1da851; /* Color más oscuro al pasar el ratón */
+    transform: scale(1.05); /* Aumenta ligeramente el tamaño */
+}
+
+      .order-status {
+    background-color: #454546; /* Fondo oscuro */
+    padding: 10px 20px; /* Espaciado interno */
+    color: #fff; /* Color del texto */
+    font-size: 16px; /* Tamaño de fuente */
+    font-weight: bold; /* Negrita */
+    display: inline-block; /* Para que se ajuste al contenido */
+    margin: 10px 0; /* Espaciado superior e inferior */
+}
