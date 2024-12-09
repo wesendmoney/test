@@ -95,20 +95,26 @@ function fetchOrders() {
                 orders.forEach(order => {
                     const listItem = document.createElement('li');
                     listItem.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <strong>Order ID:</strong> ${order['Order ID'] || 'N/A'}
-                            <strong></strong> <span class="order-status" style="margin-left: auto;">${order['Status'] || 'N/A'}</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <strong>Monto:</strong> ${order['From Amount'] || 'N/A'} ${order['From Currency'] || 'N/A'} <br>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <strong>Precio a Recibir:</strong> ${order['To Amount'] || 'N/A'} ${order['To Currency'] || 'N/A'} <br>
-                        </div>
-                        <div class="input-group">
-                            <button onclick="showReceipt('${order['Comprobante']}', '${order['Order ID']}', '${order['From Amount']}', '${order['From Currency']}')">Ver Comprobante</button>
-                        </div>
-                    `;
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong>Order ID:</strong> ${order['Order ID'] || 'N/A'}
+        <strong></strong> <span class="order-status" style="margin-left: auto;">${order['Status'] || 'N/A'}</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong>Monto:</strong> ${order['From Amount'] || 'N/A'} ${order['From Currency'] || 'N/A'} <br>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong>Precio a Recibir:</strong> ${order['To Amount'] || 'N/A'} ${order['To Currency'] || 'N/A'} <br>
+    </div>
+    <div class="input-group">
+        <button onclick="showReceipt('${order['Comprobante']}', '${order['Order ID']}', '${order['From Amount']}', '${order['From Currency']}')">Ver Comprobante</button>
+    </div>
+    <div id="receiptDetails-${order['Order ID']}" style="display: none; margin-top: 10px;">
+        <hr style="margin: 10px 0; border: 1px solid #444;"> 
+        <img id="receiptImage-${order['Order ID']}" alt="Receipt" style="max-width: 100%; margin-top: 10px; display:none;">
+        <p id="orderAmount-${order['Order ID']}"></p>
+        <button onclick="shareReceipt('${order['Comprobante']}')">Compartir Comprobante</button>
+    </div>
+`;
                     ordersList.appendChild(listItem);
                 });
 
