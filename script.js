@@ -1,4 +1,37 @@
-  
+       
+        // Función para habilitar o deshabilitar el botón de subir comprobante
+function toggleUploadButton() {
+    const fromAmount = document.getElementById('from-amount').value;
+    const toAmount = document.getElementById('to-amount').value;
+    const uploadButton = document.getElementById('openReceiptButton');
+
+    // Habilitar el botón si ambos campos tienen valores
+    if (fromAmount && toAmount) {
+        uploadButton.disabled = false; // Habilitar el botón
+    } else {
+        uploadButton.disabled = true; // Deshabilitar el botón
+    }
+}
+
+// Agregar eventos de entrada a los campos de la calculadora
+document.getElementById('from-amount').addEventListener('input', toggleUploadButton);
+document.getElementById('to-amount').addEventListener('input', toggleUploadButton);
+
+// Inicializar el estado del botón al cargar la página
+window.onload = function() {
+    toggleUploadButton(); // Verificar el estado del botón al cargar
+};
+        
+                function openRegisterForm() {
+    // Ocultar el formulario de inicio de sesión
+    document.getElementById('loginForm').style.display = 'none';
+    // Mostrar el formulario de registro
+    document.getElementById('registerForm').style.display = 'block';
+    // Mostrar el contenedor de autenticación
+    document.getElementById('authContainer').style.display = 'block';
+}
+
+        
            document.getElementById('openReceiptButton').addEventListener('click', function() {
         document.getElementById('imageInput').click(); // Activa el input de archivo
     });
@@ -42,7 +75,9 @@ window.onload = function() {
     }
 };
          
-                function fetchOrders() {
+              let lastFetchedOrders = []; // Almacena el estado anterior de las órdenes
+
+function fetchOrders() {
     // Asegúrate de que currentUser  tenga un valor válido
     if (!currentUser ) {
         console.error('currentUser  no está definido.');
@@ -59,29 +94,26 @@ window.onload = function() {
             if (orders && Array.isArray(orders) && orders.length > 0) {
                 orders.forEach(order => {
                     const listItem = document.createElement('li');
-listItem.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <strong>Order ID:</strong> ${order['Order ID'] || 'N/A'}
-        <strong></strong> <span class="order-status" style="margin-left: auto;">${order['Status'] || 'N/A'}</span>
-    </div>
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <strong>Monto:</strong> ${order['From Amount'] || 'N/A'} ${order['From Currency'] || 'N/A'} <br>
-    </div>
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <strong>Precio a Recibir:</strong> ${order['To Amount'] || 'N/A'} ${order['To Currency'] || 'N/A'} <br>
-    </div>
-    <div class="input-group">
-        <button onclick="showReceipt('${order['Comprobante']}', '${order['Order ID']}', '${order['From Amount']}', '${order['From Currency']}')">Ver Comprobante</button>
-    </div>
-    <div id="receiptDetails-${order['Order ID']}" style="display: none; margin-top: 10px;">
-        <hr style="margin: 10px 0; border: 1px solid #444;"> 
-        <img id="receiptImage-${order['Order ID']}" alt="Receipt" style="max-width: 100%; margin-top: 10px; display:none;">
-        <p id="orderAmount-${order['Order ID']}"></p>
-        <button onclick="shareReceipt('${order['Comprobante']}')">Compartir Comprobante</button>
-    </div>
-`;
+                    listItem.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>Order ID:</strong> ${order['Order ID'] || 'N/A'}
+                            <strong></strong> <span class="order-status" style="margin-left: auto;">${order['Status'] || 'N/A'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>Monto:</strong> ${order['From Amount'] || 'N/A'} ${order['From Currency'] || 'N/A'} <br>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>Precio a Recibir:</strong> ${order['To Amount'] || 'N/A'} ${order['To Currency'] || 'N/A'} <br>
+                        </div>
+                        <div class="input-group">
+                            <button onclick="showReceipt('${order['Comprobante']}', '${order['Order ID']}', '${order['From Amount']}', '${order['From Currency']}')">Ver Comprobante</button>
+                        </div>
+                    `;
                     ordersList.appendChild(listItem);
                 });
+
+                // Verificar si alguna orden ha cambiado a "pagada"
+                checkForPaidOrders(orders);
             } else {
                 ordersList.innerHTML = '<li>No hay órdenes disponibles.</li>';
             }
@@ -91,6 +123,17 @@ listItem.innerHTML = `
             const ordersList = document.getElementById('ordersList');
             ordersList.innerHTML = '<li>Error al cargar las órdenes.</li>';
         });
+}
+
+// Función para verificar si alguna orden ha cambiado a "pagada"
+function checkForPaidOrders(currentOrders) {
+    currentOrders.forEach(currentOrder => {
+        const previousOrder = lastFetchedOrders.find(order => order['Order ID'] === currentOrder['Order ID']);
+        if (previousOrder && previousOrder['Status'] !== currentOrder['Status'] && currentOrder['Status'] === 'Paid') {
+            alert(`La orden ${currentOrder['Order ID']} ha sido marcada como pagada.`);
+        }
+    });
+    lastFetchedOrders = currentOrders; // Actualiza el estado anterior de las órdenes
 }
        
         function shareReceipt(receiptUrl) {
@@ -1173,4 +1216,4 @@ function rejectPayment(orderId, reason) {
          document.getElementById('profileContainer').style.display = 'none';
          cotizaContainer
          }
-         
+  
