@@ -18,7 +18,7 @@
 <div id="menu" class="menu">
     <div class="menu-content">
         <a class="login-button" onclick="openLoginModal(); closeMenu()">Iniciar Sesión</a>
-        <a class="register-button" onclick="openRegisterModal(); closeMenu()">Registrarse</a>
+        <a class="register-button" onclick="openRegisterForm(); closeMenu()">Registrarse</a>
     </div>
 </div>
 </div>
@@ -188,7 +188,7 @@
                <div class="image-upload">
         <label for="imageInput" class="image-upload-label">
             <span>Haz clic aquí para subir tu comprobante</span>
-             <button id="openReceiptButton" style="margin-top: 20px;">Subir Comprobante de Pago</button>
+             <button id="openReceiptButton" style="margin-top: 20px;" disabled>Subir Comprobante de Pago</button>
         </label>
         <img id="imgPreview" style="display:none; max-width: 100%; margin-top: 10px;" />
     </div>
@@ -287,13 +287,13 @@
    </div>
   
 <div id="Toolbar" class="toolbar" style="display: none;"> <!-- Inicialmente oculta -->
-    <span class="toolbar-text" onclick="showCotizacion()">
+    <span class="toolbar-text" onclick="showCotizacion(); fetchOrders();">
         <i class="fas fa-dollar-sign"></i> <!-- Icono de dólar -->
     </span>
-    <span class="toolbar-text" onclick="showOrdersSection()">
+    <span class="toolbar-text" onclick="showOrdersSection(); fetchOrders();">
         <i class="fas fa-list-alt"></i> <!-- Icono de lista -->
     </span>
-    <span class="toolbar-text" onclick="showProfileContainer()">
+    <span class="toolbar-text" onclick="showProfileContainer();">
         <i class="fas fa-user"></i> <!-- Icono de usuario -->
     </span>
 </div>
