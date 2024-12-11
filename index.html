@@ -1,0 +1,2318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload with Preview Modal</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+* {
+    box-sizing: border-box; /* Asegura que el padding y el borde se incluyan en el ancho total */
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #121212; /* Fondo oscuro */
+    color: #e0e0e0; /* Texto claro */
+    margin: 0; /* Eliminar márgenes del body */
+    padding: 0; /* Eliminar padding del body */
+    display: flex;
+    flex-direction: column; /* Cambia la dirección a columna */
+    align-items: center; /* Centra el contenido horizontalmente */
+    height: 100vh; /* Asegúrate de que ocupe toda la altura de la ventana */
+    overflow-x: hidden; /* Evita el desbordamiento horizontal */
+}
+
+.containerOut {
+    display: flex;
+    flex-direction: column; /* Alineación vertical */
+    align-items: center; /* Centrar horizontalmente */
+    justify-content: center; /* Centrar verticalmente */
+    width: 95%; /* Asegúrate de que ocupe todo el ancho */
+}
+
+.container, #authContainer {
+    background-color: #1e1e1e; /* Fondo de la caja */
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); /* Sombra más intensa */
+    padding: 30px;
+    width: 95%; /* Ajusta el ancho según lo necesites */
+    max-width: 400px; /* Ancho máximo para pantallas grandes */
+    margin: 20px auto; /* Centra el contenedor y añade margen superior e inferior */
+}
+
+#authContainer {
+            display: none; /* Inicialmente oculto */
+        }
+
+        @media (max-width: 600px) {
+            .container, #authContainer {
+                width: 95%; /* Aumenta el ancho en pantallas pequeñas */
+                padding: 15px; /* Reduce el padding en pantallas pequeñas */
+            }
+              .toolbar-text {
+        font-size: 18px; /* Ajusta el tamaño del texto para pantallas pequeñas */
+    }
+
+    .toolbar-text i {
+        font-size: 20px; /* Ajusta el tamaño del icono para pantallas pequeñas */
+    }
+        }
+      
+        .input-group {
+            margin-bottom: 15px; /* Reduce el espaciado entre grupos de inputs */
+        }
+
+        .input-group label {
+            display: block; /* Asegura que las etiquetas ocupen toda la línea */
+            margin-bottom: 5px; /* Espaciado entre la etiqueta y el input */
+            font-weight: bold; /* Negrita para las etiquetas */
+            color: #e0e0e0; /* Color de las etiquetas */
+        }
+
+        .input-group input,
+        .input-group select,
+        .input-group textarea {
+            width: 100%; /* Asegura que los inputs ocupen el 100% del ancho */
+            padding: 12px; /* Espaciado interno */
+            border: 1px solid #444; /* Borde oscuro */
+            border-radius: 5px; /* Bordes redondeados */
+            transition: border-color 0.3s; /* Transición para el borde */
+            box-sizing: border-box; /* Asegura que el padding y el borde se incluyan en el ancho total */
+            background-color: #2a2a2a; /* Fondo de los inputs */
+            color: #e0e0e0; /* Texto en inputs */
+            margin-bottom: 10px; /* Espaciado uniforme entre inputs */
+        }
+
+        .input-group button {
+            width: 100%; /* Asegura que el botón ocupe todo el ancho del contenedor */
+            padding: 12px; /* Padding uniforme, igual al de los inputs */
+            background-color: #4c975f; /* Color de fondo */
+            color: #1e1e1e; /* Color del texto (color del fondo del contenedor) */
+            border: none; /* Sin borde */
+            border-radius: 5px; /* Bordes redondeados */
+            cursor: pointer; /* Cambia el cursor al pasar sobre el botón */
+            transition: background-color 0.3s; /* Transiciones suaves */
+            margin-top: 25px; /* Margen superior para separación */
+            font-size: 16px; /* Tamaño de fuente consistente */
+            line-height: 1.5; /* Asegura que el texto esté centrado verticalmente */
+            font-weight: bold; /* Texto en negrita */
+        }
+
+        .input-group button:hover {
+            background-color: #388e3c; /* Color más oscuro al pasar el mouse */
+        }
+
+        /* Estilo para el enlace de "¿Ya tienes una cuenta?" */
+        .register-link {
+            display: block; /* Asegura que ocupe toda la línea */
+            color: #4c975f; /* Color del texto */
+            font-size: 16px; /* Tamaño de fuente */
+            text-align: center; /* Centra el texto */
+            margin-top: 25px; /* Margen superior para separación */
+            cursor: pointer; /* Cambia el cursor al pasar sobre el enlace */
+            text-decoration: none; /* Sin subrayado */
+        }
+
+        .register-link:hover {
+            text-decoration: underline; /* Subrayado al pasar el mouse */
+            color: #388e3c; /* Cambia el color al pasar el mouse */
+        }
+
+        hr {
+            margin: 25px 0; /* Espaciado uniforme entre la línea y los elementos adyacentes */
+            border: 1px solid #444; /* Estilo de la línea */
+        }
+
+        h1 {
+            text-align: center;
+            color: #4c975f; /* Color del título */
+            margin-bottom: 20px;
+        }
+
+        .exchange-rate {
+            margin-top: 20px;
+                        font-size: 1.2em;
+            text-align: center;
+            color: #b0bec5; /* Color del texto de la tasa */
+        }
+
+        .currency-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .currency-input select,
+        .currency-input input[type="number"] {
+            padding: 10px;
+            border: 1px solid #444; /* Borde oscuro */
+            border-radius: 5px;
+            flex: 1;
+            background-color: #2a2a2a; /* Fondo de los inputs */
+            color: #e0e0e0; /* Texto en inputs */
+            transition: border-color 0.3s;
+        }
+
+        .currency-input input[type="number"]:focus,
+        .currency-input select:focus {
+            border-color: #4a90e2; /* Color del borde al enfocar */
+            outline: none;
+        }
+
+        /* Estilo para el icono del menú */
+        .menu-icon {
+            cursor: pointer;
+            font-size: 24px;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        /* Menú hamburguesa */
+        .menu {
+            display: none; /* Oculto por defecto */
+            position: absolute;
+            top: 60px; /* Ajusta según sea necesario */
+            right: 15px;
+            background-color: #1e1e1e; /* Fondo oscuro */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); /* Sombra más intensa */
+            border-radius: 8px;
+            z-index: 10;
+            width: 200px; /* Ajusta el ancho del menú */
+        }
+
+        .menu a {
+            display: block; /* Asegúrate de que cada enlace ocupe toda la línea */
+            padding: 12px 15px;
+            color: #4c975f; /* Color del enlace */
+            text-decoration: none;
+            border-bottom: 1px solid #444; /* Línea entre elementos */
+            transition: background-color 0.3s;
+        }
+
+        .menu a:last-child {
+            border-bottom: none; /* Elimina la línea del último elemento */
+        }
+
+        .menu a:hover {
+            background-color: #2a2a2a; /* Fondo oscuro al pasar el ratón */
+        }
+
+       .modal {
+    display: none; /* Oculto por defecto */
+    position: fixed; /* Fijo en la pantalla */
+    z-index: 2000; /* Asegúrate de que esté por encima de otros elementos */
+    left: 0;
+    top: 0;
+    width: 100%; /* Ancho completo */
+    height: 100%; /* Alto completo */
+    overflow: auto; /* Habilitar el desplazamiento si es necesario */
+    background-color: rgba(0, 0, 0, 0.6); /* Fondo negro con opacidad */
+    padding-top: 60px;
+}
+
+        .modal-content {
+            background-color: #1e1e1e; /* Fondo oscuro para el modal */
+            margin: 5% auto; /* 5% desde la parte superior y centrado */
+            padding: 20px;
+            border: 1px solid #888; /* Borde */
+            width: 90%; /* Podrías ajustar el ancho */
+            max-width: 600px; /* Máximo ancho del modal */
+        }
+
+        /* Estilos de la vista previa de la imagen */
+        #imagePreview {
+            max-width: 100%;
+            height: auto;
+            margin-top: 10px;
+        }
+
+        /* Mensajes de éxito o error */
+        .success-message {
+            color: #4caf50; /* Color verde */
+            margin-top: 20px;
+        }
+
+        .error-message {
+            color: red;
+            margin-top: 20px;
+        }
+
+        /* Estilos para el botón de cerrar */
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: white; /* Color blanco al pasar el ratón */
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+      #takerContainer,
+  #cashierContainer,    
+ #ordersContainer {
+    position: fixed; /* Fija el contenedor para que ocupe toda la ventana */
+    top: 0; /* Alinea en la parte superior */
+    left: 0; /* Alinea a la izquierda */
+    width: 100%; /* Ocupa todo el ancho de la pantalla */
+    height: 100%; /* Ocupa toda la altura de la pantalla */
+    background-color: #121212; /* Fondo oscuro */
+    color: #e0e0e0; /* Texto claro */
+    overflow-y: auto; /* Permite el desplazamiento vertical */
+    padding: 20px; /* Espaciado interno */
+    z-index: 1000; /* Asegúrate de que esté por encima de otros elementos */
+}
+
+        /* Listas de órdenes y pagos */
+        #ordersList,
+        #pendingPaymentsList,
+        #validatedPaymentsList {
+            list-style-type: none; /* Elimina los puntos de la lista */
+            padding: 0; /* Elimina el padding */
+            margin: 0; /* Elimina el margen */
+        }
+
+
+        #ordersList li,
+        #pendingPaymentsList li,
+        #validatedPaymentsList li {
+            background: #2a2a2a; /* Color de fondo oscuro */
+            padding: 15px; /* Espaciado interno */
+            color: #e0e0e0; /* Color del texto */
+            border-bottom: 1px solid #444; /* Línea de separación */
+            width: 100%; /* Asegura que cada elemento de la lista ocupe todo el ancho */
+      }
+      
+
+        /* Estilos para elementos ocultos */
+        .hidden {
+            display: none;
+        }
+
+        /* Estilo para el mensaje de error/success */
+        #message {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        /* Estilos del contenido del menú */
+        .menu-content {
+            padding: 15px; /* Espaciado interno */
+            background-color: #1e1e1e; /* Fondo oscuro */
+        }
+
+        .menu-content div {
+            margin-bottom: 10px; /* Espaciado entre líneas */
+            font-size: 16px; /* Tamaño de fuente */
+            color: #e0e0e0; /* Color del texto */
+        }
+
+        .menu-content strong {
+            display: inline-block; /* Permite que el texto fuerte y el texto normal estén en la misma línea */
+            width: 120px; /* Ancho fijo para alinear el texto */
+        }
+
+        .menu-content button {
+            background-color: #4c975f; /* Color de fondo */
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 15px; /* Añadir margen superior para separar el botón */
+        }
+
+        .menu-content button:hover {
+            background-color: #388e3c; /* Color más oscuro al pasar el mouse */
+        }
+
+        /* Estilos para las pestañas */
+        .tabs {
+            display: flex;
+            flex-direction: column; /* Cambia a columna para alinear verticalmente */
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: transparent; /* Cambia a transparente */
+            margin-bottom: 5px; /* Margen inferior para separación */
+            text-align: left; /* Alinear a la izquierda */
+            cursor: pointer; /* Cambiar el cursor para que no parezca un botón */
+            font-size: 1.2em; /* Aumenta el tamaño de la fuente */
+            font-weight: bold; /* Negrita para destacar el título */
+            color: #e0e0e0; /* Color del texto */
+            border-bottom: 2px solid #444; /* Línea inferior para separar títulos */
+        }
+
+        .tab.active {
+            color: #4c975f; /* Color del texto para la pestaña activa */
+            border-bottom: 2px solid #4c975f; /* Línea inferior de color para la pestaña activa */
+        }
+
+        .tab-content {
+            display: none;
+            border: 1px solid #444; /* Borde oscuro */
+            border-radius: 5px;
+            padding: 20px;
+            background-color: #1e1e1e; /* Fondo oscuro para el contenido */
+            color: #e0e0e0; /* Texto claro */
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Estilos para la vista previa de la imagen */
+        .image-preview {
+            display: none; /* Oculto por defecto */
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #444; /* Borde oscuro */
+            border-radius: 5px;
+            text-align: center;
+            background-color: #2a2a2a; /* Fondo oscuro */
+        }
+
+        /* Estilos para el botón de subir imagen */
+        #uploadButtonModal {
+            margin-right: 10px;
+        }
+
+        /* Estilos para el contenedor de los pagos */
+        #cashierSection, #takerSection {
+            display: none; /* Inicialmente oculto */
+        }
+
+        /* Estilos para los botones de acción en la sección de pagos */
+        #submitPayment, #rejectOrderButton {
+                       background-color: #4c975f; /* Color de fondo */
+            color: white; /* Color del texto */
+            border: none; /* Sin borde */
+            border-radius: 5px; /* Bordes redondeados */
+            padding: 10px 15px; /* Espaciado interno */
+            cursor: pointer; /* Cambia el cursor al pasar sobre el botón */
+            transition: background-color 0.3s; /* Transición suave */
+            margin-top: 10px; /* Margen superior para separación */
+        }
+
+        #submitPayment:hover, #rejectOrderButton:hover {
+            background-color: #388e3c; /* Color más oscuro al pasar el mouse */
+        }
+
+        /* Estilos para el contenedor de la calculadora */
+        #calculatorContainer {
+            display: flex;
+            flex-direction: column; /* Alineación vertical */
+            align-items: center; /* Centrar horizontalmente */
+            margin-top: 20px; /* Margen superior */
+        }
+
+        /* Estilos para los resultados de la calculadora */
+        #calculatorResult {
+            margin-top: 20px; /* Margen superior */
+            font-size: 1.5em; /* Tamaño de fuente más grande */
+            color: #4caf50; /* Color verde para el resultado */
+        }
+  
+          
+          
+         header {
+         color: #4c975f;
+         }
+        
+
+        
+       
+  .image-container {
+    text-align: center; /* Centra la imagen */
+    margin-bottom: 0px; /* Espacio debajo de la imagen */
+    width: 100%; /* Asegura que ocupe el ancho completo */
+    height: 100%; /* Ajusta la altura del contenedor para recortar */
+    overflow: hidden; /* Oculta el contenido que se desborda */
+}
+
+.image-container img {
+    width: 100%; /* Asegura que la imagen ocupe el ancho completo */
+    height: 60%; /* Mantiene la proporción de la imagen */
+    transform: translateY(15%); /* Desplaza la imagen hacia arriba para recortar el 20% superior */
+}
+
+
+
+
+
+
+         /* Estilos del botón */
+         button {
+         background-color: #4c975f; /* Color de WhatsApp */
+         color: white;
+         border: none;
+         padding: 12px 20px;
+         border-radius: 5px;
+         cursor: pointer;
+         transition: background-color 0.3s;
+         }
+         button:disabled {
+         background-color: #ccc;
+         cursor: not-allowed;
+         }
+         button:hover:not(:disabled) {
+         background-color: #128C7E; /* Color más oscuro al pasar el ratón */
+         }
+
+
+         /* Estilos para el botón de cerrar sesión */
+         #logoutButton {
+         display: none; /* Inicialmente oculto */
+         }
+         /* Estilos para el botón de enviar a WhatsApp */
+         #send-whatsapp {
+         margin-top: 20px;
+         }
+         /* Estilos para el mensaje de error/success */
+         #message {
+         margin-top: 10px;
+         font-weight: bold;
+         color: #e0e0e0; /* Texto claro para mensajes */
+         }
+         /* Estilos para el contenedor de notificaciones */
+         #notificationBell {
+         cursor: pointer;
+         font-size: 20px;
+         color: #4c975f; /* Color del icono de notificación */
+         }
+         /* Estilos para los mensajes de notificación */
+         .notification-message {
+         color: #4caf50; /* Color verde */
+         margin-top: 20px;
+         }
+         /* Estilos para el contenedor de la calculadora */
+         .containerOut {
+         display: block; /* Inicialmente visible */
+         }
+         /* Estilos para el contenedor de la sección de reseller */
+         #resellerSection {
+         display: none; /* Inicialmente oculto */
+         }
+         /* Estilos para el contenedor de la sección de cashier */
+         #cashierSection {
+         display: none; /* Inicialmente oculto */
+         }
+         /* Estilos para el contenedor de la sección de taker */
+         #takerSection {
+         display: none; /* Inicialmente oculto */
+         }
+         /* Estilos para el contenedor de los pagos */
+        
+
+.toolbar {
+    display: flex; /* Usa flexbox para alinear los iconos */
+    justify-content: space-between; /* Espacia los iconos uniformemente */
+    position: fixed; /* Fija la barra en la parte inferior */
+    bottom: 0; /* Posición desde la parte inferior */
+    left: 0; /* Alineación a la izquierda */
+    right: 0; /* Alineación a la derecha */
+    background-color: #1e1e1e; /* Color de fondo oscuro */
+    height: 50px; /* Altura fija para la barra */
+    z-index: 1000; /* Asegúrate de que esté por encima de otros elementos */
+}
+
+.toolbar-text {
+    flex: 1; /* Permite que cada icono ocupe el mismo espacio */
+    text-align: center; /* Alinea el texto al centro */
+    line-height: 50px; /* Centra verticalmente el texto */
+    color: white; /* Color del texto */
+    cursor: pointer; /* Cambia el cursor al pasar el mouse */
+}
+
+.toolbar-text:hover {
+    color: #4c975f; /* Cambia el color al pasar el mouse */
+}
+
+.toolbar-text i {
+    font-size: 24px; /* Tamaño del icono */
+    transition: color 0.3s; /* Transición suave para el color */
+}
+      
+       .rejection-button {
+    background-color: transparent; /* Fondo transparente */
+    color: white; /* Color del texto en blanco */
+    border: 2px solid white; /* Borde blanco */
+    padding: 10px 15px; /* Espaciado interno */
+    margin: 5px 0; /* Margen entre botones */
+    cursor: pointer; /* Cambia el cursor al pasar sobre el botón */
+    transition: background-color 0.3s, color 0.3s; /* Transición suave */
+    font-size: 16px; /* Tamaño de fuente */
+    border-radius: 5px; /* Bordes redondeados */
+    width: 100%; /* Asegura que el botón ocupe el 100% del ancho del contenedor */
+    text-align: center; /* Alinea el texto al centro */
+}
+
+.rejection-button:hover {
+    background-color: white; /* Cambia el fondo a blanco al pasar el mouse */
+    color: black; /* Cambia el color del texto a negro al pasar el mouse */
+}
+
+/* Estilo para el contenedor de rechazo */
+#rejectionOptions {
+    display: flex;
+    flex-direction: column; /* Asegura que los botones estén uno debajo del otro */
+    justify-content: center; /* Centra los botones verticalmente */
+    align-items: stretch; /* Asegura que los botones ocupen el ancho completo */
+} 
+.image-upload {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 2px dashed #4c975f; /* Borde punteado */
+    border-radius: 10px; /* Bordes redondeados */
+    padding: 20px; /* Espaciado interno */
+    background-color: #1e1e1e; /* Fondo oscuro */
+    cursor: pointer; /* Cambia el cursor al pasar sobre el área */
+    transition: background-color 0.3s; /* Transición suave para el fondo */
+    position: relative; /* Para posicionar el input de archivo */
+}
+
+ #openReceiptButton,      
+#imageUpload {
+    position: absolute; /* Posiciona absolutamente */
+    left: 0; /* Alinea a la izquierda */
+    top: 0; /* Alinea a la parte superior */
+    width: 100%; /* Ocupa todo el ancho del contenedor */
+    height: 100%; /* Ocupa toda la altura del contenedor */
+    opacity: 0; /* Hazlo invisible */
+    cursor: pointer; /* Mantiene el cursor de puntero */
+}
+        
+.image-upload:hover {
+    background-color: #2a2a2a; /* Cambia el fondo al pasar el ratón */
+}
+        
+.image-upload-label {
+    text-align: center; /* Centra el texto */
+    color: #e0e0e0; /* Color del texto */
+    font-size: 1.2em; /* Tamaño de fuente */
+}
+
+#imageInput {
+    position: absolute; /* Posiciona absolutamente */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0; /* Hazlo invisible */
+    cursor: pointer; /* Mantiene el cursor de puntero */
+}
+
+#uploadText {
+    opacity: 1; /* Asegúrate de que el texto sea visible inicialmente */
+    transition: opacity 0.3s; /* Transición suave */
+}
+        .button-container {
+    display: flex; /* Establece un contenedor flexible */
+    justify-content: space-between; /* Justifica los elementos horizontalmente */
+    margin-top: 20px; /* Espacio entre los botones y el contenido anterior */
+}
+
+.validate-button, .reject-button {
+    background-color: #4c975f; /* Color de fondo verde */
+    color: white; /* Color del texto */
+    border: none; /* Sin borde */
+    padding: 10px 15px; /* Espaciado interno */
+    border-radius: 5px; /* Bordes redondeados */
+    cursor: pointer; /* Cambia el cursor al pasar sobre el botón */
+    transition: background-color 0.3s, transform 0.2s; /* Transiciones suaves */
+    flex: 1; /* Asigna un tamaño igual a los botones */
+    margin: 0 5px; /* Espacio entre los botones */
+}
+
+.validate-button:hover {
+    background-color: #388e3c; /* Color más oscuro al pasar el mouse */
+    transform: scale(1.05); /* Efecto de aumento al pasar el mouse */
+}
+
+.reject-button {
+    background-color: #f44336; /* Color de fondo rojo */
+    color: white; /* Color del texto */
+    border: none; /* Sin borde */
+    padding: 10px 15px; /* Espaciado interno */
+    border-radius: 5px; /* Bordes redondeados */
+    cursor: pointer; /* Cambia el cursor al pasar sobre el botón */
+    transition: background-color 0.3s, transform 0.2s; /* Transiciones suaves */
+    flex: 1; /* Asigna un tamaño igual a los botones */
+    margin: 0 5px; /* Espacio entre los botones */
+}
+
+        button.reject-button:hover {
+    background-color: #c62828; /* Color más oscuro al pasar el mouse */
+          transform: scale(1.05); /* Efecto de aumento al pasar el mouse */
+}
+
+  .button-container {
+    display: flex; /* Utiliza flexbox para alinear los botones en una fila */
+    justify-content: space-between; /* Justifica el espacio entre los botones */
+    margin-top: 20px; /* Espacio entre los botones y el contenido anterior */
+}
+
+.rejection-button {
+    background-color: transparent; /* Fondo transparente */
+    color: white; /* Color del texto en blanco */
+    border: 2px solid white; /* Borde blanco */
+    padding: 10px 15px; /* Espaciado interno */
+    margin: 5px 0; /* Margen superior e inferior entre botones */
+    cursor: pointer; /* Cambia el cursor al pasar sobre el botón */
+    transition: background-color 0.3s, color 0.3s; /* Transición suave */
+    font-size: 16px; /* Tamaño de fuente */
+    border-radius: 5px; /* Bordes redondeados */
+    width: 100%; /* Asegura que el botón ocupe el 100% del ancho del contenedor */
+    text-align: center; /* Alinea el texto al centro */
+}
+
+.rejection-button:hover {
+    background-color: white; /* Cambia el fondo a blanco al pasar el mouse */
+    color: black; /* Cambia el color del texto a negro al pasar el mouse */
+}  
+       
+      .send-button {
+    transition: background-color 0.3s, transform 0.3s; /* Transiciones suaves */
+}
+
+.send-button:hover {
+    background-color: #1da851; /* Color más oscuro al pasar el ratón */
+    transform: scale(1.05); /* Aumenta ligeramente el tamaño */
+}
+
+      .order-status {
+    background-color: #454546; /* Fondo oscuro */
+    padding: 10px 20px; /* Espaciado interno */
+    color: #fff; /* Color del texto */
+    font-size: 16px; /* Tamaño de fuente */
+    font-weight: bold; /* Negrita */
+    display: inline-block; /* Para que se ajuste al contenido */
+    margin: 10px 0; /* Espaciado superior e inferior */
+}
+      
+.spinner {
+  width: 50px;
+  padding: 8px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #ff5733;
+  --_m: 
+    conic-gradient(#0000 10%,#000),
+    linear-gradient(#000 0 0) content-box;
+  -webkit-mask: var(--_m);
+          mask: var(--_m);
+  -webkit-mask-composite: source-out;
+          mask-composite: subtract;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+      #overlay {
+    position: fixed; /* Fijo en la pantalla */
+    top: 0;
+    left: 0;
+    width: 100%; /* Ocupa todo el ancho */
+    height: 100%; /* Ocupa toda la altura */
+    background-color: rgba(0, 0, 0, 0.5); /* Fondo negro con opacidad */
+    z-index: 999; /* Asegúrate de que esté por encima de otros elementos */
+    display: none; /* Oculto por defecto */
+}
+      </style>
+<header>
+   <span class="menu-icon" onclick="toggleMenu()">☰</span>
+    <!-- Imagen centrada fuera del contenedor -->
+    <div class="image-container">
+        <img src="https://i.imgur.com/7yGjoSP.png" alt="Conversor de Divisas" />
+    </div>
+</header>
+
+<!-- Menú hamburguesa -->
+<div id="menu" class="menu">
+    <div class="menu-content">
+        <a class="login-button" onclick="openLoginModal(); closeMenu()">Iniciar Sesión</a>
+        <a class="register-button" onclick="openRegisterModal(); closeMenu()">Registrarse</a>
+    </div>
+</div>
+</div>
+
+<div id="authContainer" class="container">
+    <span class="close" onclick="closelogingModal()">&times;</span>
+   <div id="registerForm" style="display: none;">
+    <h1>Registro</h1>
+    <div class="input-group">
+        <label for="username">Nombre de usuario</label>
+        <input type="text" id="username" placeholder="Nombre de usuario" required>
+    </div>
+    <div class="input-group">
+        <label for="email">Correo electrónico</label>
+        <input type="email" id="email" placeholder="Correo electrónico" required>
+    </div>
+    <div class="input-group">
+        <label for="phone">Teléfono</label>
+        <input type="tel" id="phone" placeholder="Teléfono" required>
+    </div>
+    <div class="input-group">
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" placeholder="Contraseña" required>
+    </div>
+    <div class="input-group">
+       <div id="message"></div>
+        <button onclick="register()">Registrar</button>
+    </div>
+    <hr style="margin: 10px 0; border: 1px solid #444;">
+    <span class="register-link" onclick="toggleForms()">¿Ya tienes cuenta? Iniciar sesión</span>
+</div>
+    <div id="loginForm" style="display: block;">
+        <h1>Inicio de Sesión</h1>
+        <div class="input-group">
+            <label for="loginEmail">Correo electrónico</label>
+            <input type="email" id="loginEmail" placeholder="Correo electrónico" required>
+        </div>
+        <div class="input-group">
+            <label for="loginPassword">Contraseña</label>
+            <input type="password" id="loginPassword" placeholder="Contraseña" required>
+                  </div>
+        <div class="input-group">
+         <div id="message"></div>
+            <button class="login-button" onclick="login()">Iniciar Sesión</button>
+        </div>
+        <hr style="margin: 10px 0; border: 1px solid #444;">
+        <span class="register-link" onclick="toggleForms()">¿No tienes cuenta? Regístrate</span>
+        
+    </div>
+</div>
+       
+<body>
+   <!-- Contenedor del perfil -->
+   <div id="profileContainer" class="container" style="display: none;">
+      <h2>Perfil de Usuario</h2>
+       <div class="input-group">
+         <strong>Nombre:</strong> <span id="userName"></span>
+      </div>
+       <div class="input-group">
+         <strong>Rol:</strong> <span id="userRole"></span>
+      </div>
+      <div class="input-group">
+      <hr style="margin: 10px 0; border: 1px solid #444;">
+     </div>
+        <div class="input-group">
+         <strong>Ganancias:</strong> <span id="userEarnings"></span>
+      </div>
+       <div class="input-group">
+         <strong>Prioridad:</strong> <span id="userCurrency"></span> 
+      </div>
+      <div class="input-group">
+         <strong>Fondos:</strong> <span id=""></span> 
+      </div>
+     <div class="input-group">
+      <hr style="margin: 10px 0; border: 1px solid #444;">
+     </div>
+     <button onclick="logout()" style="background: none; border: none; cursor: pointer;">
+            <i class="fas fa-sign-out-alt" style="color: white; font-size: 24px;"></i>
+        </button>
+      
+   </div>
+   <div id="notifications" class="notification-message" style="display: none;"></div>
+   <div class="containerOut">
+      <div class="container">
+         <h1>Conversor de Divisas</h1>
+         <div class="input-group">
+            <label for="from-amount">Tú envías:</label>
+            <div class="currency-input">
+               <input type="number" id="from-amount-out" placeholder="Cantidad" min="0" step="any">
+               <select id="from-currency-out">
+                  <option value="CLP">CLP - Chile</option>
+                  <option value="COP">COP - Colombia</option>
+                  <option value="USD">USD - Estados Unidos</option>
+                  <option value="EUR">EUR - España</option>
+                  <option value="PEN">PEN - Perú</option>
+                  <option value="ECU">ECU - Ecuador</option>
+                  <option value="VES">VES - Venezuela</option>
+               </select>
+            </div>
+         </div>
+         <div class="input-group">
+            <label for="to-amount">Ellos reciben:</label>
+            <div class="currency-input">
+               <input type="number" id="to-amount-out" placeholder="Cantidad" min="0" step="any">
+               <select id="to-currency-out">
+                  <option value="VES">VES - Venezuela</option>
+                  <option value="COP">COP - Colombia</option>
+                  <option value="USD">USD - Estados Unidos</option>
+                  <option value="EUR">EUR - España</option>
+                  <option value="PEN">PEN - Perú</option>
+                  <option value="CLP">CLP - Chile</option>
+                  <option value="ECU">ECU - Ecuador</option>
+               </select>
+            </div>
+         </div>
+         <div class="exchange-rate" id="exchange-rate-out">@WeSendMoney</div>
+      </div>
+   </div>
+  
+  <button id="send-whatsapp" class="send-button" style="display: block; background-color: #25D366; border: none; border-radius: 5px; color: white; font-size: 18px; padding: 10px 20px; cursor: pointer; display: flex; align-items: center;">
+    <i class="fab fa-whatsapp" style="font-size: 24px; margin-right: 8px;"></i> <!-- Icono de WhatsApp -->
+    Enviar dinero ahora
+</button>
+   <!-- Botón para generar recibo fuera de la calculadora -->
+   <div id="resellerSection" style="display: none;">
+      <div id="cotizaContainer">
+         <h1>Conversor de Divisas</h1>
+         <div class="tabs">
+            <div class="tab active" data-tab="calculator">1. Cotiza tu Remesa</div>
+            <div id="calculator" class="tab-content active">
+               <div class="input-group">
+                  <label for="from-amount">Tú envías:</label>
+                  <div class="currency-input">
+                     <input type="number" id="from-amount" placeholder="Cantidad" min="0" step="any">
+                     <select id="from-currency">
+                        <option value="CLP">CLP - Chile</option>
+                        <option value="COP">COP - Colombia</option>
+                        <option value="USD">USD - Estados Unidos</option>
+                        <option value="EUR">EUR - España</option>
+                        <option value="PEN">PEN - Perú</option>
+                        <option value="ECU">ECU - Ecuador</option>
+                        <option value="VES">VES - Venezuela</option>
+                     </select>
+                  </div>
+               </div>
+               <div class="input-group">
+                  <label for="to-amount">Ellos reciben:</label>
+                  <div class="currency-input">
+                     <input type="number" id="to-amount" placeholder="Cantidad" min="0" step="any">
+                     <select id="to-currency">
+                        <option value="VES">VES - Venezuela</option>
+                        <option value="COP">COP - Colombia</option>
+                        <option value="USD">USD - Estados Unidos</option>
+                        <option value="EUR">EUR - España</option>
+                        <option value="PEN">PEN - Perú</option>
+                        <option value="CLP">CLP - Chile</option>
+                        <option value="ECU">ECU - Ecuador</option>
+                     </select>
+                  </div>
+               </div>
+               <div class="exchange-rate" id="exchange-rate">@weSendMoney</div>
+               <!-- Input file para la imagen -->
+              <p style="color: #e0e0e0; text-align: center;">Ya cotizaste?</p>
+    
+  
+              
+               <div class="image-upload">
+        <label for="imageInput" class="image-upload-label">
+            <span>Haz clic aquí para subir tu comprobante</span>
+             <button id="openReceiptButton" disabled style="margin-top: 20px;">Subir Comprobante de Pago</button>
+        </label>
+        <img id="imgPreviewReseller" style="display:none; max-width: 100%; margin-top: 10px;" />
+    </div>
+             
+            </div>
+            <div class="tab" data-tab="receipt">2. Verifica tu comprobante</div>
+            <div id="receipt" class="tab-content">
+               <!-- Contenedor para mostrar la imagen -->
+               <div id="imagePreviewContainer" class="image-preview">
+                  <h3>Vista Previa de la Imagen</h3>
+                  <img id="imagePreview" alt="Image Preview"/>
+                  <div style="text-align: center; margin-top: 20px;">
+                     <button type="button" id="uploadButtonModal" style="margin-right: 10px;">Subir Imagen</button>
+                  </div>
+               </div>
+            </div>
+            <div class="tab" data-tab="beneficiary">3. Envia a tu beneficiario</div>
+            <div id="beneficiary" class="tab-content">
+               <div class="form-group" style="margin-bottom: 10px;">
+                  <label for="beneficiaryData">Datos del Beneficiario:</label>
+                  <textarea id="beneficiaryData" rows="5" placeholder="Nombre Apellido, CI: xxxxxxxxx, Teléfono: (xxxx) xxxxxxx, Banco: Nombre del Banco, N. de Cuenta: xxxxxxxxx" required style="width: 100%; padding: 5px;"></textarea>
+               </div>
+               <div style="text-align: center; margin-top: 20px;">
+                  <button type="button" id="submitPayment">Enviar Pago</button>
+               </div>
+            </div>
+         </div>
+         <!-- Input file para la imagen -->
+         <input type="file" id="imageInput" accept="image/*" style="display: none;">
+         <pre id="resellerOutput"></pre>
+      </div>
+      <div id="ordersContainer" style="display: none;">
+         <h2>Órdenes</h2>
+         <!-- Contenedor para las órdenes -->
+         <ul id="ordersList">
+            <!-- Las órdenes se llenarán aquí -->
+         </ul>
+      </div>
+
+      <pre id="resellerOutput"></pre>
+   </div>
+   <div id="cashierSection" style="display: none;">
+      <div id="cashierContainer">
+         <h2>Ordenes</h2>
+         <!-- Contenedor para las órdenes -->
+         <ul id="pendingPaymentsList">
+            <!-- Los pagos pendientes se llenarán aquí -->
+         </ul>
+         <!-- Vista previa de la imagen -->
+         <div id="imagePreviewContainer" style="display: none;">
+            <h3>Vista Previa de la Imagen</h3>
+            <img id="imagePreview" alt="Image Preview" style="max-width: 100%; margin-top: 10px;" />
+         </div>
+      </div>
+     
+   </div>
+   <div id="takerSection" style="display: none;">
+   <div id="takerContainer">
+      <h2>Ordenes disponibles</h2>
+      <ul id="validatedPaymentsList">
+         <!-- Los pagos validados se llenarán aquí -->
+      </ul>
+   </div>
+   <!-- Modal de confirmación -->
+   <div id="takeOrderModal" class="modal">
+      <div class="modal-content">
+         <span class="close" onclick="closeModal()">&times;</span>
+         <h1>Información de la Orden</h1>
+         <p><strong>Order ID:</strong> <span id="orderIdConfirmation"></span></p>
+         <p><strong>Monto a Pagar:</strong> <span id="toAmountConfirmation"></span></p>
+         <p><strong>Beneficiario:</strong> <span id="beneficiaryName"></span></p>
+         <!-- Input para subir imagen -->
+       
+         <div class="image-upload">
+            <label for="imageInput" class="image-upload-label">
+            <span>Haz clic aquí para subir tu comprobante</span>
+            <input type="file" id="imageUpload" accept="image/*" multiple onchange="previewImages(event)" />
+            </label>
+            <img id="imgPreview" style="display:none; max-width: 100%; margin-top: 10px;" />
+         </div>
+         <div class="input-group">
+      <hr style="margin: 10px 0; border: 1px solid #444;">
+     </div>
+        
+        <div class="input-group">
+         <button id="uploadButton" style="display:none;" onclick="uploadImages()">Marcar orden como pagada</button>
+           </div>
+         <h2>Rechazar Orden</h2>
+         <div class="button-container">
+            <button class="rejection-button" onclick="rejectPayment(currentOrderId, 'error_datos')">Error en datos</button>
+            <button class="rejection-button" onclick="rejectPayment(currentOrderId, 'equivocacion')">Me equivoqué de orden</button>
+         </div>
+      </div>
+     </div>
+    
+   </div>
+  
+<div id="Toolbar" class="toolbar" style="display: none;"> <!-- Inicialmente oculta -->
+    <span class="toolbar-text" onclick="showCotizacion()">
+        <i class="fas fa-dollar-sign"></i> <!-- Icono de dólar -->
+    </span>
+    <span class="toolbar-text" onclick="showOrdersSection()">
+        <i class="fas fa-list-alt"></i> <!-- Icono de lista -->
+    </span>
+    <span class="toolbar-text" onclick="showProfileContainer()">
+        <i class="fas fa-user"></i> <!-- Icono de usuario -->
+    </span>
+</div>
+<!-- Spinner HTML -->
+<div id="overlay" style="display: none;"></div>
+<div id="spinner" class="spinner" style="display: none;"></div>
+      <script>
+        
+  function showSpinner() {
+    document.getElementById('overlay').style.display = 'block'; // Muestra el overlay
+    document.getElementById('spinner').style.display = 'block'; // Muestra el spinner
+}
+
+function hideSpinner() {
+    document.getElementById('overlay').style.display = 'none'; // Oculta el overlay
+    document.getElementById('spinner').style.display = 'none'; // Oculta el spinner
+}
+        
+        
+           let lastFetchedOrders = []; // Almacena el estado anterior de las órdenes
+        
+        // Función para verificar si alguna orden ha cambiado a "pagada"
+function checkForPaidOrders(currentOrders) {
+    currentOrders.forEach(currentOrder => {
+        const previousOrder = lastFetchedOrders.find(order => order['Order ID'] === currentOrder['Order ID']);
+        if (previousOrder && previousOrder['Status'] !== currentOrder['Status'] && currentOrder['Status'] === 'Paid') {
+            alert(`La orden ${currentOrder['Order ID']} ha sido marcada como pagada.`);
+        }
+    });
+    lastFetchedOrders = currentOrders; // Actualiza el estado anterior de las órdenes
+}
+        
+        // Función para verificar los inputs y habilitar/deshabilitar el botón
+function checkInputs() {
+    const fromAmount = document.getElementById('from-amount').value;
+    const fromCurrency = document.getElementById('from-currency').value;
+    const toAmount = document.getElementById('to-amount').value;
+    const toCurrency = document.getElementById('to-currency').value;
+
+    const uploadButton = document.getElementById('openReceiptButton');
+
+    // Habilitar el botón si todos los campos tienen valores
+    if (fromAmount && fromCurrency && toAmount && toCurrency) {
+        uploadButton.disabled = false; // Habilitar el botón
+    } else {
+        uploadButton.disabled = true; // Deshabilitar el botón
+    }
+}
+
+// Agregar eventos de entrada a los inputs
+document.getElementById('from-amount').addEventListener('input', checkInputs);
+document.getElementById('from-currency').addEventListener('change', checkInputs);
+document.getElementById('to-amount').addEventListener('input', checkInputs);
+document.getElementById('to-currency').addEventListener('change', checkInputs);
+           document.getElementById('openReceiptButton').addEventListener('click', function() {
+        document.getElementById('imageInput').click(); // Activa el input de archivo
+    });
+         // Variables globales para almacenar datos de la orden
+         let currentOrderId;
+         let currentToAmount;
+         let currentToCurrency;
+         
+         function toggleMenu() {
+                 const menu = document.getElementById('menu');
+                 menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+             }
+         
+             function closeMenu() {
+                 document.getElementById('menu').style.display = 'none';
+             }
+         
+             // Cerrar el menú al hacer clic fuera de él
+             window.onclick = function(event) {
+                 const menu = document.getElementById('menu');
+                 if (event.target !== menu && !menu.contains(event.target)) {
+                     closeMenu();
+                 }
+             };
+         
+         
+window.onload = function() {
+    // Ocultar secciones que no son de autenticación
+    document.getElementById('resellerSection').style.display = 'none';
+    document.getElementById('cashierSection').style.display = 'none';
+    document.getElementById('takerSection').style.display = 'none';
+
+    // Mostrar el contenedor de autenticación
+    document.getElementById('authContainer').style.display = 'block';
+
+    // Mostrar el botón "Enviar dinero ahora" si no hay usuario autenticado
+    if (!currentUser ) {
+        document.getElementById('send-whatsapp').style.display = 'block'; // Muestra el botón
+    } else {
+        document.getElementById('send-whatsapp').style.display = 'none'; // Oculta el botón si hay usuario autenticado
+    }
+};
+         
+           
+
+function fetchOrders() {
+    // Asegúrate de que currentUser  tenga un valor válido
+    if (!currentUser ) {
+        console.error('currentUser  no está definido.');
+        return;
+    }
+
+    fetch(`${apiUrl}?path=getOrders&resellerName=${encodeURIComponent(currentUser )}`)
+        .then(response => response.json())
+        .then(orders => {
+            console.log(orders); // Verifica la respuesta de la API
+            const ordersList = document.getElementById('ordersList');
+            ordersList.innerHTML = ''; // Limpiar elementos existentes
+
+            if (orders && Array.isArray(orders) && orders.length > 0) {
+                orders.forEach(order => {
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>Order ID:</strong> ${order['Order ID'] || 'N/A'}
+                            <strong></strong> <span class="order-status" style="margin-left: auto;">${order['Status'] || 'N/A'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>Monto:</strong> ${order['From Amount'] || 'N/A'} ${order['From Currency'] || 'N/A'} <br>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>Precio a Recibir:</strong> ${order['To Amount'] || 'N/A'} ${order['To Currency'] || 'N/A'} <br>
+                        </div>
+                        <div class="input-group">
+                            <button onclick="showReceipt('${order['Comprobante']}', '${order['Order ID']}', '${order['From Amount']}', '${order['From Currency']}')">Ver Comprobante</button>
+                        </div>
+                        <div id="receiptDetails-${order['Order ID']}" style="display: none; margin-top: 10px;">
+                            <hr style="margin: 10px 0; border: 1px solid #444;"> 
+                            <div id="receiptImages-${order['Order ID']}"></div> <!-- Contenedor para los comprobantes -->
+                        </div>
+                    `;
+                    ordersList.appendChild(listItem);
+                });
+
+                // Verificar si alguna orden ha cambiado a "pagada"
+                checkForPaidOrders(orders);
+            } else {
+                ordersList.innerHTML = '<li>No hay órdenes disponibles.</li>';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching orders:', error);
+            const ordersList = document.getElementById('ordersList');
+            ordersList.innerHTML = '<li>Error al cargar las órdenes.</li>';
+        });
+}
+
+// Función para verificar si alguna orden ha cambiado a "pagada"
+function checkForPaidOrders(currentOrders) {
+    currentOrders.forEach(currentOrder => {
+        const previousOrder = lastFetchedOrders.find(order => order['Order ID'] === currentOrder['Order ID']);
+        if (previousOrder && previousOrder['Status'] !== currentOrder['Status'] && currentOrder['Status'] === 'Paid') {
+            alert(`La orden ${currentOrder['Order ID']} ha sido marcada como pagada.`);
+        }
+    });
+    lastFetchedOrders = currentOrders; // Actualiza el estado anterior de las órdenes
+}
+       
+        function shareReceipt(receiptUrl) {
+    const message = `Mira este comprobante: ${receiptUrl}`;
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+    
+    // Abre el enlace de WhatsApp
+    window.open(whatsappUrl, '_blank');
+}
+        
+         function openModal() {
+         // Mostrar el contenedor de inicio de sesión/registro
+         document.getElementById('authContainer').style.display = 'block';
+         document.getElementById('registerForm').style.display = 'none';
+         document.getElementById('loginForm').style.display = 'block';
+         document.getElementById('message').textContent = ''; // Limpiar mensajes
+         
+         // Ocultar el resto del contenido
+         document.body.classList.add('hidden'); // Agregar clase para ocultar el scroll
+         }
+         
+         function closelogingModal() {
+         const modal = document.getElementById('authContainer');
+         if (modal) {
+             modal.style.display = 'none'; // Cierra el contenedor
+         }
+         document.body.classList.remove('hidden'); // Mostrar el contenido de la página
+         }
+         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+         
+         // Variables globales para almacenar la URL de la imagen
+             let uploadedImageUrl = '';
+             let receiptUrl = ''; // Variable para almacenar la URL de la imagen
+             let currentUser = ''; // Declaración de la variable global
+              let userCurrency = '';
+         
+            // Mostrar la imagen directamente en la página cuando se selecciona un archivo
+document.getElementById('imageInput').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    const previewContainer = document.getElementById('imagePreviewContainer');
+    const preview = document.getElementById('imagePreview');
+
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            previewContainer.style.display = 'block'; // Mostrar el contenedor de la vista previa
+        }
+        reader.readAsDataURL(file);
+
+        // Cambiar a la pestaña de "Recibo"
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        // Remover la clase activa de todas las pestañas
+        tabs.forEach(t => t.classList.remove('active'));
+        tabContents.forEach(tc => {
+            tc.classList.remove('active');
+            tc.style.display = 'none'; // Oculta todos los contenidos
+        });
+
+        // Activar la pestaña de recibo
+        const receiptTab = document.querySelector('.tab[data-tab="receipt"]'); // Asegúrate de que el selector sea correcto
+        if (receiptTab) {
+            receiptTab.classList.add('active');
+            const receiptContent = document.getElementById('receipt'); // Asegúrate de que el ID sea correcto
+            if (receiptContent) {
+                receiptContent.classList.add('active');
+                receiptContent.style.display = 'block'; // Muestra el contenido de la pestaña de recibo
+            }
+        }
+    }
+});
+         
+// Subir imagen a Imgur
+document.getElementById('uploadButtonModal').addEventListener('click', async () => {
+    const fileInput = document.getElementById('imageInput');
+    const file = fileInput.files[0];
+
+    if (!file) {
+        alert('Por favor seleccione una imagen para subir.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+        const response = await fetch('https://api.imgur.com/3/image', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Client-ID bb0beed3488e033' // Reemplaza con tu Client ID de Imgur
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+        console.log(data); // Verifica la respuesta de la API
+
+        // Verifica si la respuesta fue exitosa
+        if (data.success) {
+            // Eliminar el alert de éxito
+            // alert('Imagen subida exitosamente a Imgur.');
+            receiptUrl = data.data.link; // Almacena la URL de la imagen subida
+
+            // Cambiar a la pestaña de "Beneficiario"
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            // Remover la clase activa de todas las pestañas
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(tc => {
+                tc.classList.remove('active');
+                tc.style.display = 'none'; // Oculta todos los contenidos
+            });
+
+            // Activar la pestaña de beneficiario
+            const beneficiaryTab = document.querySelector('.tab[data-tab="beneficiary"]');
+            if (beneficiaryTab) {
+                beneficiaryTab.classList.add('active');
+                const beneficiaryContent = document.getElementById('beneficiary');
+                if (beneficiaryContent) {
+                    beneficiaryContent.style.display = 'block'; // Muestra el contenido de la pestaña de beneficiario
+                }
+            }
+        } else {
+            // Si la respuesta no fue exitosa, muestra el error
+            alert('Error al subir la imagen: ' + (data.message || 'Error desconocido'));
+        }
+    } catch (error) {
+        console.error('Error al subir la imagen:', error);
+        alert('Error al subir la imagen.'); // Muestra un mensaje de error en caso de fallo en la conexión
+    }
+});
+         
+         
+         
+         // Manejar el envío del pago
+         document.getElementById('submitPayment').addEventListener('click', function() {
+         const fromAmount = document.getElementById('from-amount').value;
+         const fromCurrency = document.getElementById('from-currency').value; 
+         const toAmount = document.getElementById('to-amount').value; 
+         const toCurrency = document.getElementById('to-currency').value; 
+         const beneficiary = document.getElementById('beneficiaryData').value; 
+         
+         // Verificar que todos los campos requeridos tengan valores
+         if (!fromAmount || !fromCurrency || !toAmount || !toCurrency || !beneficiary || !receiptUrl) {
+             alert('Por favor complete todos los campos y suba una imagen.');
+             console.log('Validación fallida con los siguientes datos:');
+             console.log('From Amount:', fromAmount);
+             console.log('From Currency:', fromCurrency);
+             console.log('To Amount:', toAmount);
+             console.log('To Currency:', toCurrency);
+             console.log('Beneficiary:', beneficiary);
+             console.log('Receipt URL:', receiptUrl); // Esto debería mostrar la URL de la imagen
+             return; // Detener la ejecución si falta algún campo
+         }
+        
+               showSpinner(); // Mostrar el spinner antes de realizar la solicitud
+         
+         fetch(`${apiUrl}?path=submitPayment&reseller=${encodeURIComponent(currentUser )}&fromAmount=${encodeURIComponent(fromAmount)}&fromCurrency=${encodeURIComponent(fromCurrency)}&toAmount=${encodeURIComponent(toAmount)}&toCurrency=${encodeURIComponent(toCurrency)}&receiptUrl=${encodeURIComponent(receiptUrl)}&beneficiary=${encodeURIComponent(beneficiary)}`, {
+             method: 'GET'
+         })
+         .then(response => response.json())
+         .then(data => {
+             if (data.status === 200) {
+                 alert('Pago enviado exitosamente');
+                 // Limpiar el formulario
+                 document.getElementById('from-amount').value = '';
+                 document.getElementById('to-amount').value = '';
+                 document.getElementById('beneficiaryData').value = '';
+                 document.getElementById('imageInput').value = '';
+                 document.getElementById('imagePreviewContainer').style.display = 'none';
+                 receiptUrl = ''; // Reiniciar la URL de la imagen
+             // Cambiar a la pestaña 1 (Cotiza tu Remesa)
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            // Remover la clase activa de todas las pestañas
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(tc => {
+                tc.classList.remove('active');
+                tc.style.display = 'none'; // Oculta todos los contenidos
+            });
+
+            // Activar la pestaña de cotización
+            const cotizacionTab = document.querySelector('.tab[data-tab="calculator"]'); // Asegúrate de que el selector sea correcto
+            cotizacionTab.classList.add('active');
+            const cotizacionContent = document.getElementById('calculator'); // Asegúrate de que el ID sea correcto
+            if (cotizacionContent) {
+                cotizacionContent.classList.add('active');
+                cotizacionContent.style.display = 'block'; // Muestra el contenido de la pestaña de cotización
+            }
+        } else {
+            alert('Error al enviar el pago: ' + data.message);
+        }
+    })
+   .catch(error => {
+        console.error('Error al enviar el pago:', error);
+        alert('Error al enviar el pago.');
+    })
+    .finally(() => {
+        hideSpinner(); // Ocultar el spinner después de completar la solicitud
+    });
+});
+         
+         
+                         
+                         
+             // Función para activar el input file
+             function triggerFileInput() {
+                 document.getElementById('imageInput').click();
+             }
+         
+         
+         
+         // Manejar el cambio de pestañas
+         const tabs = document.querySelectorAll('.tab');
+         const tabContents = document.querySelectorAll('.tab-content');
+         
+         tabs.forEach(tab => {
+         tab.addEventListener('click', () => {
+             // Remover la clase activa de todas las pestañas
+             tabs.forEach(t => t.classList.remove('active'));
+             tabContents.forEach(tc => {
+                 tc.classList.remove('active');
+                 tc.style.display = 'none'; // Oculta todos los contenidos
+             });
+         
+             // Agregar la clase activa a la pestaña seleccionada y mostrar su contenido
+             tab.classList.add('active');
+             const selectedTab = tab.getAttribute('data-tab');
+             const selectedContent = document.getElementById(selectedTab);
+             if (selectedContent) {
+                 selectedContent.classList.add('active');
+                 selectedContent.style.display = 'block'; // Muestra el contenido de la pestaña activa
+             }
+         });
+         });
+         
+         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+         
+         const apiUrl = 'https://script.google.com/macros/s/AKfycbytKXlU_2H7IZlDxek3lZhlZz8lTawBSmDQ68KjMY_jw1ggHs4BWtyXFxKgdkWQ-Uem/exec';
+         
+         
+      function showRejectionOptions(orderId) {
+    const rejectionOptions = document.getElementById(`rejectionOptions-${orderId}`);
+    if (rejectionOptions) { // Asegúrate de que el elemento existe
+        rejectionOptions.style.display = rejectionOptions.style.display === 'none' ? 'block' : 'none';
+    } else {
+        console.error(`No se encontró el elemento con ID: rejectionOptions-${orderId}`);
+    }
+}
+
+  function showReceipt(receiptUrls, orderId) {
+    const receiptDetails = document.getElementById(`receiptDetails-${orderId}`);
+    const receiptImagesContainer = document.getElementById(`receiptImages-${orderId}`);
+    
+    // Limpia el contenedor de imágenes
+    receiptImagesContainer.innerHTML = '';
+
+    // Divide la cadena de URLs en un array
+    const urls = receiptUrls.split(',').map(url => url.trim()); // Divide por comas y elimina espacios
+
+    // Cambiar el src de la imagen y mostrar los detalles
+    urls.forEach(url => {
+        const img = document.createElement('img');
+        img.src = url; // Asigna la URL
+        img.alt = "Receipt";
+        img.style.maxWidth = '100%'; // Ajusta el tamaño de la imagen
+        img.style.marginTop = '10px'; // Margen superior
+        receiptImagesContainer.appendChild(img); // Agrega la imagen al contenedor
+    });
+
+    // Alternar la visibilidad del contenedor de detalles
+    if (receiptDetails.style.display === "none") {
+        receiptDetails.style.display = "block"; // Muestra los detalles
+    } else {
+        receiptDetails.style.display = "none"; // Minimiza/colapsa
+    }
+}
+        
+// En la función fetchPendingPayments
+function fetchPendingPayments() {
+    // Asegúrate de que userCurrency tenga un valor válido
+    if (!userCurrency) {
+        console.error('userCurrency no está definido.');
+        return;
+    }
+
+    fetch(`${apiUrl}?path=fetchPayments&currency=${encodeURIComponent(userCurrency)}`, {
+        method: 'GET'
+    })
+    .then(response => response.json())
+    .then(data => {
+        const pendingPaymentsList = document.getElementById('pendingPaymentsList');
+        pendingPaymentsList.innerHTML = ''; // Limpiar elementos existentes
+
+        if (data && Array.isArray(data) && data.length > 0) {
+            data.forEach(payment => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <strong>Orden ID:</strong> ${payment['Order ID']} <br>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <strong>Monto:</strong> ${payment['From Amount']} ${payment['From Currency']} <br>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <strong>Estado:</strong> ${payment['Status']} <br>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                     <strong>Receipt URL:</strong> ${payment['Receipt URL']}<br>
+                    </div>
+ <div class="input-group">
+        <button onclick="showReceipt('${payment['Receipt URL']}', '${payment['Order ID']}', '${payment['From Amount']}', '${payment['From Currency']}')">Ver Detalles</button>
+    </div>
+
+                    
+                    
+                    <div id="receiptDetails-${payment['Order ID']}" style="display: none; margin-top: 10px;">
+                     <hr style="margin: 10px 0; border: 1px solid #444;"> 
+                        <img id="receiptImage-${payment['Order ID']}" alt="Receipt" style="max-width: 100%; margin-top: 10px;">
+                        <p id="orderAmount-${payment['Order ID']}"></p>
+                        
+                       <div class="button-container">
+                            <button class="validate-button" onclick="validatePayment('${payment['Order ID']}')">Validar</button>
+                            <button class="reject-button" onclick="showRejectionOptions('${payment['Order ID']}')">Rechazar</button>
+                        </div>
+                        <div id="rejectionOptions-${payment['Order ID']}" style="display: none;">
+                         <hr style="margin: 10px 0; border: 1px solid #444;"> 
+                            <button class="rejection-button" onclick="rejectPayment('${payment['Order ID']}', 'error_datos')">Error en datos</button>
+                            <button class="rejection-button" onclick="rejectPayment('${payment['Order ID']}', 'equivocacion')">Me equivoqué de orden</button>
+                        </div>
+                    </div>
+                `;
+                pendingPaymentsList.appendChild(listItem);
+            });
+        } else {
+            pendingPaymentsList.innerHTML = '<li>No hay pagos pendientes.</li>';
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching pending payments:', error);
+        const pendingPaymentsList = document.getElementById('pendingPaymentsList');
+        pendingPaymentsList.innerHTML = '<li>Error al cargar los pagos pendientes.</li>';
+    });
+}
+         
+         // Llama a fetchPendingPayments al cargar la página
+         window.onload = function() {
+             fetchPendingPayments();
+             fetchValidatedPayments(); // Asegúrate de que esta función esté definida
+         };
+         
+         
+         
+         // En las funciones de validación y rechazo
+      function validatePayment(orderId) {
+    const confirmation = confirm(`¿Está seguro de que desea validar el pago con Order ID: ${orderId}?`);
+    if (confirmation) {
+        fetch(`${apiUrl}?path=validatePayment&paymentId=${encodeURIComponent(orderId)}&isValid=true`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 200) {
+                    alert('Pago validado exitosamente.');
+                    fetchPendingPayments(); // Actualiza la lista de pagos pendientes
+                } else {
+                    alert('Error al validar el pago: ' + data.message);
+                }
+            })
+                        .catch(error => {
+                console.error('Error validating payment:', error);
+                alert('Error al validar el pago.');
+            });
+    }
+}
+
+function rejectPayment(orderId, reason) {
+    if (!reason) {
+        alert("Por favor, selecciona una razón para rechazar la orden.");
+        return;
+    }
+
+    fetch(`${apiUrl}?path=rejectOrder&orderId=${encodeURIComponent(orderId)}&reason=${encodeURIComponent(reason)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 200) {
+                alert('Orden rechazada exitosamente.');
+                fetchPendingPayments(); // Actualiza la lista de pagos pendientes
+            } else {
+                alert('Error al rechazar la orden: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error rechazando la orden:', error);
+            alert('Error al rechazar la orden.');
+        });
+}
+         
+         // Close modal when clicking outside
+         window.onclick = function(event) {
+         const modal = document.getElementById('verificationModal');
+         if (event.target == modal) {
+             modal.style.display = 'none';
+         }
+         }
+         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+         function fetchValidatedPayments() {
+    fetch(`${apiUrl}?path=fetchValidatedPayments`, {
+        method: 'GET'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        const validatedPaymentsList = document.getElementById('validatedPaymentsList');
+        validatedPaymentsList.innerHTML = ''; // Limpiar elementos existentes
+
+        if (data.length === 0) {
+            validatedPaymentsList.innerHTML = '<li>No hay pagos validados.</li>';
+            return; // No hay datos para mostrar
+        }
+
+        data.forEach(payment => {
+            const listItem = document.createElement('li');
+            listItem.innerHTML = `
+             <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong>Order ID:</strong> ${payment['Order ID']} <br>
+                </div>
+                 <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong>A pagar:</strong> ${payment['To Amount']} ${payment['To Currency']} <br>
+                </div>
+                 <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong>Status:</strong> ${payment['Status']} <br>
+                </div>
+                <div class="input-group">
+                <button onclick="takeOrder('${payment['Order ID']}', '${payment['To Amount']}', '${payment['To Currency']}', '${encodeURIComponent(payment['beneficiary'])}')">Tomar Orden</button>
+                 </div>
+            `;
+            validatedPaymentsList.appendChild(listItem);
+        });
+    })
+    .catch(error => {
+        console.error('Error fetching validated payments:', error);
+        const validatedPaymentsList = document.getElementById('validatedPaymentsList');
+        validatedPaymentsList.innerHTML = '<li>Error al cargar pagos validados. Intenta de nuevo más tarde.</li>';
+    });
+}
+      
+         // Función para manejar el clic en la orden y mostrar el modal
+         function takeOrder(orderId, toAmount, toCurrency, beneficiaryName) {
+         currentOrderId = orderId;
+         currentToAmount = toAmount;
+         currentToCurrency = toCurrency;
+         
+         // Actualiza la información en el modal
+         document.getElementById('orderIdConfirmation').innerText = orderId;
+         document.getElementById('toAmountConfirmation').innerText = `${toAmount} ${toCurrency}`;
+         document.getElementById('beneficiaryName').innerText = decodeURIComponent(beneficiaryName);
+        
+            // Confirmar la orden automáticamente
+    confirmOrder(); // Llama a la función para confirmar la orden
+         }
+         
+         // Función para confirmar la orden
+         function confirmOrder() {
+         const orderId = currentOrderId; // Asegúrate de que currentOrderId esté definido
+         
+         const url = `${apiUrl}?path=takeOrder&orderId=${encodeURIComponent(orderId)}&takerName=${encodeURIComponent(currentUser )}`;
+         
+         fetch(url)
+             .then(response => {
+                 if (!response.ok) {
+                     throw new Error(`HTTP error! status: ${response.status}`);
+                 }
+                 return response.json();
+             })
+             .then(data => {
+                 if (data.status === 200) {
+                     alert("Orden tomada exitosamente.");
+                     fetchPendingPayments(); // Actualiza la lista de pagos pendientes
+                    
+         // Muestra el modal
+         const takeOrderModal = document.getElementById('takeOrderModal');
+         if (takeOrderModal) {
+             takeOrderModal.style.display = 'block';
+         }
+       
+                 } else {
+                     alert("Error al tomar la orden: " + data.message);
+                     closeModal(); // Cierra el modal solo si hay un error
+                 }
+             })
+             .catch(error => {
+                 console.error('Error confirming order:', error);
+                 alert("Error al tomar la orden. Intenta de nuevo más tarde. Detalle: " + error.message);
+                 closeModal(); // Cierra el modal solo si hay un error
+             });
+         }
+         // Función para cerrar el modal
+         
+         // Función para limpiar los datos del modal
+         function clearModalData() {
+         document.getElementById('imagePreview').style.display = 'none'; // Oculta la vista previa
+         document.getElementById('imagePreview').src = ''; // Limpia la imagen
+         document.getElementById('rejectionReason').value = ''; // Limpia el campo de razón de rechazo
+         document.getElementById('orderIdConfirmation').innerText = ''; // Limpia el ID de la orden
+         document.getElementById('toAmountConfirmation').innerText = ''; // Limpia el monto a pagar
+         document.getElementById('beneficiaryName').innerText = ''; // Limpia el nombre del beneficiario
+         imageFile = null; // Limpia la variable de archivo de imagen
+         }
+         
+         
+         function rejectOrder(orderId, reason) {
+    if (!reason) {
+        alert("Por favor, selecciona una razón para rechazar la orden.");
+        return;
+    }
+
+    fetch(`${apiUrl}?path=rejectOrder&orderId=${encodeURIComponent(orderId)}&reason=${encodeURIComponent(reason)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 200) {
+                alert('Orden rechazada exitosamente.');
+                closeModal(); // Cierra el modal
+                fetchPendingPayments(); // Actualiza la lista de pagos pendientes
+            } else {
+                alert('Error al rechazar la orden: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error rechazando la orden:', error);
+            alert('Error al rechazar la orden.');
+        });
+}
+         
+         
+         let imageFile; // Variable para almacenar el archivo de imagen
+         
+     function previewImages(event) {
+    const files = event.target.files; // Obtiene todos los archivos seleccionados
+    const previewContainer = document.getElementById('imagePreviewContainer');
+    const previewImages = document.getElementById('imagePreview'); // Cambia esto para manejar múltiples imágenes
+    const uploadButton = document.getElementById('uploadButton'); // Obtiene el botón "Marcar Pagado"
+
+    // Limpia el contenedor de vista previa
+    previewImages.innerHTML = ''; // Limpia las imágenes previas
+
+    if (files.length > 0) {
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.maxWidth = '100%';
+                img.style.marginTop = '10px';
+                previewImages.appendChild(img); // Agrega cada imagen al contenedor
+            }
+            reader.readAsDataURL(file);
+        }
+        previewContainer.style.display = 'block'; // Muestra el contenedor de la vista previa
+        uploadButton.style.display = 'block'; // Muestra el botón "Marcar Pagado"
+    } else {
+        previewContainer.style.display = 'none'; // Oculta el contenedor si no hay archivos
+        uploadButton.style.display = 'none'; // Oculta el botón si no hay archivos
+    }
+}
+         
+    function uploadImages() {
+    const files = document.getElementById('imageUpload').files; // Obtiene todos los archivos seleccionados
+    const promises = []; // Array para almacenar las promesas de subida
+
+    if (files.length === 0) {
+        alert("Por favor, selecciona al menos una imagen para subir.");
+        return;
+    }
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const formData = new FormData();
+        formData.append('image', file);
+
+        // Agrega la promesa de subida a la lista
+        promises.push(fetch('https://api.imgur.com/3/image', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Client-ID bb0beed3488e033' // Reemplaza con tu Client ID de Imgur
+            },
+            body: formData
+        }).then(response => response.json()));
+    }
+
+    // Espera a que todas las imágenes se suban
+    Promise.all(promises)
+        .then(results => {
+            const imgurUrls = results.map(data => data.success ? data.data.link : null).filter(url => url !== null);
+            if (imgurUrls.length > 0) {
+                markAsPaid(currentOrderId, imgurUrls); // Envía todas las URLs al marcar como pagado
+            } else {
+                alert("Error al subir todas las imágenes.");
+            }
+        })
+        .catch(error => {
+            console.error('Error al subir las imágenes:', error);
+            alert("Error al subir las imágenes.");
+        });
+}
+         
+         // Función para marcar la orden como pagada
+         function markAsPaid(orderId, imgurUrls) {
+    const url = `${apiUrl}?path=markAsPaid&orderId=${encodeURIComponent(orderId)}&imgurUrls=${encodeURIComponent(JSON.stringify(imgurUrls))}`;
+    
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 200) {
+                alert("Pago marcado como pagado exitosamente.");
+            } else {
+                alert("Error al marcar como pagada: " + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error marking as paid:', error);
+            alert("Error al marcar como pagada. Intenta de nuevo más tarde. Detalle: " + error.message);
+        })
+        .finally(() => {
+            fetchPendingPayments();
+            fetchValidatedPayments();
+                 closeModal(); // Cierra el modal
+                 clearModalData(); // Limpia los datos del modal
+             });
+         }
+         
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+         // Funciones para la calculadora "out"
+         let lastEditedFieldOut = '';
+         
+         async function convertCurrencyOut() {
+         const fromCurrencyOut = document.getElementById('from-currency-out').value;
+         const toCurrencyOut = document.getElementById('to-currency-out').value;
+         const fromAmountOut = parseFloat(document.getElementById('from-amount-out').value);
+         const toAmountOut = parseFloat(document.getElementById('to-amount-out').value);
+         
+         if (lastEditedFieldOut === 'from' && isNaN(fromAmountOut)) {
+             document.getElementById('to-amount-out').value = ''; // Limpia el campo de destino
+             return; 
+         } else if (lastEditedFieldOut === 'to' && isNaN(toAmountOut)) {
+             document.getElementById('from-amount-out').value = ''; // Limpia el campo de origen
+             return; 
+         }
+         
+         try {
+             const rateOut = await fetchExchangeRate(fromCurrencyOut, toCurrencyOut);
+             if (lastEditedFieldOut === 'from' && !isNaN(fromAmountOut)) {
+                 const convertedAmountOut = fromAmountOut * rateOut;
+                 document.getElementById('to-amount-out').value = convertedAmountOut.toFixed(2);
+             } else if (lastEditedFieldOut === 'to' && !isNaN(toAmountOut)) {
+                 const convertedAmountOut = toAmountOut / rateOut;
+                 document.getElementById('from-amount-out').value = convertedAmountOut.toFixed(2);
+             }
+         } catch (error) {
+             console.error('Error al obtener la tasa de cambio:', error);
+             document.getElementById('exchange-rate-out').textContent = 'Tasa de cambio no disponible';
+         }
+         }
+         
+         // Escucha los eventos de entrada y cambio para la calculadora "out"
+         document.getElementById('from-amount-out').addEventListener('input', function() {
+         lastEditedFieldOut = 'from';
+         convertCurrencyOut();
+         });
+         
+         document.getElementById('to-amount-out').addEventListener('input', function() {
+         lastEditedFieldOut = 'to';
+         convertCurrencyOut();
+         });
+         
+         // Escucha los eventos de cambio en los selectores de moneda para la calculadora "out"
+         document.getElementById('from-currency-out').addEventListener('change', async () => {
+         clearAmountFieldsOut(); // Limpiar los campos de cantidad
+            await updateExchangeRateOut(); // Actualizar la tasa de cambio
+         await convertCurrencyOut(); // Convierte si hay cantidad
+         });
+         
+         document.getElementById('to-currency-out').addEventListener('change', async () => {
+         clearAmountFieldsOut(); // Limpiar los campos de cantidad
+         await updateExchangeRateOut(); // Actualizar la tasa de cambio
+         await convertCurrencyOut(); // Convierte si hay cantidad
+         });
+         
+         // Función para limpiar los campos de cantidad en la calculadora "out"
+         function clearAmountFieldsOut() {
+         document.getElementById('from-amount-out').value = '';
+         document.getElementById('to-amount-out').value = '';
+         }
+         
+         // Función para actualizar la tasa de cambio al cambiar la selección para la calculadora "out"
+         async function updateExchangeRateOut() {
+         const fromCurrencyOut = document.getElementById('from-currency-out').value;
+         const toCurrencyOut = document.getElementById('to-currency-out').value;
+         
+         try {
+             const rateOut = await fetchExchangeRate(fromCurrencyOut, toCurrencyOut);
+             document.getElementById('exchange-rate-out').textContent = `Tasa de cambio: 1 ${fromCurrencyOut} = ${rateOut} ${toCurrencyOut}`;
+         } catch (error) {
+             document.getElementById('exchange-rate-out').textContent = 'Tasa de cambio no disponible';
+         }
+         }
+         
+         // Inicializa la tasa de cambio al cargar la página para la calculadora "out"
+         document.addEventListener('DOMContentLoaded', async () => {
+         await updateExchangeRate();
+         await updateExchangeRateOut();
+         });
+         
+         
+         let lastEditedField = '';
+         let exchangeRates = {}; // Objeto para almacenar las tasas de cambio en caché
+         
+         async function fetchExchangeRate(fromCurrency, toCurrency) {
+         // Comprobar si la tasa ya está en caché
+         const cacheKey = `${fromCurrency}_${toCurrency}`;
+         const currentTime = Date.now(); // Obtener el tiempo actual en milisegundos
+         
+         // Verificar si la tasa está en caché y si no ha expirado (10 minutos = 600000 milisegundos)
+         if (exchangeRates[cacheKey]) {
+             const { rate, timestamp } = exchangeRates[cacheKey];
+             if (currentTime - timestamp < 600000) { // Si han pasado menos de 10 minutos
+                 return rate; // Retorna la tasa desde la caché
+             }
+         }
+         
+         // Si no está en caché o ha expirado, hacer la solicitud a la API
+         const response = await fetch(`https://script.google.com/macros/s/AKfycbyqwVhjeggTJ2aJ87OgbROMFublEt77kO9sciQRep8uoZKgj9ZgiOAVlBqpHphwr1Rg/exec?from=${fromCurrency}&to=${toCurrency}`);
+         const data = await response.json();
+         
+         if (data.error) {
+             throw new Error(data.error);
+         }
+         
+         // Eliminar comas de la tasa y convertir a número
+         const rate = parseFloat(data.rate.replace(/,/g, '')); // Reemplaza las comas y convierte a número
+         exchangeRates[cacheKey] = { rate: rate, timestamp: currentTime }; // Almacenar la tasa y el timestamp en caché
+         return rate; // Retorna la tasa
+         }
+         
+         async function convertCurrency() {
+         const fromCurrency = document.getElementById('from-currency').value;
+         const toCurrency = document.getElementById('to-currency').value;
+         const fromAmount = parseFloat(document.getElementById('from-amount').value);
+         const toAmount = parseFloat(document.getElementById('to-amount').value);
+         
+         // Verificar si uno de los campos está vacío
+         if (lastEditedField === 'from' && isNaN(fromAmount)) {
+             document.getElementById('to-amount').value = ''; // Limpia el campo de destino
+             return; // Salir de la función si el campo de origen está vacío
+         } else if (lastEditedField === 'to' && isNaN(toAmount)) {
+             document.getElementById('from-amount').value = ''; // Limpia el campo de origen
+             return; // Salir de la función si el campo de destino está vacío
+         }
+         
+         try {
+             const rate = await fetchExchangeRate(fromCurrency, toCurrency);
+             console.log(`Tasa de cambio de ${fromCurrency} a ${toCurrency}: ${rate}`); // Debugging
+         
+             if (lastEditedField === 'from' && !isNaN(fromAmount)) {
+                 const convertedAmount = fromAmount * rate;
+                 document.getElementById('to-amount').value = convertedAmount.toFixed(2);
+                 console.log(`Convertido: ${fromAmount} ${fromCurrency} = ${convertedAmount} ${toCurrency}`); // Debugging
+             } else if (lastEditedField === 'to' && !isNaN(toAmount)) {
+                 const convertedAmount = toAmount / rate;
+                 document.getElementById('from-amount').value = convertedAmount.toFixed(2);
+                 console.log(`Convertido: ${toAmount} ${toCurrency} = ${convertedAmount} ${fromCurrency}`); // Debugging
+             }
+         } catch (error) {
+             console.error('Error al obtener la tasa de cambio:', error);
+             document.getElementById('exchange-rate').textContent = 'Tasa de cambio no disponible';
+         }
+         }
+         
+         // Función para limpiar los campos de cantidad
+         function clearAmountFields() {
+         document.getElementById('from-amount').value = '';
+         document.getElementById('to-amount').value = '';
+         }
+         
+         // Escucha los eventos de entrada y cambio
+         document.getElementById('from-amount').addEventListener('input', function() {
+         lastEditedField = 'from';
+         convertCurrency();
+         });
+         
+         document.getElementById('to-amount').addEventListener('input', function() {
+         lastEditedField = 'to';
+         convertCurrency();
+         });
+         
+         // Escucha los eventos de cambio en los selectores de moneda
+         document.getElementById('from-currency').addEventListener('change', async () => {
+         clearAmountFields(); // Limpiar los campos de cantidad
+         await updateExchangeRate(); // Actualizar la tasa de cambio
+         await convertCurrency(); // Convierte si hay cantidad
+         });
+         
+         document.getElementById('to-currency').addEventListener('change', async () => {
+         clearAmountFields(); // Limpiar los campos de cantidad
+         await updateExchangeRate(); // Actualizar la tasa de cambio
+         await convertCurrency(); // Convierte si hay cantidad
+         });
+         
+         async function updateExchangeRate() {
+    // Limpia los campos de cantidad antes de actualizar la tasa
+    clearAmountFields(); // Limpia los campos de cantidad
+
+    const fromCurrency = document.getElementById('from-currency').value;
+    const toCurrency = document.getElementById('to-currency').value;
+
+    try {
+        const rate = await fetchExchangeRate(fromCurrency, toCurrency);
+        document.getElementById('exchange-rate').textContent = `Tasa de cambio: 1 ${fromCurrency} = ${rate} ${toCurrency}`;
+    } catch (error) {
+        document.getElementById('exchange-rate').textContent = 'Tasa de cambio no disponible';
+    }
+}
+
+// Función para limpiar los campos de cantidad
+function clearAmountFields() {
+    document.getElementById('from-amount').value = '';
+    document.getElementById('to-amount').value = '';
+}
+         
+         // Inicializa la tasa de cambio al cargar la página
+         document.addEventListener('DOMContentLoaded', async () => {
+         await updateExchangeRate();
+         });
+         
+         document.getElementById('send-whatsapp').addEventListener('click', function() {
+         const fromAmount = document.getElementById('from-amount').value;
+         const fromCurrency = document.getElementById('from-currency').value;
+         const toAmount = document.getElementById('to-amount').value;
+         const toCurrency = document.getElementById('to-currency').value;
+         const exchangeRateText = document.getElementById('exchange-rate').textContent;
+         
+         // Construir el mensaje para WhatsApp
+         const message = `Hola! Quiero enviar ${fromAmount} ${fromCurrency}, que se convierte en ${toAmount} ${toCurrency}. ${exchangeRateText}`;
+         
+         // Codificar el mensaje para la URL
+         const encodedMessage = encodeURIComponent(message);
+         
+         // Crear el enlace de WhatsApp
+         const whatsappUrl = `https://wa.me/584121542322?text=${encodedMessage}`;
+         
+         // Abrir el enlace en una nueva pestaña
+         window.open(whatsappUrl, '_blank');
+         });
+         
+         
+         ////////////////////////////////////////////////////////////////////////////////
+         
+         
+             function showMessage(message, isError = true) {
+                 const messageDiv = document.getElementById('message');
+                 messageDiv.textContent = message;
+                 messageDiv.style.color = isError ? 'red' : 'green';
+             }
+         
+         function login() {
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+
+    if (!email || !password) {
+        showMessage('Por favor, completa todos los campos.');
+        return;
+    }
+
+    fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta de la API');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                currentUser  = data.user.name; // Inicializar currentUser  aquí
+                userCurrency = data.user.country; // Almacena la moneda del usuario
+                showMessage("Inicio de sesión exitoso!", false);
+                showProfile(data.role, data.user);
+                fetchOrders();
+                closeModal();
+              
+              // Mostrar la barra de herramientas al iniciar sesión
+                document.getElementById('Toolbar').style.display = 'flex'; // Muestra la barra de herramientas
+
+
+                // Ocultar el botón "Enviar dinero ahora" al iniciar sesión
+                document.getElementById('send-whatsapp').style.display = 'none'; // Oculta el botón
+
+                // Ocultar el contenedorOut al iniciar sesión exitosamente
+                document.querySelector('.containerOut').style.display = 'none'; // Asegúrate de que este sea el selector correcto
+                document.getElementById('authContainer').style.display = 'none'; // Ocultar el contenedor de autenticación
+                // Ocultar los botones de "Iniciar Sesión" y "Registrarse" en el menú
+                document.querySelector('.login-button').style.display = 'none'; // Oculta el botón de inicio de sesión
+                document.querySelector('.register-button').style.display = 'none'; // Oculta el botón de registro
+            } else {
+                showMessage("Credenciales inválidas: " + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage("Ocurrió un error durante el inicio de sesión.");
+        });
+}
+         
+         function register() {
+         const username = document.getElementById('username').value;
+         const email = document.getElementById('email').value;
+         const phone = document.getElementById('phone').value;
+         const password = document.getElementById('password').value;
+         
+         if (!username || !email || !phone || !password) {
+             showMessage('Por favor, completa todos los campos.');
+             return;
+         }
+         
+         fetch(`${apiUrl}?action=register&username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}&password=${encodeURIComponent(password)}`)
+             .then(response => response.json())
+             .then(data => {
+                 if (data.success) {
+                     showMessage(data.message, false);
+                     
+                     // Ocultar los formularios de registro y de inicio de sesión
+                     document.getElementById('authContainer').style.display = 'none'; // Ocultar el contenedor de autenticación
+                     document.querySelector('.login-button').style.display = 'none'; // Oculta el botón de inicio de sesión
+                     document.querySelector('.register-button').style.display = 'none'; // Oculta el botón de registro
+                 } else {
+                     showMessage(data.message);
+                 }
+             })
+             .catch(error => {
+                 console.error('Error:', error);
+                 showMessage("Ocurrió un error durante el registro.");
+             });
+         }
+         
+         function showProfile(role, user) {
+    // Almacena el nombre del usuario en la variable global
+    currentUser  = user.name;
+    userCurrency = user.country; // Asegúrate de almacenar la moneda
+
+    // Ocultar todas las secciones
+    document.getElementById('resellerSection').style.display = 'none';
+    document.getElementById('cashierSection').style.display = 'none';
+    document.getElementById('takerSection').style.display = 'none';
+
+    // Mostrar el perfil del usuario
+    document.getElementById('userName').textContent = ` ${user.name} `;
+    document.getElementById('userEarnings').textContent = ` ${user.earnings} `;
+    document.getElementById('userRole').textContent = ` ${role} `;
+    document.getElementById('userCurrency').textContent = userCurrency; // Muestra la moneda del usuario
+
+    // Mostrar la sección correspondiente según el rol
+    if (role === 'reseller') {
+        document.getElementById('resellerSection').style.display = 'block'; // Mostrar sección de recibos
+        fetchOrders(); // Cargar transacciones del reseller
+    } else if (role === 'cashier') {
+        document.getElementById('cashierSection').style.display = 'block'; // Mostrar sección de validación
+        fetchPendingPayments(); // Cargar pagos pendientes
+    } else if (role === 'taker') {
+        document.getElementById('takerSection').style.display = 'block'; // Mostrar sección de toma y pago de recibos
+    } else {
+        showMessage("Rol no reconocido.");
+    }
+}
+                    
+             function toggleForms() {
+                 const registerForm = document.getElementById('registerForm');
+                 const loginForm = document.getElementById('loginForm');
+         
+                 // Alternar entre el formulario de registro y el de inicio de sesión
+                 if (registerForm.style.display === 'none') {
+                     registerForm.style.display = 'block';
+                     loginForm.style.display = 'none';
+                     document.getElementById('message').textContent = ''; // Limpiar mensajes
+                 } else {
+                     registerForm.style.display = 'none';
+                     loginForm.style.display = 'block';
+                     document.getElementById('message').textContent = ''; // Limpiar mensajes
+                 }
+             }
+         
+         
+         // Cerrar el modal al hacer clic fuera de él
+         window.onclick = function(event) {
+         const modal = document.getElementById('authModal');
+         if (event.target === modal) {
+             closeModal();
+         }
+         }
+         
+         // También puedes usar el botón de cerrar
+         document.querySelector('.close').addEventListener('click', closeModal);
+         
+            
+         window.onclick = function(event) {
+         const modal = document.getElementById('authModal');
+         if (event.target === modal) {
+             closeModal();
+         }
+         }
+        
+               function openRegisterModal() {
+    // Ocultar el formulario de inicio de sesión
+    document.getElementById('loginForm').style.display = 'none';
+    // Mostrar el formulario de registro
+    document.getElementById('registerForm').style.display = 'block';
+    // Mostrar el contenedor de autenticación
+    document.getElementById('authContainer').style.display = 'block';
+}
+         
+         function openLoginModal() {
+         // Ocultar todas las secciones
+         document.getElementById('resellerSection').style.display = 'none';
+         document.getElementById('cashierSection').style.display = 'none';
+         document.getElementById('takerSection').style.display = 'none';
+         
+         // Ocultar la calculadora y los botones de autenticación
+         document.querySelector('.container').style.display = 'none'; // Oculta la calculadora
+         document.querySelector('.login-button').style.display = 'none'; // Oculta el botón de inicio de sesión
+         document.querySelector('.register-button').style.display = 'none'; // Oculta el botón de registro
+         
+         // Ocultar el contenedorOut al abrir el modal de inicio de sesión
+         document.querySelector('.containerOut').style.display = 'none'; // Asegúrate de que este sea el selector correcto
+         
+         // Mostrar el contenedor de inicio de sesión
+         document.getElementById('authContainer').style.display = 'block';
+         document.getElementById('registerForm').style.display = 'none';
+         document.getElementById('loginForm').style.display = 'block';
+         }
+         
+         function closeModal() {
+         const authModal = document.getElementById('authContainer');
+         const takeOrderModal = document.getElementById('takeOrderModal');
+         if (authModal) {
+             authModal.style.display = 'none'; // Cierra el modal de autenticación
+         }
+          
+         if (takeOrderModal) {
+        takeOrderModal.style.display = 'none'; // Cierra el modal de toma de orden
+    }  
+         
+         // Mostrar la calculadora nuevamente
+         document.querySelector('.container').style.display = 'block'; // Muestra la calculadora
+         document.querySelector('.login-button').style.display = 'inline-block'; // Muestra el botón de inicio de sesión
+         document.querySelector('.register-button').style.display = 'inline-block'; // Muestra el botón de registro
+         
+         document.body.classList.remove('hidden'); // Muestra el contenido de la página
+         }
+         
+  function logout() {
+    // Limpiar información del usuario y ocultar el perfil
+    currentUser  = ''; // Limpiar la variable global del usuario
+    userCurrency = ''; // Limpiar la moneda del usuario
+
+    // Ocultar secciones de usuario
+    document.getElementById('resellerSection').style.display = 'none';
+    document.getElementById('cashierSection').style.display = 'none';
+    document.getElementById('takerSection').style.display = 'none';
+    document.getElementById('profileContainer').style.display = 'none';
+
+    // Mostrar el contenedor de autenticación
+    document.getElementById('authContainer').style.display = 'block';
+    
+    // Mostrar la calculadora "out"
+    document.querySelector('.containerOut').style.display = 'block'; // Muestra la calculadora "out"
+
+    // Ocultar la calculadora principal
+    document.querySelector('.container').style.display = 'none'; // Oculta la calculadora principal
+
+    // Mostrar los botones de inicio de sesión y registro
+    document.querySelector('.login-button').style.display = 'inline-block'; // Muestra el botón de inicio de sesión
+    document.querySelector('.register-button').style.display = 'inline-block'; // Muestra el botón de registro
+
+    // Minimizar el menú
+    closeMenu(); // Llama a la función que minimiza el menú
+}
+         
+         //////////////////////////////////////////////////////////////////////////////////////
+         
+         function showProfileContainer() {
+         // Mostrar el contenedor del perfil
+         document.getElementById('profileContainer').style.display = 'block';
+         document.getElementById('cotizaContainer').style.display = 'none';  
+         document.getElementById('ordersContainer').style.display = 'none';
+         document.getElementById('cashierContainer').style.display = 'none';
+         document.getElementById('takerContainer').style.display = 'none';
+        
+         }
+         
+         function showOrdersSection() {
+         // Mostrar el contenedor del perfil
+           document.getElementById('takerContainer').style.display = 'block';
+         document.getElementById('cashierContainer').style.display = 'block';
+         document.getElementById('ordersContainer').style.display = 'block';
+         document.getElementById('profileContainer').style.display = 'none';
+         document.getElementById('cotizaContainer').style.display = 'none';   
+         }
+          function showCotizacion() {
+         // Mostrar el contenedor del perfil
+         document.getElementById('cotizaContainer').style.display = 'block';   
+         document.getElementById('ordersContainer').style.display = 'none';
+         document.getElementById('profileContainer').style.display = 'none';
+         cotizaContainer
+         }
+         
+         ////////////////////////////////////////////////////toolbar///////////////////////////////////////////////////////
+         
+</script>
