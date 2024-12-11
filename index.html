@@ -1440,33 +1440,24 @@ document.getElementById('uploadButtonModal').addEventListener('click', async () 
     }
 }
 
-  function showReceipt(receiptUrls, orderId) {
+ function showReceipt(receiptUrl, orderId, fromAmount, fromCurrency) {
     const receiptDetails = document.getElementById(`receiptDetails-${orderId}`);
-    const receiptImagesContainer = document.getElementById(`receiptImages-${orderId}`);
-    
-    // Limpia el contenedor de imágenes
-    receiptImagesContainer.innerHTML = '';
-
-    // Divide la cadena de URLs en un array
-    const urls = receiptUrls.split(',').map(url => url.trim()); // Divide por comas y elimina espacios
+    const receiptImage = document.getElementById(`receiptImage-${orderId}`);
+    const orderAmount = document.getElementById(`orderAmount-${orderId}`);
 
     // Cambiar el src de la imagen y mostrar los detalles
-    urls.forEach(url => {
-        const img = document.createElement('img');
-        img.src = url; // Asigna la URL
-        img.alt = "Receipt";
-        img.style.maxWidth = '100%'; // Ajusta el tamaño de la imagen
-        img.style.marginTop = '10px'; // Margen superior
-        receiptImagesContainer.appendChild(img); // Agrega la imagen al contenedor
-    });
+    receiptImage.src = receiptUrl;
+    orderAmount.innerHTML = `<strong>Monto:</strong> ${fromAmount} ${fromCurrency}`;
 
     // Alternar la visibilidad del contenedor de detalles
     if (receiptDetails.style.display === "none") {
-        receiptDetails.style.display = "block"; // Muestra los detalles
+        receiptDetails.style.display = "block";
+        receiptImage.style.display = 'block'; // Mostrar la imagen
     } else {
-        receiptDetails.style.display = "none"; // Minimiza/colapsa
+        receiptDetails.style.display = "none"; // Minimizar/colapsar
+        receiptImage.style.display = 'none'; // Ocultar la imagen
     }
-}
+}      
         
 // En la función fetchPendingPayments
 function fetchPendingPayments() {
