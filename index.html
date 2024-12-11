@@ -1440,24 +1440,30 @@ document.getElementById('uploadButtonModal').addEventListener('click', async () 
     }
 }
 
- function showReceipt(receiptUrl, orderId, fromAmount, fromCurrency) {
-    const receiptDetails = document.getElementById(`receiptDetails-${orderId}`);
-    const receiptImage = document.getElementById(`receiptImage-${orderId}`);
-    const orderAmount = document.getElementById(`orderAmount-${orderId}`);
+ function showReceipt(receiptUrls, orderId) {
+            const receiptDetails = document.getElementById(`receiptDetails-${orderId}`);
+            const receiptImagesContainer = document.getElementById(`receiptImages-${orderId}`);
 
-    // Cambiar el src de la imagen y mostrar los detalles
-    receiptImage.src = receiptUrl;
-    orderAmount.innerHTML = `<strong>Monto:</strong> ${fromAmount} ${fromCurrency}`;
+            receiptImagesContainer.innerHTML = '';
 
-    // Alternar la visibilidad del contenedor de detalles
-    if (receiptDetails.style.display === "none") {
-        receiptDetails.style.display = "block";
-        receiptImage.style.display = 'block'; // Mostrar la imagen
-    } else {
-        receiptDetails.style.display = "none"; // Minimizar/colapsar
-        receiptImage.style.display = 'none'; // Ocultar la imagen
-    }
-}      
+            const urls = receiptUrls.split(',').map(url => url.trim());
+
+            urls.forEach(url => {
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = "Receipt";
+                img.style.maxWidth = '100%';
+                img.style.marginTop = '10px';
+                receiptImagesContainer.appendChild(img);
+            });
+
+            if (receiptDetails.style.display === "none") {
+                receiptDetails.style.display = "block";
+            } else {
+                receiptDetails.style.display = "none";
+            }
+        }
+          
         
 // En la función fetchPendingPayments
 function fetchPendingPayments() {
