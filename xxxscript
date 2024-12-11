@@ -391,7 +391,7 @@ document.getElementById('uploadButtonModal').addEventListener('click', async () 
     }
 }
 
-   function showReceipt(receiptUrl, orderId, fromAmount, fromCurrency) {
+ function showReceipt(receiptUrl, orderId, fromAmount, fromCurrency) {
     const receiptDetails = document.getElementById(`receiptDetails-${orderId}`);
     const receiptImage = document.getElementById(`receiptImage-${orderId}`);
     const orderAmount = document.getElementById(`orderAmount-${orderId}`);
@@ -409,6 +409,7 @@ document.getElementById('uploadButtonModal').addEventListener('click', async () 
         receiptImage.style.display = 'none'; // Ocultar la imagen
     }
 }      
+
 // En la función fetchPendingPayments
 function fetchPendingPayments() {
     // Asegúrate de que userCurrency tenga un valor válido
