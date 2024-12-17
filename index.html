@@ -1020,6 +1020,8 @@ window.onload = function() {
 
         showProfile(storedRole, user);
         fetchOrders();
+        fetchPendingPayments();
+        fetchValidatedPayments();
 
         document.getElementById('Toolbar').style.display = 'flex';
         document.getElementById('send-whatsapp').style.display = 'none';
@@ -1031,7 +1033,7 @@ window.onload = function() {
         document.getElementById('resellerSection').style.display = 'none';
         document.getElementById('cashierSection').style.display = 'none';
         document.getElementById('takerSection').style.display = 'none';
-        document.getElementById('authContainer').style.display = 'block';
+        document.getElementById('authContainer').style.display = 'none';
 
         if (!currentUser) {
             document.getElementById('send-whatsapp').style.display = 'block';
@@ -1402,10 +1404,6 @@ window.onload = function() {
             });
         }
 
-        window.onload = function() {
-            fetchPendingPayments();
-            fetchValidatedPayments();
-        };
 
         function validatePayment(orderId) {
             const confirmation = confirm(`¿Está seguro de que desea validar el pago con Order ID: ${orderId}?`);
@@ -1997,6 +1995,7 @@ function login() {
             document.getElementById('loginForm').style.display = 'none';
             document.getElementById('registerForm').style.display = 'block';
             document.getElementById('authContainer').style.display = 'block';
+          document.getElementById('send-whatsapp').style.display = 'none';
         }
 
         function openLoginModal() {
@@ -2012,6 +2011,7 @@ function login() {
             document.getElementById('authContainer').style.display = 'block';
             document.getElementById('registerForm').style.display = 'none';
             document.getElementById('loginForm').style.display = 'block';
+          document.getElementById('send-whatsapp').style.display = 'none';
         }
 
         function closeModal() {
@@ -2030,12 +2030,12 @@ function login() {
             document.body.classList.remove('hidden');
         }
 
-        function logout() {
-    currentUser = '';
+function logout() {
+    currentUser  = '';
     userCurrency = '';
 
     // Eliminar información del usuario de localStorage
-    localStorage.removeItem('currentUser');
+    localStorage.removeItem('currentUser ');
     localStorage.removeItem('userRole');
     localStorage.removeItem('userCurrency');
 
@@ -2044,11 +2044,15 @@ function login() {
     document.getElementById('takerSection').style.display = 'none';
     document.getElementById('profileContainer').style.display = 'none';
 
+    document.getElementById('send-whatsapp').style.display = 'block';
     document.getElementById('authContainer').style.display = 'block';
     document.querySelector('.containerOut').style.display = 'block';
     document.querySelector('.container').style.display = 'none';
     document.querySelector('.login-button').style.display = 'inline-block';
     document.querySelector('.register-button').style.display = 'inline-block';
+
+    // Ocultar la barra de herramientas
+    document.getElementById('Toolbar').style.display = 'none';
 
     closeMenu();
 }
