@@ -1009,14 +1009,14 @@ function hideLoader() {
  
 
 window.onload = function() {
-    const storedUser = localStorage.getItem('currentUser');
+    const storedUser  = localStorage.getItem('currentUser ');
     const storedRole = localStorage.getItem('userRole');
-    const storedCurrency = localStorage.getItem('userCurrency');
+    // const storedCurrency = localStorage.getItem('userCurrency'); // Eliminar esta línea
 
-    if (storedUser && storedRole && storedCurrency) {
-        const user = JSON.parse(storedUser);
-        currentUser = user.name;
-        userCurrency = storedCurrency;
+    if (storedUser  && storedRole) { // Cambiar aquí para eliminar la verificación de storedCurrency
+        const user = JSON.parse(storedUser );
+        currentUser  = user.name;
+        // userCurrency = storedCurrency; // Eliminar esta línea
 
         showProfile(storedRole, user);
         fetchOrders();
@@ -1035,14 +1035,13 @@ window.onload = function() {
         document.getElementById('takerSection').style.display = 'none';
         document.getElementById('authContainer').style.display = 'none';
 
-        if (!currentUser) {
+        if (!currentUser ) {
             document.getElementById('send-whatsapp').style.display = 'block';
         } else {
             document.getElementById('send-whatsapp').style.display = 'none';
         }
     }
 };
-
         function fetchOrders() {
             if (!currentUser) {
                 console.error('currentUser no está definido.');
@@ -1756,7 +1755,6 @@ window.onload = function() {
                     return rate;
                 }
             }
-
             const response = await fetch(`${apiUrl}?path=getExchangeRate&from=${fromCurrency}&to=${toCurrency}`);
             const data = await response.json();
 
