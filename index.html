@@ -1011,9 +1011,9 @@ function hideLoader() {
 window.onload = function() {
     const storedUser = localStorage.getItem('currentUser');
     const storedRole = localStorage.getItem('userRole');
-    const storedCurrency = localStorage.getItem('userCurrency');
+    //const storedCurrency = localStorage.getItem('userCurrency');
 
-    if (storedUser && storedRole && storedCurrency) {
+    if (storedUser && storedRole) {
         const user = JSON.parse(storedUser);
         currentUser = user.name;
         userCurrency = storedCurrency;
