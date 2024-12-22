@@ -1016,7 +1016,7 @@ window.onload = function() {
     if (storedUser && storedRole) {
         const user = JSON.parse(storedUser);
         currentUser = user.name;
-        userCurrency = storedCurrency;
+        
 
         showProfile(storedRole, user);
         fetchOrders();
