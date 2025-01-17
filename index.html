@@ -1,0 +1,2118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload with Preview Modal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .containerOut {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 95%;
+        }
+
+        .container, #authContainer {
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            width: 95%;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+
+        #authContainer { display: none; }
+
+        @media (max-width: 600px) {
+            .container, #authContainer {
+                width: 95%;
+                padding: 15px;
+            }
+            .toolbar-text { font-size: 18px; }
+            .toolbar-text i { font-size: 20px; }
+        }
+
+        .input-group { margin-bottom: 15px; }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #e0e0e0;
+        }
+
+        .input-group input,
+        .input-group select,
+        .input-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            transition: border-color 0.3s;
+            background-color: #2a2a2a;
+            color: #e0e0e0;
+            margin-bottom: 10px;
+        }
+
+        .input-group button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4c975f;
+            color: #1e1e1e;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 25px;
+            font-size: 16px;
+            line-height: 1.5;
+            font-weight: bold;
+        }
+
+        .input-group button:hover { background-color: #388e3c; }
+
+        .register-link {
+            display: block;
+            color: #4c975f;
+            font-size: 16px;
+            text-align: center;
+            margin-top: 25px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .register-link:hover {
+            text-decoration: underline;
+            color: #388e3c;
+        }
+
+        hr {
+            margin: 25px 0;
+            border: 1px solid #444;
+        }
+
+        h1 {
+            text-align: center;
+            color: #4c975f;
+            margin-bottom: 20px;
+        }
+
+        .exchange-rate {
+            margin-top: 20px;
+            font-size: 1.2em;
+            text-align: center;
+            color: #b0bec5;
+        }
+
+        .currency-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .currency-input select,
+        .currency-input input[type="number"] {
+            padding: 10px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            flex: 1;
+            background-color: #2a2a2a;
+            color: #e0e0e0;
+            transition: border-color 0.3s;
+        }
+
+        .currency-input input[type="number"]:focus,
+        .currency-input select:focus {
+            border-color: #4a90e2;
+            outline: none;
+        }
+
+        .menu-icon {
+            cursor: pointer;
+            font-size: 24px;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .menu {
+            display: none;
+            position: absolute;
+            top: 60px;
+            right: 15px;
+            background-color: #1e1e1e;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            z-index: 10;
+            width: 200px;
+        }
+
+        .menu a {
+            display: block;
+            padding: 12px 15px;
+            color: #4c975f;
+            text-decoration: none;
+            border-bottom: 1px solid #444;
+            transition: background-color 0.3s;
+        }
+
+        .menu a:last-child { border-bottom: none; }
+
+        .menu a:hover { background-color: #2a2a2a; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #1e1e1e;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 600px;
+        }
+
+        #imagePreview {
+            max-width: 100%;
+            height: auto;
+            margin-top: 10px;
+        }
+
+        .success-message {
+            color: #4caf50;
+            margin-top: 20px;
+        }
+
+        .error-message {
+            color: red;
+            margin-top: 20px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: white;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        #takerContainer,
+        #cashierContainer,
+        #ordersContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #121212;
+            color: #e0e0e0;
+            overflow-y: auto;
+            padding: 20px;
+            z-index: 1000;
+        }
+
+        #ordersList,
+        #pendingPaymentsList,
+        #validatedPaymentsList {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #ordersList li,
+        #pendingPaymentsList li,
+        #validatedPaymentsList li {
+            background: #2a2a2a;
+            padding: 15px;
+            color: #e0e0e0;
+            border-bottom: 1px solid #444;
+            width: 100%;
+        }
+
+        .hidden { display: none; }
+
+        #message {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .menu-content {
+            padding: 15px;
+            background-color: #1e1e1e;
+        }
+
+        .menu-content div {
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: #e0e0e0;
+        }
+
+        .menu-content strong {
+            display: inline-block;
+            width: 120px;
+        }
+
+        .menu-content button {
+            background-color: #4c975f;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 15px;
+        }
+
+        .menu-content button:hover { background-color: #388e3c; }
+
+        .tabs {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: transparent;
+            margin-bottom: 5px;
+            text-align: left;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #e0e0e0;
+            border-bottom: 2px solid #444;
+        }
+
+        .tab.active {
+            color: #4c975f;
+            border-bottom: 2px solid #4c975f;
+        }
+
+        .tab-content {
+            display: none;
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 20px;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+        }
+
+        .tab-content.active { display: block; }
+
+        .image-preview {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            text-align: center;
+            background-color: #2a2a2a;
+        }
+
+        #uploadButtonModal { margin-right: 10px; }
+
+        #cashierSection, #takerSection { display: none; }
+
+        #submitPayment, #rejectOrderButton {
+            background-color: #4c975f;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+
+        #submitPayment:hover, #rejectOrderButton:hover { background-color: #388e3c; }
+
+        #calculatorContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        #calculatorResult {
+            margin-top: 20px;
+            font-size: 1.5em;
+            color: #4caf50;
+        }
+
+        header { color: #4c975f; }
+
+        .image-container {
+            text-align: center;
+            margin-bottom: 0px;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .image-container img {
+            width: 100%;
+            height: 60%;
+            transform: translateY(15%);
+        }
+
+        button {
+            background-color: #4c975f;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        button:hover:not(:disabled) { background-color: #128C7E; }
+
+        #logoutButton { display: none; }
+
+        #send-whatsapp {
+            margin-top: 20px;
+        }
+
+        #message {
+            margin-top: 10px;
+            font-weight: bold;
+            color: #e0e0e0;
+        }
+
+        #notificationBell {
+            cursor: pointer;
+            font-size: 20px;
+            color: #4c975f;
+        }
+
+        .notification-message {
+            color: #4caf50;
+            margin-top: 20px;
+        }
+
+        .containerOut { display: block; }
+
+        #resellerSection { display: none; }
+
+        #cashierSection { display: none; }
+
+        #takerSection { display: none; }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #1e1e1e;
+            height: 50px;
+            z-index: 1000;
+        }
+
+        .toolbar-text {
+            flex: 1;
+            text-align: center;
+            line-height: 50px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .toolbar-text:hover { color: #4c975f; }
+
+        .toolbar-text i {
+            font-size: 24px;
+            transition: color 0.3s;
+        }
+
+        .rejection-button {
+            background-color: transparent;
+            color: white;
+            border: 2px solid white;
+            padding: 10px 15px;
+            margin: 5px 0;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+            font-size: 16px;
+            border-radius: 5px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .rejection-button:hover {
+            background-color: white;
+            color: black;
+        }
+
+        #rejectionOptions {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: stretch;
+        }
+
+        .image-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 2px dashed #4c975f;
+            border-radius: 10px;
+            padding: 20px;
+            background-color: #1e1e1e;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            position: relative;
+        }
+
+        #openReceiptButton,
+        #imageUpload {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .image-upload:hover { background-color: #2a2a2a; }
+
+        .image-upload-label {
+            text-align: center;
+            color: #e0e0e0;
+            font-size:             1.2em;
+        }
+
+        #imageInput {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        #uploadText {
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .validate-button, .reject-button {
+            background-color: #4c975f;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            flex: 1;
+            margin: 0 5px;
+        }
+
+        .validate-button:hover {
+            background-color: #388e3c;
+            transform: scale(1.05);
+        }
+
+        .reject-button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            flex: 1;
+            margin: 0 5px;
+        }
+
+        button.reject-button:hover {
+            background-color: #c62828;
+            transform: scale(1.05);
+        }
+
+        .send-button {
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        .send-button:hover {
+            background-color: #1da851;
+            transform: scale(1.05);
+        }
+
+        .order-status {
+            background-color: #454546;
+            padding: 10px 20px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            display: inline-block;
+            margin: 10px 0;
+        }
+
+/* Estilo para el overlay */
+#overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Fondo semi-transparente */
+    z-index: 999; /* Asegúrate de que esté por encima de otros elementos */
+    display: none; /* Oculto por defecto */
+}
+
+ #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none; /* Oculto por defecto */
+        }
+
+        .loader {
+            position: fixed; /* Posición fija para centrarlo en la pantalla */
+            top: 50%; /* Mueve el spinner al 50% desde la parte superior */
+            left: 50%; /* Mueve el spinner al 50% desde la izquierda */
+            transform: translate(-50%, -50%); /* Ajusta la posición para centrarlo */
+            width: 40px;
+                height: 40px; /* Altura del spinner */
+            border-radius: 50%; /* Hace que el spinner sea un círculo */
+            border: 3px solid rgba(255, 255, 255, 0.2); /* Borde del spinner */
+            border-top-color: transparent; /* Color del borde superior (transparente para el efecto de giro) */
+            animation: rot1 1.2s linear infinite; /* Animación de rotación */
+        }
+
+        @keyframes rot1 {
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg); /* Comienza en 0 grados */
+            }
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg); /* Gira hasta 360 grados */
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <span class="menu-icon" onclick="toggleMenu()">☰</span>
+        <div class="image-container">
+            <img src="https://i.imgur.com/7yGjoSP.png" alt="Conversor de Divisas" />
+        </div>
+    </header>
+
+    <div id="menu" class="menu">
+        <div class="menu-content">
+            <a class="login-button" onclick="openLoginModal(); closeMenu()">Iniciar Sesión</a>
+            <a class="register-button" onclick="openRegisterModal(); closeMenu()">Registrarse</a>
+        </div>
+    </div>
+
+    <div id="authContainer" class="container">
+        <span class="close" onclick="closelogingModal()">&times;</span>
+        <div id="registerForm" style="display: none;">
+            <h1>Registro</h1>
+            <div class="input-group">
+                <label for="username">Nombre de usuario</label>
+                <input type="text" id="username" placeholder="Nombre de usuario" required>
+            </div>
+            <div class="input-group">
+                <label for="email">Correo electrónico</label>
+                <input type="email" id="email" placeholder="Correo electrónico" required>
+            </div>
+            <div class="input-group">
+                <label for="phone">Teléfono</label>
+                <input type="tel" id="phone" placeholder="Teléfono" required>
+            </div>
+            <div class="input-group">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" placeholder="Contraseña" required>
+            </div>
+            <div class="input-group">
+                <div id="message"></div>
+                <button onclick="register()">Registrar</button>
+            </div>
+            <hr style="margin: 10px 0; border: 1px solid #444;">
+            <span class="register-link" onclick="toggleForms()">¿Ya tienes cuenta? Iniciar sesión</span>
+        </div>
+        <div id="loginForm" style="display: block;">
+            <h1>Inicio de Sesión</h1>
+            <div class="input-group">
+                <label for="loginEmail">Correo electrónico</label>
+                <input type="email" id="loginEmail" placeholder="Correo electrónico" required>
+            </div>
+            <div class="input-group">
+                <label for="loginPassword">Contraseña</label>
+                <input type="password" id="loginPassword" placeholder="Contraseña" required>
+            </div>
+            <div class="input-group">
+                <div id="message"></div>
+                <button class="login-button" onclick="login()">Iniciar Sesión</button>
+            </div>
+            <hr style="margin: 10px 0; border: 1px solid #444;">
+            <span class="register-link" onclick="toggleForms()">¿No tienes cuenta? Regístrate</span>
+        </div>
+    </div>
+
+    <div id="profileContainer" class="container" style="display: none;">
+        <h2>Perfil de Usuario</h2>
+        <div class="input-group">
+            <strong>Nombre:</strong> <span id="userName"></span>
+        </div>
+        <div class="input-group">
+            <strong>Rol:</strong> <span id="userRole"></span>
+        </div>
+        <div class="input-group">
+            <hr style="margin: 10px 0; border: 1px solid #444;">
+        </div>
+        <div class="input-group">
+            <strong>Ganancias:</strong> <span id="userEarnings"></span>
+        </div>
+        <div class="input-group">
+            <strong>Prioridad:</strong> <span id="userCurrency"></span>
+        </div>
+        <div class="input-group">
+            <strong>Fondos:</strong> <span></span>
+        </div>
+        <div class="input-group">
+            <hr style="margin: 10px 0; border: 1px solid #444;">
+        </div>
+        <button onclick="logout()" style="background: none; border: none; cursor: pointer;">
+            <i class="fas fa-sign-out-alt" style="color: white; font-size: 24px;"></i>
+        </button>
+    </div>
+
+    <div id="notifications" class="notification-message" style="display: none;"></div>
+
+    <div class="containerOut">
+        <div class="container">
+            <h1>Conversor de Divisas</h1>
+            <div class="input-group">
+                <label for="from-amount">Tú envías:</label>
+                <div class="currency-input">
+                    <input type="number" id="from-amount-out" placeholder="Cantidad" min="0" step="any">
+                    <select id="from-currency-out">
+                        <option value="CLP">CLP - Chile</option>
+                        <option value="COP">COP - Colombia</option>
+                        <option value="USD">USD - Estados Unidos</option>
+                        <option value="EUR">EUR - España</option>
+                        <option value="PEN">PEN - Perú</option>
+                        <option value="ECU">ECU - Ecuador</option>
+                        <option value="VES">VES - Venezuela</option>
+                    </select>
+                </div>
+            </div>
+            <div class="input-group">
+                <label for="to-amount">Ellos reciben:</label>
+                <div class="currency-input">
+                    <input type="number" id="to-amount-out" placeholder="Cantidad" min="0" step="any">
+                    <select id="to-currency-out">
+                        <option value="VES">VES - Venezuela</option>
+                        <option value="COP">COP - Colombia</option>
+                        <option value="USD">USD - Estados Unidos</option>
+                        <option value="EUR">EUR - España</option>
+                        <option value="PEN">PEN - Perú</option>
+                        <option value="CLP">CLP - Chile</option>
+                        <option value="ECU">ECU - Ecuador</option>
+                    </select>
+                </div>
+            </div>
+            <div class="exchange-rate" id="exchange-rate-out">@WeSendMoney</div>
+        </div>
+    </div>
+
+    <button id="send-whatsapp" class="send-button" style="display: block; background-color: #25D366; border: none; border-radius: 5px; color: white; font-size: 18px; padding: 10px 20px; cursor: pointer; display: flex; align-items: center;">
+        <i class="fab fa-whatsapp" style="font-size: 24px; margin-right: 8px;"></i>
+        Enviar dinero ahora
+    </button>
+
+    <div id="resellerSection" style="display: none;">
+        <div id="cotizaContainer">
+            <h1>Conversor de Divisas</h1>
+            <div class="tabs">
+                <div class="tab active" data-tab="calculator">1. Cotiza tu Remesa</div>
+                <div id="calculator" class="tab-content active">
+                    <div class="input-group">
+                        <label for="from-amount">Tú envías:</label>
+                        <div class="currency-input">
+                            <input type="number" id="from-amount" placeholder="Cantidad" min="0" step="any">
+                            <select id="from-currency">
+                                <option value="CLP">CLP - Chile</option>
+                                <option value="COP">COP - Colombia</option>
+                                <option value="USD">USD - Estados Unidos</option>
+                                <option value="EUR">EUR - España</option>
+                                <option value="PEN">PEN - Perú</option>
+                                <option value="ECU">ECU - Ecuador</option>
+                                <option value="VES">VES - Venezuela</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="to-amount">Ellos reciben:</label>
+                        <div class="currency-input">
+                            <input type="number" id="to-amount" placeholder="Cantidad" min="0" step="any">
+                            <select id="to-currency">
+                                <option value="VES">VES - Venezuela</option>
+                                <option value="COP">COP - Colombia</option>
+                                <option value="USD">USD - Estados Unidos</option>
+                                <option value="EUR">EUR - España</option>
+                                <option value="PEN">PEN - Perú</option>
+                                <option value="CLP">CLP - Chile</option>
+                                <option value="ECU">ECU - Ecuador</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="exchange-rate" id="exchange-rate">@weSendMoney</div>
+                    <p style="color: #e0e0e0; text-align: center;">Ya cotizaste?</p>
+                    <div class="image-upload">
+    <label for="imageInput" class="image-upload-label">
+        <span id="uploadButtonText">Haz clic aquí para subir un comprobante</span>
+        <button id="openReceiptButton" disabled style="margin-top: 20px;">Subir Comprobante de Pago</button>
+    </label>
+    <img id="imgPreviewReseller" style="display:none; max-width: 100%; margin-top: 10px;" />
+</div>
+                </div>
+                <div class="tab" data-tab="receipt">2. Verifica tu comprobante</div>
+                <div id="receipt" class="tab-content">
+                    <div id="imagePreviewContainer" class="image-preview">
+                        <h3>Vista Previa de la Imagen</h3>
+                        <img id="imagePreview" alt="Image Preview"/>
+                        <div style="text-align: center; margin-top: 20px;">
+                            <button type="button" id="uploadButtonModal" style="margin-right: 10px;">Subir Imagen</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab" data-tab="beneficiary">3. Envia a tu beneficiario</div>
+                <div id="beneficiary" class="tab-content">
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label for="beneficiaryData">Datos del Beneficiario:</label>
+                        <textarea id="beneficiaryData" rows="5" placeholder="Nombre Apellido, CI: xxxxxxxxx, Teléfono: (xxxx) xxxxxxx, Banco: Nombre del Banco, N. de Cuenta: xxxxxxxxx" required style="width: 100%; padding: 5px;"></textarea>
+                    </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button type="button" id="submitPayment">Enviar Pago</button>
+                    </div>
+                </div>
+            </div>
+            <input type="file" id="imageInput" accept="image/*" style="display: none;">
+            <pre id="resellerOutput"></pre>
+        </div>
+        <div id="ordersContainer" style="display: none;">
+            <h2>Órdenes</h2>
+            <ul id="ordersList">
+            </ul>
+        </div>
+        <pre id="resellerOutput"></pre>
+    </div>
+
+    <div id="cashierSection" style="display: none;">
+        <div id="cashierContainer">
+            <h2>Ordenes</h2>
+            <ul id="pendingPaymentsList">
+            </ul>
+            <div id="imagePreviewContainer" style="display: none;">
+                <h3>Vista Previa de la Imagen</h3>
+                <img id="imagePreview" alt="Image Preview" style="max-width: 100%; margin-top: 10px;" />
+            </div>
+        </div>
+    </div>
+
+    <div id="takerSection" style="display: none;">
+        <div id="takerContainer">
+            <h2>Ordenes disponibles</h2>
+            <ul id="validatedPaymentsList">
+            </ul>
+        </div>
+        <div id="takeOrderModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <h1>Información de la Orden</h1>
+                <p><strong>Order ID:</strong> <span id="orderIdConfirmation"></span></p>
+                              <p><strong>Monto a Pagar:</strong> <span id="toAmountConfirmation"></span></p>
+                <p><strong>Beneficiario:</strong> <span id="beneficiaryName"></span></p>
+                <div class="image-upload">
+                    <label for="imageInput" class="image-upload-label">
+                        <span>Haz clic aquí para subir tu comprobante</span>
+                        <input type="file" id="imageUpload" accept="image/*" multiple onchange="previewImages(event)" />
+                    </label>
+                    <img id="imgPreview" style="display:none; max-width: 100%; margin-top: 10px;" />
+                </div>
+                <div class="input-group">
+                    <hr style="margin: 10px 0; border: 1px solid #444;">
+                </div>
+                <div class="input-group">
+                    <button id="uploadButton" style="display:none;" onclick="uploadImages()">Marcar orden como pagada</button>
+                </div>
+                <h2>Rechazar Orden</h2>
+                <div class="button-container">
+                    <button class="rejection-button" onclick="rejectPayment(currentOrderId, 'error_datos')">Error en datos</button>
+                    <button class="rejection-button" onclick="rejectPayment(currentOrderId, 'equivocacion')">Me equivoqué de orden</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="Toolbar" class="toolbar" style="display: none;">
+        <span class="toolbar-text" onclick="showCotizacion()">
+            <i class="fas fa-dollar-sign"></i>
+        </span>
+        <span class="toolbar-text" onclick="showOrdersSection();fetchOrders()">
+            <i class="fas fa-list-alt"></i>
+        </span>
+        <span class="toolbar-text" onclick="showProfileContainer()">
+            <i class="fas fa-user"></i>
+        </span>
+    </div>
+
+    <div id="overlay" style="display: none;"></div>
+    <div class="loader" style="display: none;"></div>
+
+    <script>
+
+      // ==============================================
+// CONSTANTES Y VARIABLES GLOBALES
+// ==============================================
+const apiUrl = "https://script.google.com/macros/s/AKfycbwWUXWoQC4R54htsVh6tEQfzxvBkM5jza82EXApSGXJ_isriYph1tWXB5xPSGguwLM2/exec";
+let currentUser = "";
+let userCurrency = "";
+let lastFetchedOrders = [];
+let currentOrderId;
+let currentToAmount;
+let currentToCurrency;
+let uploadedImageUrl = "";
+let receiptUrl = "";
+let imageFile;
+let exchangeRates = {};
+let lastEditedField = "";
+let lastEditedFieldOut = "";
+let conversionTimeout;
+let updateButtonTimeout;
+
+// ==============================================
+// FUNCIONES DE INICIO Y CARGA
+// ==============================================
+window.onload = function () {
+    const storedUser = localStorage.getItem("currentUser");
+    const storedRole = localStorage.getItem("userRole");
+
+    if (storedUser && storedRole) {
+        const user = JSON.parse(storedUser);
+        currentUser = user.name;
+
+        showProfile(storedRole, user);
+        fetchOrders();
+        fetchPendingPayments();
+        fetchValidatedPayments();
+
+        document.getElementById("Toolbar").style.display = "flex";
+        document.getElementById("send-whatsapp").style.display = "none";
+        document.querySelector(".containerOut").style.display = "none";
+        document.getElementById("authContainer").style.display = "none";
+        document.querySelector(".login-button").style.display = "none";
+        document.querySelector(".register-button").style.display = "none";
+    } else {
+        document.getElementById("resellerSection").style.display = "none";
+        document.getElementById("cashierSection").style.display = "none";
+        document.getElementById("takerSection").style.display = "none";
+        document.getElementById("authContainer").style.display = "none";
+
+        if (!currentUser) {
+            document.getElementById("send-whatsapp").style.display = "block";
+        } else {
+            document.getElementById("send-whatsapp").style.display = "none";
+        }
+    }
+};
+
+document.addEventListener("DOMContentLoaded", async () => {
+    await updateExchangeRate();
+    await updateExchangeRateOut();
+});
+
+// ==============================================
+// FUNCIONES DE AUTENTICACIÓN
+// ==============================================
+function login() {
+    const email = document.getElementById("loginEmail").value;
+    const password = document.getElementById("loginPassword").value;
+
+    if (!email || !password) {
+        showMessage("Por favor, completa todos los campos.");
+        return;
+    }
+
+    showLoader();
+
+    fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("Error en la respuesta de la API");
+            }
+            return response.json();
+        })
+        .then((data) => {
+            if (data.success) {
+                localStorage.setItem("currentUser", JSON.stringify(data.user));
+                localStorage.setItem("userRole", data.role);
+                localStorage.setItem("userCurrency", data.user.country);
+
+                currentUser = data.user.name;
+                userCurrency = data.user.country;
+                showMessage("Inicio de sesión exitoso!", false);
+                showProfile(data.role, data.user);
+                fetchOrders();
+                closeModal();
+
+                document.getElementById("Toolbar").style.display = "flex";
+                document.getElementById("send-whatsapp").style.display = "none";
+                document.querySelector(".containerOut").style.display = "none";
+                document.getElementById("authContainer").style.display = "none";
+                document.querySelector(".login-button").style.display = "none";
+                document.querySelector(".register-button").style.display = "none";
+            } else {
+                showMessage("Credenciales inválidas: " + data.message);
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            showMessage("Ocurrió un error durante el inicio de sesión.");
+        })
+        .finally(() => {
+            hideLoader();
+        });
+}
+
+function register() {
+    const username = document.getElementById("username").value;
+    const email = document.getElementById("email").value;
+    const phone = document.getElementById("phone").value;
+    const password = document.getElementById("password").value;
+
+    if (!username || !email || !phone || !password) {
+        showMessage("Por favor, completa todos los campos.");
+        return;
+    }
+    showLoader();
+
+    fetch(`${apiUrl}?action=register&username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}&password=${encodeURIComponent(password)}`)
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.success) {
+                showMessage(data.message, false);
+                document.getElementById("authContainer").style.display = "none";
+                document.querySelector(".login-button").style.display = "none";
+                document.querySelector(".register-button").style.display = "none";
+            } else {
+                showMessage(data.message);
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            showMessage("Ocurrió un error durante el registro.");
+        })
+        .finally(() => {
+            hideLoader();
+        });
+}
+
+function logout() {
+    currentUser = "";
+    userCurrency = "";
+
+    localStorage.removeItem("currentUser");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userCurrency");
+
+    document.getElementById("resellerSection").style.display = "none";
+    document.getElementById("cashierSection").style.display = "none";
+    document.getElementById("takerSection").style.display = "none";
+    document.getElementById("profileContainer").style.display = "none";
+
+    document.getElementById("send-whatsapp").style.display = "block";
+    document.getElementById("authContainer").style.display = "block";
+    document.querySelector(".containerOut").style.display = "block";
+    document.querySelector(".container").style.display = "none";
+    document.querySelector(".login-button").style.display = "inline-block";
+    document.querySelector(".register-button").style.display = "inline-block";
+
+    document.getElementById("Toolbar").style.display = "none";
+
+    closeMenu();
+}
+
+// ==============================================
+// FUNCIONES DE INTERFAZ DE USUARIO
+// ==============================================
+function toggleMenu() {
+    const menu = document.getElementById("menu");
+    menu.style.display = menu.style.display === "block" ? "none" : "block";
+}
+
+function closeMenu() {
+    document.getElementById("menu").style.display = "none";
+}
+
+function showProfile(role, user) {
+    currentUser = user.name;
+    userCurrency = user.country;
+
+    document.getElementById("resellerSection").style.display = "none";
+    document.getElementById("cashierSection").style.display = "none";
+    document.getElementById("takerSection").style.display = "none";
+
+    document.getElementById("userName").textContent = ` ${user.name} `;
+    document.getElementById("userEarnings").textContent = ` ${user.earnings} `;
+    document.getElementById("userRole").textContent = ` ${role} `;
+    document.getElementById("userCurrency").textContent = userCurrency;
+
+    if (role === "reseller") {
+        document.getElementById("resellerSection").style.display = "block";
+        fetchOrders();
+    } else if (role === "cashier") {
+        document.getElementById("cashierSection").style.display = "block";
+        fetchPendingPayments();
+    } else if (role === "taker") {
+        document.getElementById("takerSection").style.display = "block";
+    } else {
+        showMessage("Rol no reconocido.");
+    }
+}
+
+function showProfileContainer() {
+    document.getElementById("profileContainer").style.display = "block";
+    document.getElementById("cotizaContainer").style.display = "none";
+    document.getElementById("ordersContainer").style.display = "none";
+    document.getElementById("cashierContainer").style.display = "none";
+    document.getElementById("takerContainer").style.display = "none";
+}
+
+function showOrdersSection() {
+    document.getElementById("takerContainer").style.display = "block";
+    document.getElementById("cashierContainer").style.display = "block";
+    document.getElementById("ordersContainer").style.display = "block";
+    document.getElementById("profileContainer").style.display = "none";
+    document.getElementById("cotizaContainer").style.display = "none";
+}
+
+function showCotizacion() {
+    document.getElementById("cotizaContainer").style.display = "block";
+    document.getElementById("ordersContainer").style.display = "none";
+    document.getElementById("profileContainer").style.display = "none";
+}
+
+// ==============================================
+// FUNCIONES DE CONVERSIÓN DE MONEDA
+// ==============================================
+async function convertCurrency() {
+    const fromCurrency = document.getElementById("from-currency").value;
+    const toCurrency = document.getElementById("to-currency").value;
+    const fromAmount = parseFloat(document.getElementById("from-amount").value);
+    const toAmount = parseFloat(document.getElementById("to-amount").value);
+
+    if (lastEditedField === "from" && isNaN(fromAmount)) {
+        document.getElementById("to-amount").value = "";
+        return;
+    } else if (lastEditedField === "to" && isNaN(toAmount)) {
+        document.getElementById("from-amount").value = "";
+        return;
+    }
+
+    try {
+        const rate = await fetchExchangeRate(fromCurrency, toCurrency);
+        if (lastEditedField === "from" && !isNaN(fromAmount)) {
+            const convertedAmount = fromAmount * rate;
+            document.getElementById("to-amount").value = convertedAmount.toFixed(2);
+        } else if (lastEditedField === "to" && !isNaN(toAmount)) {
+            const convertedAmount = toAmount / rate;
+            document.getElementById("from-amount").value = convertedAmount.toFixed(2);
+        }
+    } catch (error) {
+        console.error("Error al obtener la tasa de cambio:", error);
+        document.getElementById("exchange-rate").textContent = "Tasa de cambio no disponible";
+    }
+}
+
+async function updateExchangeRateOut() {
+    const fromCurrencyOut = document.getElementById("from-currency-out").value;
+    const toCurrencyOut = document.getElementById("to-currency-out").value;
+
+    try {
+        const rateOut = await fetchExchangeRate(fromCurrencyOut, toCurrencyOut);
+        document.getElementById("exchange-rate-out").textContent = `Tasa de cambio: 1 ${fromCurrencyOut} = ${rateOut} ${toCurrencyOut}`;
+    } catch (error) {
+        document.getElementById("exchange-rate-out").textContent = "Tasa de cambio no disponible";
+    }
+}
+
+async function updateExchangeRate() {
+    clearAmountFields();
+
+    const fromCurrency = document.getElementById("from-currency").value;
+    const toCurrency = document.getElementById("to-currency").value;
+
+    showLoader(); // Mostrar el loader
+
+    try {
+        const rate = await fetchExchangeRate(fromCurrency, toCurrency);
+        document.getElementById("exchange-rate").textContent = `Tasa de cambio: 1 ${fromCurrency} = ${rate} ${toCurrency}`;
+    } catch (error) {
+        document.getElementById("exchange-rate").textContent = "Tasa de cambio no disponible";
+    } finally {
+        hideLoader(); // Ocultar el loader
+        clearAmountFields();
+    }
+}
+
+async function convertCurrencyOut() {
+    const fromCurrencyOut = document.getElementById("from-currency-out").value;
+    const toCurrencyOut = document.getElementById("to-currency-out").value;
+    const fromAmountOut = parseFloat(document.getElementById("from-amount-out").value);
+    const toAmountOut = parseFloat(document.getElementById("to-amount-out").value);
+
+    if (lastEditedFieldOut === "from" && isNaN(fromAmountOut)) {
+        document.getElementById("to-amount-out").value = "";
+        return;
+    } else if (lastEditedFieldOut === "to" && isNaN(toAmountOut)) {
+        document.getElementById("from-amount-out").value = "";
+        return;
+    }
+
+    showLoader();
+
+    try {
+        const rateOut = await fetchExchangeRate(fromCurrencyOut, toCurrencyOut);
+        if (lastEditedFieldOut === "from" && !isNaN(fromAmountOut)) {
+            const convertedAmountOut = fromAmountOut * rateOut;
+            document.getElementById("to-amount-out").value = convertedAmountOut.toFixed(2);
+        } else if (lastEditedFieldOut === "to" && !isNaN(toAmountOut)) {
+            const convertedAmountOut = toAmountOut / rateOut;
+            document.getElementById("from-amount-out").value = convertedAmountOut.toFixed(2);
+        }
+    } catch (error) {
+        console.error("Error al obtener la tasa de cambio:", error);
+        document.getElementById("exchange-rate-out").textContent = "Tasa de cambio no disponible";
+    } finally {
+        hideLoader();
+    }
+}
+
+async function fetchExchangeRate(fromCurrency, toCurrency) {
+    const cacheKey = `${fromCurrency}_${toCurrency}`;
+    const currentTime = Date.now();
+
+    if (exchangeRates[cacheKey]) {
+        const { rate, timestamp } = exchangeRates[cacheKey];
+        if (currentTime - timestamp < 600000) {
+            return rate;
+        }
+    }
+
+    showLoader();
+
+    const response = await fetch(`${apiUrl}?path=getExchangeRate&from=${fromCurrency}&to=${toCurrency}`);
+    const data = await response.json();
+
+    hideLoader();
+
+    if (data.error) {
+        throw new Error(data.error);
+    }
+
+    const rate = parseFloat(data.rate.replace(/,/g, ""));
+    exchangeRates[cacheKey] = { rate: rate, timestamp: currentTime };
+    return rate;
+}
+
+// ==============================================
+// FUNCIONES DE GESTIÓN DE ÓRDENES
+// ==============================================
+function fetchOrders() {
+    if (!currentUser) {
+        console.error("currentUser no está definido.");
+        return;
+    }
+
+    fetch(`${apiUrl}?path=getOrders&resellerName=${encodeURIComponent(currentUser)}`)
+        .then((response) => response.json())
+        .then((orders) => {
+            const ordersList = document.getElementById("ordersList");
+            ordersList.innerHTML = "";
+
+            if (orders && Array.isArray(orders) && orders.length > 0) {
+                orders.forEach((order) => {
+                    const listItem = document.createElement("li");
+                    listItem.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>Order ID:</strong> ${order["Order ID"] || "N/A"}
+                            <strong></strong> <span class="order-status" style="margin-left: auto;">${order["Status"] || "N/A"}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>Monto:</strong> ${order["From Amount"] || "N/A"} ${order["From Currency"] || "N/A"} <br>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>Precio a Recibir:</strong> ${order["To Amount"] || "N/A"} ${order["To Currency"] || "N/A"} <br>
+                        </div>
+                        <div class="input-group">
+                            <button onclick="showReceipt('${order["Comprobante"]}', '${order["Order ID"]}', '${order["From Amount"]}', '${order["From Currency"]}')">Ver Comprobante</button>
+                        </div>
+                        <div id="receiptDetails-${order["Order ID"]}" style="display: none; margin-top: 10px;">
+                            <hr style="margin: 10px 0; border: 1px solid #444;"> 
+                            <div id="receiptImages-${order["Order ID"]}"></div>
+                        </div>
+                    `;
+                    ordersList.appendChild(listItem);
+                });
+                checkForPaidOrders(orders);
+            } else {
+                ordersList.innerHTML = "<li>No hay órdenes disponibles.</li>";
+            }
+        })
+        .catch((error) => {
+            console.error("Error fetching orders:", error);
+            const ordersList = document.getElementById("ordersList");
+            ordersList.innerHTML = "<li>Error al cargar las órdenes.</li>";
+        });
+}
+
+function fetchPendingPayments() {
+    // Verificar si userCurrency está definido
+    if (!userCurrency) {
+        alert("No se ha definido una moneda para el usuario.");
+        return;
+    }
+
+    // Mostrar el loader
+    showLoader();
+
+    // Llamar al backend con la moneda del usuario
+    fetch(`${apiUrl}?path=fetchPayments&currencies=${encodeURIComponent(userCurrency)}`)
+        .then((response) => response.json())
+        .then((data) => {
+            const pendingPaymentsList = document.getElementById("pendingPaymentsList");
+            pendingPaymentsList.innerHTML = "";
+
+            if (data && Array.isArray(data) && data.length > 0) {
+                data.forEach((payment) => {
+                    const listItem = document.createElement("li");
+                    listItem.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>Orden ID:</strong> ${payment["Order ID"]} <br>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>Monto:</strong> ${payment["From Amount"]} ${payment["From Currency"]} <br>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>Estado:</strong> ${payment["Status"]} <br>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>Receipt URL:</strong> ${payment["Receipt URL"]}<br>
+                        </div>
+                        <div class="input-group">
+                            <button onclick="showReceiptcs('${payment["Receipt URL"]}', '${payment["Order ID"]}', '${payment["From Amount"]}', '${payment["From Currency"]}')">Ver Detalles</button>
+                        </div>
+                        <div id="receiptDetails-${payment["Order ID"]}" style="display: none; margin-top: 10px;">
+                            <hr style="margin: 10px 0; border: 1px solid #444;"> 
+                            <img id="receiptImage-${payment["Order ID"]}" alt="Receipt" style="max-width: 100%; margin-top: 10px;">
+                            <p id="orderAmount-${payment["Order ID"]}"></p>
+                            <div class="button-container">
+                                <button class="validate-button" onclick="validatePayment('${payment["Order ID"]}')">Validar</button>
+                                <button class="reject-button" onclick="showRejectionOptions('${payment["Order ID"]}')">Rechazar</button>
+                            </div>
+                            <div id="rejectionOptions-${payment["Order ID"]}" style="display: none;">
+                                <hr style="margin: 10px 0; border: 1px solid #444;"> 
+                                <button class="rejection-button" onclick="rejectPayment('${payment["Order ID"]}', 'error_datos')">Error en datos</button>
+                                <button class="rejection-button" onclick="rejectPayment('${payment["Order ID"]}', 'equivocacion')">Me equivoqué de orden</button>
+                            </div>
+                        </div>
+                    `;
+                    pendingPaymentsList.appendChild(listItem);
+                });
+            } else {
+                pendingPaymentsList.innerHTML = "<li>No hay pagos pendientes.</li>";
+            }
+        })
+        .catch((error) => {
+            console.error("Error fetching pending payments:", error);
+            const pendingPaymentsList = document.getElementById("pendingPaymentsList");
+            pendingPaymentsList.innerHTML = "<li>Error al cargar los pagos pendientes.</li>";
+        })
+        .finally(() => {
+            hideLoader();
+        });
+}
+
+function fetchValidatedPayments() {
+    fetch(`${apiUrl}?path=fetchValidatedPayments`, {
+        method: "GET",
+    })
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+            return response.json();
+        })
+        .then((data) => {
+            const validatedPaymentsList = document.getElementById("validatedPaymentsList");
+            validatedPaymentsList.innerHTML = "";
+
+            if (data.length === 0) {
+                validatedPaymentsList.innerHTML = "<li>No hay pagos validados.</li>";
+                return;
+            }
+
+            data.forEach((payment) => {
+                const listItem = document.createElement("li");
+                listItem.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong>Order ID:</strong> ${payment["Order ID"]} <br>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong>A pagar:</strong> ${payment["To Amount"]} ${payment["To Currency"]} <br>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong>Status:</strong> ${payment["Status"]} <br>
+                    </div>
+                    <div class="input-group">
+                        <button onclick="takeOrder('${payment["Order ID"]}', '${payment["To Amount"]}', '${payment["To Currency"]}', '${encodeURIComponent(payment["beneficiary"])}')">Tomar Orden</button>
+                    </div>
+                `;
+                validatedPaymentsList.appendChild(listItem);
+            });
+        })
+        .catch((error) => {
+            console.error("Error fetching validated payments:", error);
+            const validatedPaymentsList = document.getElementById("validatedPaymentsList");
+            validatedPaymentsList.innerHTML = "<li>Error al cargar pagos validados. Intenta de nuevo más tarde.</li>";
+        });
+}
+
+function showRejectionOptions(orderId) {
+    const rejectionOptions = document.getElementById(`rejectionOptions-${orderId}`);
+    if (rejectionOptions) {
+        rejectionOptions.style.display = rejectionOptions.style.display === "none" ? "block" : "none";
+    } else {
+        console.error(`No se encontró el elemento con ID: rejectionOptions-${orderId}`);
+    }
+}
+
+function showReceipt(receiptUrls, orderId) {
+    const receiptDetails = document.getElementById(`receiptDetails-${orderId}`);
+    const receiptImagesContainer = document.getElementById(`receiptImages-${orderId}`);
+
+    receiptImagesContainer.innerHTML = "";
+
+    const urls = receiptUrls.split(",").map((url) => url.trim());
+
+    urls.forEach((url) => {
+        const img = document.createElement("img");
+        img.src = url;
+        img.alt = "Receipt";
+        img.style.maxWidth = "100%";
+        img.style.marginTop = "10px";
+        receiptImagesContainer.appendChild(img);
+    });
+
+    if (receiptDetails.style.display === "none") {
+        receiptDetails.style.display = "block";
+    } else {
+        receiptDetails.style.display = "none";
+    }
+}
+
+function showReceiptcs(receiptUrl, orderId, fromAmount, fromCurrency) {
+    const receiptDetails = document.getElementById(`receiptDetails-${orderId}`);
+    const receiptImage = document.getElementById(`receiptImage-${orderId}`);
+    const orderAmount = document.getElementById(`orderAmount-${orderId}`);
+
+    // Cambiar el src de la imagen y mostrar los detalles
+    receiptImage.src = receiptUrl;
+    orderAmount.innerHTML = `<strong>Monto:</strong> ${fromAmount} ${fromCurrency}`;
+
+    // Alternar la visibilidad del contenedor de detalles
+    if (receiptDetails.style.display === "none") {
+        receiptDetails.style.display = "block";
+        receiptImage.style.display = "block"; // Mostrar la imagen
+    } else {
+        receiptDetails.style.display = "none"; // Minimizar/colapsar
+        receiptImage.style.display = "none"; // Ocultar la imagen
+    }
+}
+
+function rejectOrder(orderId, reason) {
+    if (!reason) {
+        alert("Por favor, selecciona una razón para rechazar la orden.");
+        return;
+    }
+
+    fetch(`${apiUrl}?path=rejectOrder&orderId=${encodeURIComponent(orderId)}&reason=${encodeURIComponent(reason)}`)
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.status === 200) {
+                alert("Orden rechazada exitosamente.");
+                closeModal();
+                fetchPendingPayments();
+            } else {
+                alert("Error al rechazar la orden: " + data.message);
+            }
+        })
+        .catch((error) => {
+            console.error("Error rechazando la orden:", error);
+            alert("Error al rechazar la orden.");
+        });
+}
+// ==============================================
+// FUNCIONES DE GESTIÓN DE PAGOS
+// ==============================================
+function validatePayment(orderId) {
+    const confirmation = confirm(`¿Está seguro de que desea validar el pago con Order ID: ${orderId}?`);
+    if (confirmation) {
+        fetch(`${apiUrl}?path=validatePayment&paymentId=${encodeURIComponent(orderId)}&isValid=true`)
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.status === 200) {
+                    alert("Pago validado exitosamente.");
+                    fetchPendingPayments();
+                } else {
+                    alert("Error al validar el pago: " + data.message);
+                }
+            })
+            .catch((error) => {
+                console.error("Error validating payment:", error);
+                alert("Error al validar el pago.");
+            });
+    }
+}
+
+function rejectPayment(orderId, reason) {
+    if (!reason) {
+        alert("Por favor, selecciona una razón para rechazar la orden.");
+        return;
+    }
+
+    fetch(`${apiUrl}?path=rejectOrder&orderId=${encodeURIComponent(orderId)}&reason=${encodeURIComponent(reason)}`)
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.status === 200) {
+                alert("Orden rechazada exitosamente.");
+                fetchPendingPayments();
+            } else {
+                alert("Error al rechazar la orden: " + data.message);
+            }
+        })
+        .catch((error) => {
+            console.error("Error rechazando la orden:", error);
+            alert("Error al rechazar la orden.");
+        });
+}
+
+function takeOrder(orderId, toAmount, toCurrency, beneficiaryName) {
+    currentOrderId = orderId;
+    currentToAmount = toAmount;
+    currentToCurrency = toCurrency;
+
+    document.getElementById("orderIdConfirmation").innerText = orderId;
+    document.getElementById("toAmountConfirmation").innerText = `${toAmount} ${toCurrency}`;
+    document.getElementById("beneficiaryName").innerText = decodeURIComponent(beneficiaryName);
+
+    confirmOrder();
+}
+
+function confirmOrder() {
+    const orderId = currentOrderId;
+
+    const url = `${apiUrl}?path=takeOrder&orderId=${encodeURIComponent(orderId)}&takerName=${encodeURIComponent(currentUser)}`;
+
+    fetch(url)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then((data) => {
+            if (data.status === 200) {
+                alert("Orden tomada exitosamente.");
+                fetchPendingPayments();
+
+                const takeOrderModal = document.getElementById("takeOrderModal");
+                if (takeOrderModal) {
+                    takeOrderModal.style.display = "block";
+                }
+            } else {
+                alert("Error al tomar la orden: " + data.message);
+                closeModal();
+            }
+        })
+        .catch((error) => {
+            console.error("Error confirming order:", error);
+            alert("Error al tomar la orden. Intenta de nuevo más tarde. Detalle: " + error.message);
+            closeModal();
+        });
+}
+
+function markAsPaid(orderId, imgurUrls) {
+    const url = `${apiUrl}?path=markAsPaid&orderId=${encodeURIComponent(orderId)}&imgurUrls=${encodeURIComponent(JSON.stringify(imgurUrls))}`;
+
+    fetch(url)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then((data) => {
+            if (data.status === 200) {
+                alert("Pago marcado como pagado exitosamente.");
+            } else {
+                alert("Error al marcar como pagada: " + data.message);
+            }
+        })
+        .catch((error) => {
+            console.error("Error marking as paid:", error);
+            alert("Error al marcar como pagada. Intenta de nuevo más tarde. Detalle: " + error.message);
+        })
+        .finally(() => {
+            fetchPendingPayments();
+            fetchValidatedPayments();
+            closeModal();
+            clearModalData();
+        });
+}
+
+document.getElementById("submitPayment").addEventListener("click", function () {
+    const fromAmount = document.getElementById("from-amount").value;
+    const fromCurrency = document.getElementById("from-currency").value;
+    const toAmount = document.getElementById("to-amount").value;
+    const toCurrency = document.getElementById("to-currency").value;
+    const beneficiary = document.getElementById("beneficiaryData").value;
+
+    if (!fromAmount || !fromCurrency || !toAmount || !toCurrency || !beneficiary || !receiptUrl) {
+        alert("Por favor complete todos los campos y suba una imagen.");
+        return;
+    }
+
+    showLoader();
+
+    fetch(
+        `${apiUrl}?path=submitPayment&reseller=${encodeURIComponent(currentUser)}&fromAmount=${encodeURIComponent(fromAmount)}&fromCurrency=${encodeURIComponent(fromCurrency)}&toAmount=${encodeURIComponent(
+            toAmount
+        )}&toCurrency=${encodeURIComponent(toCurrency)}&receiptUrl=${encodeURIComponent(receiptUrl)}&beneficiary=${encodeURIComponent(beneficiary)}`,
+        {
+            method: "GET",
+        }
+    )
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.status === 200) {
+                alert("Pago enviado exitosamente");
+                document.getElementById("from-amount").value = "";
+                document.getElementById("to-amount").value = "";
+                document.getElementById("beneficiaryData").value = "";
+                document.getElementById("imageInput").value = "";
+                document.getElementById("imagePreviewContainer").style.display = "none";
+                receiptUrl = "";
+
+                const tabs = document.querySelectorAll(".tab");
+                const tabContents = document.querySelectorAll(".tab-content");
+
+                tabs.forEach((t) => t.classList.remove("active"));
+                tabContents.forEach((tc) => {
+                    tc.classList.remove("active");
+                    tc.style.display = "none";
+                });
+
+                const cotizacionTab = document.querySelector('.tab[data-tab="calculator"]');
+                cotizacionTab.classList.add("active");
+                const cotizacionContent = document.getElementById("calculator");
+                if (cotizacionContent) {
+                    cotizacionContent.classList.add("active");
+                    cotizacionContent.style.display = "block";
+                }
+            } else {
+                alert("Error al enviar el pago: " + data.message);
+            }
+        })
+        .catch((error) => {
+            console.error("Error al enviar el pago:", error);
+            alert("Error al enviar el pago.");
+        })
+        .finally(() => {
+            hideLoader();
+            fetchOrders();
+        });
+});
+
+// ==============================================
+// FUNCIONES DE GESTIÓN DE IMÁGENES
+// ==============================================
+function previewImages(event) {
+    const files = event.target.files;
+    const previewContainer = document.getElementById("imagePreviewContainer");
+    const previewImages = document.getElementById("imagePreview");
+    const uploadButton = document.getElementById("uploadButton");
+
+    previewImages.innerHTML = "";
+
+    if (files.length > 0) {
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = document.createElement("img");
+                img.src = e.target.result;
+                img.style.maxWidth = "100%";
+                img.style.marginTop = "10px";
+                previewImages.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        }
+        previewContainer.style.display = "block";
+        uploadButton.style.display = "block";
+    } else {
+        previewContainer.style.display = "none";
+        uploadButton.style.display = "none";
+    }
+}
+
+function uploadImages() {
+    const files = document.getElementById("imageUpload").files;
+    const promises = [];
+
+    if (files.length === 0) {
+        alert("Por favor, selecciona al menos una imagen para subir.");
+        return;
+    }
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const formData = new FormData();
+        formData.append("image", file);
+
+        promises.push(
+            fetch("https://api.imgur.com/3/image", {
+                method: "POST",
+                headers: {
+                    Authorization: "Client-ID bb0beed3488e033",
+                },
+                body: formData,
+            }).then((response) => response.json())
+        );
+    }
+
+    Promise.all(promises)
+        .then((results) => {
+            const imgurUrls = results.map((data) => (data.success ? data.data.link : null)).filter((url) => url !== null);
+            if (imgurUrls.length > 0) {
+                markAsPaid(currentOrderId, imgurUrls);
+            } else {
+                alert("Error al subir todas las imágenes.");
+            }
+        })
+        .catch((error) => {
+            console.error("Error al subir las imágenes:", error);
+            alert("Error al subir las imágenes.");
+        });
+}
+
+document.getElementById("imageInput").addEventListener("change", function (event) {
+    const file = event.target.files[0];
+    const previewContainer = document.getElementById("imagePreviewContainer");
+    const preview = document.getElementById("imagePreview");
+
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            preview.src = e.target.result;
+            previewContainer.style.display = "block";
+        };
+        reader.readAsDataURL(file);
+
+        const tabs = document.querySelectorAll(".tab");
+        const tabContents = document.querySelectorAll(".tab-content");
+
+        tabs.forEach((t) => t.classList.remove("active"));
+        tabContents.forEach((tc) => {
+            tc.classList.remove("active");
+            tc.style.display = "none";
+        });
+
+        const receiptTab = document.querySelector('.tab[data-tab="receipt"]');
+        if (receiptTab) {
+            receiptTab.classList.add("active");
+            const receiptContent = document.getElementById("receipt");
+            if (receiptContent) {
+                receiptContent.classList.add("active");
+                receiptContent.style.display = "block";
+            }
+        }
+    }
+});
+
+document.getElementById("uploadButtonModal").addEventListener("click", async () => {
+    const fileInput = document.getElementById("imageInput");
+    const file = fileInput.files[0];
+
+    if (!file) {
+        alert("Por favor seleccione una imagen para subir.");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+        const response = await fetch("https://api.imgur.com/3/image", {
+            method: "POST",
+            headers: {
+                Authorization: "Client-ID bb0beed3488e033",
+            },
+            body: formData,
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            receiptUrl = data.data.link;
+
+            const tabs = document.querySelectorAll(".tab");
+            const tabContents = document.querySelectorAll(".tab-content");
+
+            tabs.forEach((t) => t.classList.remove("active"));
+            tabContents.forEach((tc) => {
+                tc.classList.remove("active");
+                tc.style.display = "none";
+            });
+
+            const beneficiaryTab = document.querySelector('.tab[data-tab="beneficiary"]');
+            if (beneficiaryTab) {
+                beneficiaryTab.classList.add("active");
+                const beneficiaryContent = document.getElementById("beneficiary");
+                if (beneficiaryContent) {
+                    beneficiaryContent.style.display = "block";
+                }
+            }
+        } else {
+            alert("Error al subir la imagen: " + (data.message || "Error desconocido"));
+        }
+    } catch (error) {
+        console.error("Error al subir la imagen:", error);
+        alert("Error al subir la imagen.");
+    }
+});
+
+function triggerFileInput() {
+    document.getElementById("imageInput").click();
+}
+
+// ==============================================
+// FUNCIONES DE UTILIDAD
+// ==============================================
+function showLoader() {
+    document.getElementById("overlay").style.display = "block";
+    document.querySelector(".loader").style.display = "block";
+}
+
+function hideLoader() {
+    document.getElementById("overlay").style.display = "none";
+    document.querySelector(".loader").style.display = "none";
+}
+
+function showMessage(message, isError = true) {
+    const messageDiv = document.getElementById("message");
+    messageDiv.textContent = message;
+    messageDiv.style.color = isError ? "red" : "green";
+}
+
+function clearModalData() {
+    document.getElementById("imagePreview").style.display = "none";
+    document.getElementById("imagePreview").src = "";
+    document.getElementById("rejectionReason").value = "";
+    document.getElementById("orderIdConfirmation").innerText = "";
+    document.getElementById("toAmountConfirmation").innerText = "";
+    document.getElementById("beneficiaryName").innerText = "";
+    imageFile = null;
+}
+
+function checkForPaidOrders(currentOrders) {
+    currentOrders.forEach((currentOrder) => {
+        const previousOrder = lastFetchedOrders.find((order) => order["Order ID"] === currentOrder["Order ID"]);
+        if (previousOrder && previousOrder["Status"] !== currentOrder["Status"] && currentOrder["Status"] === "Paid") {
+            alert(`La orden ${currentOrder["Order ID"]} ha sido marcada como pagada.`);
+        }
+    });
+    lastFetchedOrders = currentOrders;
+}
+
+function checkInputs() {
+    const fromAmount = document.getElementById("from-amount").value;
+    const fromCurrency = document.getElementById("from-currency").value;
+    const toAmount = document.getElementById("to-amount").value;
+    const toCurrency = document.getElementById("to-currency").value;
+    const uploadButton = document.getElementById("openReceiptButton");
+
+    if (fromAmount && fromCurrency && toAmount && toCurrency) {
+        uploadButton.disabled = false;
+    } else {
+        uploadButton.disabled = true;
+    }
+}
+
+function clearAmountFields() {
+    document.getElementById("from-amount").value = "";
+    document.getElementById("to-amount").value = "";
+}
+
+function clearAmountFieldsOut() {
+    document.getElementById("from-amount-out").value = "";
+    document.getElementById("to-amount-out").value = "";
+}
+
+function updateUploadButtonText() {
+    const fromAmount = document.getElementById("from-amount").value;
+    const fromCurrency = document.getElementById("from-currency").value;
+    const toAmount = document.getElementById("to-amount").value;
+    const uploadButtonText = document.getElementById("uploadButtonText");
+
+    if (fromAmount && toAmount) {
+        uploadButtonText.textContent = `Haz clic aquí para subir un comprobante por el monto de ${fromAmount} ${fromCurrency}`;
+        document.getElementById("openReceiptButton").disabled = false;
+    } else {
+        uploadButtonText.textContent = "Haz clic aquí para subir un comprobante";
+        document.getElementById("openReceiptButton").disabled = true;
+    }
+}
+
+function handleInputWithDelay() {
+    clearTimeout(updateButtonTimeout);
+    updateButtonTimeout = setTimeout(updateUploadButtonText, 1000);
+}
+
+// ==============================================
+// EVENT LISTENERS
+// ==============================================
+document.getElementById("from-amount").addEventListener("input", handleInputWithDelay);
+document.getElementById("to-amount").addEventListener("input", handleInputWithDelay);
+
+document.getElementById("openReceiptButton").addEventListener("click", function () {
+    document.getElementById("imageInput").click();
+});
+
+document.getElementById("from-amount").addEventListener("input", checkInputs);
+document.getElementById("from-currency").addEventListener("change", checkInputs);
+document.getElementById("to-amount").addEventListener("input", checkInputs);
+document.getElementById("to-currency").addEventListener("change", checkInputs);
+
+document.getElementById("from-amount").addEventListener("input", function () {
+    lastEditedField = "from";
+    clearTimeout(conversionTimeout);
+    conversionTimeout = setTimeout(convertCurrency, 500);
+});
+
+document.getElementById("to-amount").addEventListener("input", function () {
+    lastEditedField = "to";
+    clearTimeout(conversionTimeout);
+    conversionTimeout = setTimeout(convertCurrency, 500);
+});
+
+document.getElementById("from-currency").addEventListener("change", async () => {
+    clearAmountFields();
+    await updateExchangeRate();
+    await convertCurrency();
+});
+
+document.getElementById("to-currency").addEventListener("change", async () => {
+    clearAmountFields();
+    await updateExchangeRate();
+    await convertCurrency();
+});
+
+document.getElementById("from-amount-out").addEventListener("input", function () {
+    lastEditedFieldOut = "from";
+    convertCurrencyOut();
+});
+
+document.getElementById("to-amount-out").addEventListener("input", function () {
+    lastEditedFieldOut = "to";
+    convertCurrencyOut();
+});
+
+document.getElementById("from-currency-out").addEventListener("change", async () => {
+    clearAmountFieldsOut();
+    await updateExchangeRateOut();
+    await convertCurrencyOut();
+});
+
+document.getElementById("to-currency-out").addEventListener("change", async () => {
+    clearAmountFieldsOut();
+    await updateExchangeRateOut();
+    await convertCurrencyOut();
+});
+
+document.getElementById("send-whatsapp").addEventListener("click", function () {
+    const fromAmount = document.getElementById("from-amount").value;
+    const fromCurrency = document.getElementById("from-currency").value;
+    const toAmount = document.getElementById("to-amount").value;
+    const toCurrency = document.getElementById("to-currency").value;
+    const exchangeRateText = document.getElementById("exchange-rate").textContent;
+
+    const message = `Hola! Quiero enviar ${fromAmount} ${fromCurrency}, que se convierte en ${toAmount} ${toCurrency}. ${exchangeRateText}`;
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/584121542322?text=${encodedMessage}`;
+
+    window.open(whatsappUrl, "_blank");
+});
+
+// ==============================================
+// FUNCIONES DE COMPARTIR Y MODALES
+// ==============================================
+function shareReceipt(receiptUrl) {
+    const message = `Mira este comprobante: ${receiptUrl}`;
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+    window.open(whatsappUrl, "_blank");
+}
+
+function openModal() {
+    document.getElementById("authContainer").style.display = "block";
+    document.getElementById("registerForm").style.display = "none";
+    document.getElementById("loginForm").style.display = "block";
+    document.getElementById("message").textContent = "";
+    document.body.classList.add("hidden");
+}
+
+function closelogingModal() {
+    const modal = document.getElementById("authContainer");
+    if (modal) {
+        modal.style.display = "none";
+    }
+    document.body.classList.remove("hidden");
+}
+
+function toggleForms() {
+    const registerForm = document.getElementById("registerForm");
+    const loginForm = document.getElementById("loginForm");
+
+    if (registerForm.style.display === "none") {
+        registerForm.style.display = "block";
+        loginForm.style.display = "none";
+        document.getElementById("message").textContent = "";
+    } else {
+        registerForm.style.display = "none";
+        loginForm.style.display = "block";
+        document.getElementById("message").textContent = "";
+    }
+}
+
+function openRegisterModal() {
+    document.getElementById("loginForm").style.display = "none";
+    document.getElementById("registerForm").style.display = "block";
+    document.getElementById("authContainer").style.display = "block";
+    document.getElementById("send-whatsapp").style.display = "none";
+}
+
+function openLoginModal() {
+    document.getElementById("resellerSection").style.display = "none";
+    document.getElementById("cashierSection").style.display = "none";
+    document.getElementById("takerSection").style.display = "none";
+
+    document.querySelector(".container").style.display = "none";
+    document.querySelector(".login-button").style.display = "none";
+    document.querySelector(".register-button").style.display = "none";
+
+    document.querySelector(".containerOut").style.display = "none";
+    document.getElementById("authContainer").style.display = "block";
+    document.getElementById("registerForm").style.display = "none";
+    document.getElementById("loginForm").style.display = "block";
+    document.getElementById("send-whatsapp").style.display = "none";
+}
+
+function closeModal() {
+    const authModal = document.getElementById("authContainer");
+    const takeOrderModal = document.getElementById("takeOrderModal");
+    if (authModal) {
+        authModal.style.display = "none";
+    }
+    if (takeOrderModal) {
+        takeOrderModal.style.display = "none";
+    }
+
+    document.querySelector(".container").style.display = "block";
+    document.querySelector(".login-button").style.display = "inline-block";
+    document.querySelector(".register-button").style.display = "inline-block";
+    document.body.classList.remove("hidden");
+}
+// ==============================================
+// FUNCIONES DE GESTIÓN DE PESTAÑAS
+// ==============================================
+
+const tabs = document.querySelectorAll(".tab");
+const tabContents = document.querySelectorAll(".tab-content");
+
+tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+        tabs.forEach((t) => t.classList.remove("active"));
+        tabContents.forEach((tc) => {
+            tc.classList.remove("active");
+            tc.style.display = "none";
+        });
+
+        tab.classList.add("active");
+        const selectedTab = tab.getAttribute("data-tab");
+        const selectedContent = document.getElementById(selectedTab);
+        if (selectedContent) {
+            selectedContent.classList.add("active");
+            selectedContent.style.display = "block";
+        }
+    });
+});
+
+    </script>
+</body>
+</html>
