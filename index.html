@@ -1158,28 +1158,31 @@ function showProfile(role, user) {
     document.getElementById("userName").textContent = ` ${user.name} `;
     document.getElementById("userEarnings").textContent = `$${user.earnings}`;
 
+    // Mostrar u ocultar secciones según el rol
     document.getElementById("resellerSection").style.display = "none";
     document.getElementById("cashierSection").style.display = "none";
     document.getElementById("takerSection").style.display = "none";
+
+    if (role === "reseller" || role === "cashier") {
+        document.getElementById("resellerSection").style.display = "block";
+        fetchOrders();
+    }
+
+    if (role === "cashier") {
+        document.getElementById("cashierSection").style.display = "block";
+        fetchPendingPayments();
+        fetchValidatedPayments();
+    }
+
+    if (role === "taker") {
+        document.getElementById("takerSection").style.display = "block";
+        fetchValidatedPayments();
+    }
 
     document.getElementById("userName").textContent = ` ${user.name} `;
     document.getElementById("userEarnings").textContent = ` ${user.earnings} `;
     document.getElementById("userRole").textContent = ` ${role} `;
     document.getElementById("userCurrency").textContent = userCurrency;
-
-    if (role === "reseller") {
-        document.getElementById("resellerSection").style.display = "block";
-        fetchOrders();
-    } else if (role === "cashier") {
-        document.getElementById("cashierSection").style.display = "block";
-        fetchPendingPayments();
-        fetchValidatedPayments(); // Mostrar órdenes disponibles para taker
-    } else if (role === "taker") {
-        document.getElementById("takerSection").style.display = "block";
-        fetchValidatedPayments();
-    } else {
-        showMessage("Rol no reconocido.");
-    }
 }
 
 function showProfileContainer() {
