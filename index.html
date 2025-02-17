@@ -678,7 +678,7 @@ header { color: #bb8a04; }
     </div>
     <div class="mb-4">
       <label>Total a pagar</label>
-      <p class="total">100.00 EUR</p>
+      <p class="total">00.00</p>
     </div>
     <button id="send-whatsapp" class="send-button" style="display: block; background-color: #25D366; border: none; border-radius: 5px; color: white; font-size: 18px; padding: 10px 20px; cursor: pointer; display: flex; align-items: center;">
         <i class="fab fa-whatsapp" style="font-size: 24px; margin-right: 8px;"></i>
@@ -1174,7 +1174,36 @@ function convertCurrency() {
     }
 }
       
-     function convertCurrencyOut() {
+
+      function updateExchangeRateOut() {
+    clearAmountFieldsOut();
+
+    const fromCurrencyOut = document.getElementById("from-currency-out").value;
+    const toCurrencyOut = document.getElementById("to-currency-out").value;
+
+    try {
+        const rateOut = exchangeRatesCache[`${fromCurrencyOut}_${toCurrencyOut}`];
+        if (rateOut === undefined) {
+            throw new Error("Tasa de cambio no disponible");
+        }
+
+        document.getElementById("exchange-rate-out").textContent = `Tasa de cambio: 1 ${fromCurrencyOut} = ${rateOut} ${toCurrencyOut}`;
+    } catch (error) {
+        document.getElementById("exchange-rate-out").textContent = "Tasa de cambio no disponible";
+    }
+}
+      
+// Función para calcular y actualizar el total
+function updateTotal() {
+    const fromAmount = parseFloat(document.getElementById("from-amount-out").value) || 0;
+    const fromCurrency = document.getElementById("from-currency-out").value;
+
+    // Mostrar el monto y la moneda de "from-amount-out" en el total
+    document.querySelector('.total').textContent = `${fromAmount.toFixed(2)} ${fromCurrency}`;
+}
+
+// Función para convertir moneda y actualizar el total
+function convertCurrencyOut() {
     const fromCurrencyOut = document.getElementById("from-currency-out").value;
     const toCurrencyOut = document.getElementById("to-currency-out").value;
     const fromAmountOut = parseFloat(document.getElementById("from-amount-out").value);
@@ -1201,28 +1230,35 @@ function convertCurrency() {
             const convertedAmountOut = toAmountOut / rateOut;
             document.getElementById("from-amount-out").value = convertedAmountOut.toFixed(2);
         }
+
+        // Actualizar el total después de la conversión
+        updateTotal();
     } catch (error) {
         console.error("Error al obtener la tasa de cambio:", error);
         document.getElementById("exchange-rate-out").textContent = "Tasa de cambio no disponible";
     }
 }
-      function updateExchangeRateOut() {
-    clearAmountFieldsOut();
 
-    const fromCurrencyOut = document.getElementById("from-currency-out").value;
-    const toCurrencyOut = document.getElementById("to-currency-out").value;
+// Event listeners para actualizar el total y realizar la conversión
+document.getElementById("from-amount-out").addEventListener("input", function () {
+    lastEditedFieldOut = "from";
+    convertCurrencyOut();
+});
 
-    try {
-        const rateOut = exchangeRatesCache[`${fromCurrencyOut}_${toCurrencyOut}`];
-        if (rateOut === undefined) {
-            throw new Error("Tasa de cambio no disponible");
-        }
+document.getElementById("to-amount-out").addEventListener("input", function () {
+    lastEditedFieldOut = "to";
+    convertCurrencyOut();
+});
 
-        document.getElementById("exchange-rate-out").textContent = `Tasa de cambio: 1 ${fromCurrencyOut} = ${rateOut} ${toCurrencyOut}`;
-    } catch (error) {
-        document.getElementById("exchange-rate-out").textContent = "Tasa de cambio no disponible";
-    }
-}
+document.getElementById("from-currency-out").addEventListener("change", function () {
+    lastEditedFieldOut = "from";
+    convertCurrencyOut();
+});
+
+document.getElementById("to-currency-out").addEventListener("change", function () {
+    lastEditedFieldOut = "to";
+    convertCurrencyOut();
+});
       
 // ==============================================
 // FUNCIONES DE GESTIÓN DE ÓRDENES
@@ -1888,22 +1924,6 @@ function handleInputWithDelay() {
     updateButtonTimeout = setTimeout(updateUploadButtonText, 1000);
 }
       
-      // Función para calcular y actualizar el total
-function updateTotal() {
-    const fromAmount = parseFloat(document.getElementById("from-amount-out").value) || 0;
-    const toAmount = parseFloat(document.getElementById("to-amount-out").value) || 0;
-
-    // Aquí puedes agregar lógica para calcular el total basado en las tasas de cambio
-    const total = fromAmount; // O cualquier lógica que necesites para calcular el total
-
-    // Actualiza el elemento que muestra el total
-    document.querySelector('.total').textContent = `${total.toFixed(2)} ${document.getElementById("to-currency-out").value}`;
-}
-
-// Agregar event listeners para actualizar el total cuando cambien las cantidades
-document.getElementById("from-amount-out").addEventListener("input", updateTotal);
-document.getElementById("to-amount-out").addEventListener("input", updateTotal);
-
 // ==============================================
 // EVENT LISTENERS
 // ==============================================
