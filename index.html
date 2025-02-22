@@ -1395,14 +1395,11 @@ function fetchPendingPayments() {
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <strong>Estado:</strong> ${payment["Status"]} <br>
                         </div>
-                        <!-- Botón para ver el comprobante -->
-                        <div class="input-group">
-                            <button onclick="showReceipt('${payment["Order ID"]}', '${payment["Receipt URL"]}')">Ver Comprobante</button>
-                        </div>
-                        <!-- Contenedor para el comprobante -->
-                        <div id="receipt-${payment["Order ID"]}" style="display: none; margin-top: 10px;">
+                        <!-- Mostrar el comprobante directamente -->
+                        <div style="margin-top: 10px;">
                             <hr style="margin: 10px 0; border: 1px solid #444;">
                             <img src="${payment["Receipt URL"]}" alt="Comprobante" style="max-width: 100%; margin-top: 10px;">
+                            <p><strong>Monto:</strong> ${payment["From Amount"]} ${payment["From Currency"]}</p>
                         </div>
                         <!-- Botones de validación y rechazo -->
                         <div class="button-container">
@@ -1427,6 +1424,7 @@ function fetchPendingPayments() {
             pendingPaymentsList.innerHTML = "<li>Error al cargar los pagos pendientes.</li>";
         });
 }
+
 
 function fetchValidatedPayments() {
     fetch(`${apiUrl}?path=fetchValidatedPayments`, {
@@ -1482,25 +1480,29 @@ function showRejectionOptions(orderId) {
     }
 }
 
-function showReceipt(orderId, receiptUrl) {
-    // Obtener el contenedor del comprobante
-    const receiptContainer = document.getElementById(`receipt-${orderId}`);
+function showReceipt(receiptUrls, orderId) {
+    console.log("showReceipt called with:", receiptUrls, orderId);
+    const receiptDetails = document.getElementById(`receiptDetails-${orderId}`);
+    const receiptImagesContainer = document.getElementById(`receiptImages-${orderId}`);
 
-    // Si el contenedor existe, alternar su visibilidad
-    if (receiptContainer) {
-        if (receiptContainer.style.display === "none") {
-            // Mostrar el comprobante
-            receiptContainer.style.display = "block";
-            const img = receiptContainer.querySelector("img");
-            if (img) {
-                img.src = receiptUrl; // Asegurarse de que la URL sea correcta
-            }
-        } else {
-            // Ocultar el comprobante
-            receiptContainer.style.display = "none";
-        }
+    receiptImagesContainer.innerHTML = ""; // Limpiar contenido anterior
+
+    const urls = receiptUrls.split(",").map((url) => url.trim());
+
+    urls.forEach((url) => {
+        const img = document.createElement("img");
+        img.src = url;
+        img.alt = "Receipt";
+        img.style.maxWidth = "100%";
+        img.style.marginTop = "10px";
+        receiptImagesContainer.appendChild(img);
+    });
+
+    // Alternar la visibilidad de los detalles de recibo
+    if (receiptDetails.style.display === "none") {
+        receiptDetails.style.display = "block";
     } else {
-        console.error(`No se encontró el contenedor del comprobante para la orden ${orderId}`);
+        receiptDetails.style.display = "none";
     }
 }
       
