@@ -741,9 +741,9 @@ header { color: #bb8a04; }
       <div class="input-group">
         <input id="from-amount-out" type="number" min="0" step="any" placeholder="Cantidad" value="100.00">
         <select id="from-currency-out">
-          <option selected value="CLP">CLP - Chile</option>
+          <option value="CLP">CLP - Chile</option>
           <option value="COP">COP - Colombia</option>
-          <option value="USD">USD - Estados Unidos</option>
+          <option selected value="USD">USD - Estados Unidos</option>
           <option value="EUR">EUR - España</option>
           <option value="PEN">PEN - Perú</option>
           <option value="ECU">ECU - Ecuador</option>
@@ -760,13 +760,13 @@ header { color: #bb8a04; }
       <div class="input-group">
         <input id="to-amount-out" type="number" min="0" step="any" placeholder="Cantidad" value="431,092.98">
         <select id="to-currency-out">
-           <option selected value="CLP">CLP - Chile</option>
+           <option value="CLP">CLP - Chile</option>
            <option value="COP">COP - Colombia</option>
            <option value="ECU">ECU - Ecuador</option>
            <option value="EUR">EUR - España</option>
            <option value="USD">USD - Estados Unidos</option>
            <option value="PEN">PEN - Perú</option> 
-           <option value="VES">VES - Venezuela</option>
+           <option selected value="VES">VES - Venezuela</option>
         </select>
       </div>
     </div>
@@ -866,14 +866,14 @@ header { color: #bb8a04; }
 
     <div id="cashierSection" style="display: none;">
         <div id="cashierContainer">
-            <h2>Ordenes</h2>
+            <h2>Sin Validar</h2>
             <ul id="pendingPaymentsList">
             </ul>
             <div id="imagePreviewContainer" style="display: none;">
                 <h3>Vista Previa de la Imagen</h3>
                 <img id="imagePreview" alt="Image Preview" style="max-width: 100%; margin-top: 10px;" />
             </div>
-          <h2>Ordenes disponibles</h2>
+          <h2>Por Pagar</h2>
             <ul id="validatedPaymentsList">
             </ul>
           
