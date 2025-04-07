@@ -5,73 +5,184 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Datos para Transferencias Internacionales</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-            color: #333;
-        }
-        h1 {
-            color: #2c3e50;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .country-selector {
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        select {
-            padding: 10px;
-            font-size: 16px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            width: 300px;
-        }
-        .country-info {
-            background-color: #f9f9f9;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .country-info h2 {
-            color: #2980b9;
-            margin-top: 0;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-        }
-        .info-item {
-            margin-bottom: 15px;
-        }
+<style>
+    * { box-sizing: border-box; }
+    
+    body {
+        font-family: 'Ginebra', sans-serif;
+        background-color: #0D1a30;
+        color: #e6e8e0;
+        margin: 0;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+    }
+    
+    h1 {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        color: #E6E0d8;
+        text-align: center;
+    }
+    
+    .country-selector {
+        margin-bottom: 20px;
+        text-align: center;
+        width: 100%;
+    }
+    
+    select {
+        padding: 12px;
+        font-size: 16px;
+        border-radius: 8px;
+        border: 1px solid #2c3e50;
+        width: 100%;
+        max-width: 400px;
+        background-color: #1a2a40;
+        color: #e6e8e0;
+        transition: border-color 0.3s;
+    }
+    
+    select:focus {
+        border-color: #bb8a04;
+        outline: none;
+    }
+    
+    .country-info {
+        background-color: #1a2a40;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        width: 100%;
+        max-width: 900px;
+        border: 1px solid #2c3e50;
+    }
+    
+    .country-info h2 {
+        color: #bb8a04;
+        margin-top: 0;
+        border-bottom: 1px solid #2c3e50;
+        padding-bottom: 10px;
+        font-size: 1.5rem;
+    }
+    
+    .info-item {
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .info-item strong {
+        display: inline-block;
+        width: 180px;
+        color: #e6e8e0;
+        font-size: 0.875rem;
+        font-weight: bold;
+    }
+    
+    .info-item span {
+        flex: 1;
+        min-width: 200px;
+        padding: 8px 0;
+    }
+    
+    .note {
+        font-style: italic;
+        color: #bb8a04;
+        margin-top: 20px;
+        font-size: 14px;
+        border-top: 1px solid #2c3e50;
+        padding-top: 10px;
+    }
+    
+    .hidden {
+        display: none;
+    }
+    
+    .copy-btn {
+        background-color: #bb8a04;
+        color: #0D1a30;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-left: 10px;
+        font-size: 14px;
+        font-weight: bold;
+        transition: background-color 0.3s, transform 0.2s;
+    }
+    
+    .copy-btn:hover {
+        background-color: #a67a03;
+        transform: scale(1.05);
+    }
+    
+    @media (max-width: 768px) {
         .info-item strong {
-            display: inline-block;
-            width: 150px;
-            color: #555;
+            width: 100%;
+            margin-bottom: 5px;
         }
-        .note {
-            font-style: italic;
-            color: #7f8c8d;
-            margin-top: 20px;
-            font-size: 14px;
+        
+        .info-item span {
+            width: 100%;
         }
-        .hidden {
-            display: none;
-        }
+        
         .copy-btn {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-left: 10px;
-            font-size: 12px;
+            margin-left: 0;
+            margin-top: 8px;
+            width: 100%;
         }
-        .copy-btn:hover {
-            background-color: #2980b9;
-        }
+    }
+    
+    /* Estilos para el header si decides agregarlo */
+    header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        background-color: #0D1a30;
+        color: #e6e8e0;
+        width: 100%;
+        max-width: 1200px;
+        margin-bottom: 20px;
+    }
+    
+    .logo-container h1 {
+        color: #E6E0D8;
+        margin-left: -24px;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+    
+    .logo-container {
+        display: flex;
+        align-items: center;
+    }
+    
+    .menu-icon {
+        cursor: pointer;
+        font-size: 24px;
+        color: #bb8a04;
+    }
+    
+    .earnings-container {
+        display: flex;
+        align-items: center;
+        margin-left: auto;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: bold;
+        background-color: #1a2a40;
+        border: 2px solid #bb8a04;
+        transition: background-color 0.3s;
+    }
     </style>
 </head>
 <body>
