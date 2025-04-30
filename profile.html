@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil - WE SEND MONEY</title>
+    <link rel="icon" href="logo.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <img src="logo.svg" alt="Logo" width="70" height="70">
+            <h1>esendMoney</h1>
+        </div>
+        <span class="menu-icon" onclick="toggleMenu()">☰</span>
+    </header>
+
+    <div id="menu" class="menu">
+        <div class="menu-content">
+            <a href="calculator.html">Cotizador</a>
+            <a href="orders.html">Órdenes</a>
+            <a href="profile.html">Perfil</a>
+            <a onclick="logout()">Cerrar Sesión</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Perfil de Usuario</h2>
+        <div class="input-group">
+            <strong>Nombre:</strong> <span id="userName"></span>
+        </div>
+        <div class="input-group">
+            <strong>Rol:</strong> <span id="userRole"></span>
+        </div>
+        <div class="input-group">
+            <hr>
+        </div>
+        <div class="input-group">
+            <strong>Moneda:</strong> <span id="userCurrency"></span>
+        </div>
+        <div class="input-group">
+            <strong>Fondos (Saldo disponible):</strong> 
+            <span id="userFunds"></span>
+        </div>
+        <div class="input-group">
+            <strong>Comisiones (USD):</strong> 
+            <span id="userEarnings">0.00</span>
+        </div>
+        <div class="input-group">
+            <a href="mapa.html" target="_blank">Ver Mapa Bancario</a>
+        </div>
+        <button onclick="logout()" class="logout-button">
+            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+        </button>
+    </div>
+
+    <div class="toolbar">
+        <span class="toolbar-text" onclick="window.location.href='calculator.html'">
+            <i class="fas fa-dollar-sign"></i>
+        </span>
+        <span class="toolbar-text" onclick="window.location.href='orders.html'">
+            <i class="fas fa-list-alt"></i>
+        </span>
+        <span class="toolbar-text" onclick="window.location.href='profile.html'">
+            <i class="fas fa-user"></i>
+        </span>
+    </div>
+
+    <script src="scripts.js"></script>
+
+</body>
+</html>
