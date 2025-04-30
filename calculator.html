@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora - WE SEND MONEY</title>
+    <link rel="icon" href="logo.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <img src="logo.svg" alt="Logo" width="70" height="70">
+            <h1>esendMoney</h1>
+        </div>
+        
+        <span class="menu-icon" onclick="toggleMenu()">☰</span>
+    </header>
+
+    <div id="menu" class="menu">
+        <div class="menu-content">
+            
+            <a href="calculator.html">Cotizador</a>
+            <a href="orders.html">Órdenes</a>
+            <a href="profile.html">Perfil</a>
+            <a onclick="logout()">Cerrar Sesión</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>Envío de Remesas</h1>
+        <div class="tabs">
+            <div class="tab active" data-tab="calculator">1. Cotiza tu Remesa</div>
+            <div id="calculator" class="tab-content active">
+                <div class="input-group">
+                    <label for="from-amount">Tú envías:</label>
+                    <div class="currency-input">
+                        <input type="number" id="from-amount" placeholder="Cantidad" min="0" step="any">
+                        <select id="from-currency">
+                            <option selected value="CLP">CLP - Chile</option>
+                            <option value="COP">COP - Colombia</option>
+                            <option value="ECU">ECU - Ecuador</option>
+                            <option value="EUR">EUR - España</option>
+                            <option value="USD">USD - Estados Unidos</option>
+                            <option value="PEN">PEN - Perú</option> 
+                            <option value="VES">VES - Venezuela</option>
+                            <option value="EFC">EFC - Venezuela</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="to-amount">Ellos reciben:</label>
+                    <div class="currency-input">
+                        <input type="number" id="to-amount" placeholder="Cantidad" min="0" step="any">
+                        <select id="to-currency">
+                            <option value="CLP">CLP - Chile</option>
+                            <option value="COP">COP - Colombia</option>
+                            <option value="ECU">ECU - Ecuador</option>
+                            <option value="EUR">EUR - España</option>
+                            <option value="USD">USD - Estados Unidos</option>
+                            <option value="PEN">PEN - Perú</option> 
+                            <option selected value="VES">VES - Venezuela</option>
+                            <option value="EFC">EFC - Venezuela</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="exchange-rate" id="exchange-rate">@weSendMoney</div>
+                <p style="color: #e0e0e0; text-align: center;">Ya cotizaste?</p>
+                <div class="image-upload">
+                    <label for="imageInput" class="image-upload-label">
+                        <span id="uploadButtonText">Haz clic aquí para subir un comprobante</span>
+                        <button id="openReceiptButton" disabled>Subir Comprobante de Pago</button>
+                    </label>
+                    <img id="imgPreviewReseller" style="display:none; max-width: 100%; margin-top: 10px;" />
+                </div>
+            </div>
+            <div class="tab" data-tab="receipt">2. Verifica tu comprobante</div>
+            <div id="receipt" class="tab-content">
+                <div id="imagePreviewContainer" class="image-preview">
+                    <h3>Vista Previa de la Imagen</h3>
+                    <img id="imagePreview" alt="Image Preview"/>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button type="button" id="uploadButtonModal">Subir Imagen</button>
+                    </div>
+                </div>
+            </div>
+            <div class="tab" data-tab="beneficiary">3. Envia a tu beneficiario</div>
+            <div id="beneficiary" class="tab-content">
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label for="beneficiaryData">Datos del Beneficiario:</label>
+                    <textarea id="beneficiaryData" rows="5" placeholder="Nombre Apellido, CI: xxxxxxxxx, Teléfono: (xxxx) xxxxxxx, Banco: Nombre del Banco, N. de Cuenta: xxxxxxxxx" required></textarea>
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button type="button" id="submitPayment">Enviar Pago</button>
+                </div>
+            </div>
+        </div>
+        <input type="file" id="imageInput" accept="image/*" style="display: none;">
+    </div>
+
+    <div class="toolbar">
+        <span class="toolbar-text" onclick="window.location.href='calculator.html'">
+            <i class="fas fa-dollar-sign"></i>
+        </span>
+        <span class="toolbar-text" onclick="window.location.href='orders.html'">
+            <i class="fas fa-list-alt"></i>
+        </span>
+        <span class="toolbar-text" onclick="window.location.href='profile.html'">
+            <i class="fas fa-user"></i>
+        </span>
+    </div>
+
+    <script src="scripts.js"></script>
+</body>
+</html>
