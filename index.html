@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WE SEND MONEY</title>
+    <link rel="icon" href="logo.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <img src="logo.svg" alt="Logo" width="70" height="70">
+            <h1>esendMoney</h1>
+        </div>
+        <span class="menu-icon" onclick="toggleMenu()">☰</span>
+    </header>
+
+    <div id="menu" class="menu">
+        <div class="menu-content">
+            <a href="login.html" class="login-button">Iniciar Sesión</a>
+            <a href="register.html" class="register-button">Registrarse</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>Envíos de dinero rápidos y seguros</h1>
+        <div class="mb-4">
+            <label for="from-amount-out">Tú envías</label>
+            <div class="input-group">
+                <input id="from-amount-out" type="number" min="0" step="any" placeholder="Cantidad" value="0">
+                <select id="from-currency-out">
+                    <option value="CLP">CLP - Chile</option>
+                    <option value="COP">COP - Colombia</option>
+                    <option selected value="USD">USD - Estados Unidos</option>
+                    <option value="EUR">EUR - España</option>
+                    <option value="PEN">PEN - Perú</option>
+                    <option value="ECU">ECU - Ecuador</option>
+                    <option value="VES">VES - Venezuela</option>
+                </select>
+            </div>
+        </div>
+        <div class="promo-banner">
+            <p>¡Tarifa promocional para tu primer envío!</p>
+            <div class="exchange-rate" id="exchange-rate-out">@WeSendMoney</div>
+        </div>
+        <div class="mb-4">
+            <label for="to-amount-out">Ellos reciben</label>
+            <div class="input-group">
+                <input id="to-amount-out" type="number" min="0" step="any" placeholder="Cantidad" value="0">
+                <select id="to-currency-out">
+                    <option value="CLP">CLP - Chile</option>
+                    <option value="COP">COP - Colombia</option>
+                    <option value="ECU">ECU - Ecuador</option>
+                    <option value="EUR">EUR - España</option>
+                    <option value="USD">USD - Estados Unidos</option>
+                    <option value="PEN">PEN - Perú</option> 
+                    <option selected value="VES">VES - Venezuela</option>
+                </select>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label>Total a pagar</label>
+            <p class="total">100.00 USD</p>
+        </div>
+        <button id="send-whatsapp" class="send-button">
+            <i class="fab fa-whatsapp"></i>
+            Enviar
+        </button>
+        <p class="footer-text">Las comisiones se encuentran incluidas en nuestras tasas.</p>
+    </div>
+
+    <div id="overlay" style="display: none;"></div>
+    <div class="loader" style="display: none;"></div>
+
+    <script src="scripts.js"></script>
+
+</body>
+</html>
