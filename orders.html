@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Órdenes - WE SEND MONEY</title>
+    <link rel="icon" href="logo.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        /* styles.css (añadir esto) */
+        .orders-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #2c3e50;
+        }
+        
+        .orders-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            color: #e6e8e0;
+            border-bottom: 2px solid transparent;
+            margin-right: 10px;
+        }
+        
+        .orders-tab.active {
+            color: #bb8a04;
+            border-bottom: 2px solid #bb8a04;
+        }
+        
+        .orders-tab-content {
+            display: none;
+        }
+        
+        .orders-tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <img src="logo.svg" alt="Logo" width="70" height="70">
+            <h1>esendMoney</h1>
+        </div>
+        <span class="menu-icon" onclick="toggleMenu()">☰</span>
+    </header>
+
+    <div id="menu" class="menu">
+        <div class="menu-content">
+            <a href="calculator.html">Cotizador</a>
+            <a href="orders.html">Órdenes</a>
+            <a href="profile.html">Perfil</a>
+            <a onclick="logout()">Cerrar Sesión</a>
+        </div>
+    </div>
+
+<div class="container">
+    <div class="orders-tabs">
+        <div class="orders-tab active" data-tab="my-orders">Mis Órdenes</div>
+        <div class="orders-tab" data-tab="pending">Sin Validar</div>
+        <div class="orders-tab" data-tab="validated">Por Pagar</div>
+    </div>
+    
+    <div id="ordersContainer" class="orders-tab-content active" data-tab-content="my-orders">
+        <h2>Mis Órdenes</h2>
+        <ul id="ordersList"></ul>
+    </div>
+    
+    <div id="pendingPaymentsContainer" class="orders-tab-content" data-tab-content="pending">
+        <h2>Órdenes Sin Validar</h2>
+        <ul id="pendingPaymentsList"></ul>
+    </div>
+    
+    <div id="validatedPaymentsContainer" class="orders-tab-content" data-tab-content="validated">
+        <h2>Órdenes Por Pagar</h2>
+        <ul id="validatedPaymentsList"></ul>
+    </div>
+</div>
+
+    <div id="takeOrderModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h1>Información de la Orden</h1>
+            <p><strong>Order ID:</strong> <span id="orderIdConfirmation"></span></p>
+            <p><strong>Monto a Pagar:</strong> <span id="toAmountConfirmation"></span></p>
+            <p><strong>Beneficiario:</strong> <span id="beneficiaryName"></span></p>
+            
+            <div class="image-upload">
+                <label for="imageUpload" class="image-upload-label">
+                    <span>Haz clic aquí para subir tu comprobante</span>
+                    <input type="file" id="imageUpload" accept="image/*" multiple onchange="previewImages(event)" />
+                </label>
+                <div id="imagePreviews" style="display: none; margin-top: 15px;"></div>
+            </div>
+            
+            <div class="input-group">
+                <button id="uploadButton" style="display: none; margin-top: 15px;" onclick="uploadImages()">
+                    Marcar orden como pagada
+                </button>
+            </div>
+            
+            <h2>Rechazar Orden</h2>
+            <div class="button-container">
+                <button class="rejection-button" onclick="rejectPayment(currentOrderId, 'error_datos')">Error en datos</button>
+                <button class="rejection-button" onclick="rejectPayment(currentOrderId, 'equivocacion')">Me equivoqué de orden</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <span class="toolbar-text" onclick="window.location.href='calculator.html'">
+            <i class="fas fa-dollar-sign"></i>
+        </span>
+        <span class="toolbar-text" onclick="window.location.href='orders.html'">
+            <i class="fas fa-list-alt"></i>
+        </span>
+        <span class="toolbar-text" onclick="window.location.href='profile.html'">
+            <i class="fas fa-user"></i>
+        </span>
+    </div>
+
+    <script src="scripts.js"></script>
+
+</body>
+</html>
