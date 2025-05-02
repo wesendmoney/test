@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", async () => {
              !window.location.pathname.includes("index.html")) {
         // Limpiar datos de sesión inválidos
         localStorage.removeItem("isLoggedIn");
-        window.location.href = "login.html";
+        window.location.href = "index.html";
     }
     
     // Configurar eventos comunes
