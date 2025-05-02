@@ -23,44 +23,67 @@ let userTransactions = [];
 // FUNCIONES DE INICIO Y CARGA
 // ==============================================
 document.addEventListener("DOMContentLoaded", async () => {
-    const storedUser = localStorage.getItem("currentUser");
-    const storedRole = localStorage.getItem("userRole");
-
-    if (storedUser && storedRole) {
-        const user = JSON.parse(storedUser);
-        currentUser = user.name;
-        userCurrency = user.country;
-
-        // Mostrar información básica del usuario solo en la página de perfil
-        if (window.location.pathname.includes("profile.html")) {
-            document.getElementById("userName").textContent = user.name;
-            document.getElementById("userRole").textContent = storedRole;
-            document.getElementById("userCurrency").textContent = userCurrency;
-            
-            // Cargar y mostrar ganancias SOLO en el perfil
-            await setupProfilePage();
+    // Verificar si hay una sesión activa
+        const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+        const lastActivity = parseInt(localStorage.getItem("lastActivity") || "0");
+        const sessionTimeout = 24 * 60 * 60 * 1000; // 24 horas de timeout
+    
+        // Páginas que requieren autenticación (excluye login, register e index)
+        const privatePages = [
+            'calculator.html',
+            'orders.html', 
+            'profile.html'
+        ];
+        
+        const currentPage = window.location.pathname.split('/').pop();
+        
+        // Redirigir si no está autenticado en una página privada
+        if (privatePages.includes(currentPage)) {
+            if (!isLoggedIn || (Date.now() - lastActivity > sessionTimeout)) {
+                localStorage.removeItem("isLoggedIn"); // Limpiar sesión inválida
+                window.location.href = "index.html";
+                return; // Detener ejecución
+            }
+            // Actualizar última actividad si la sesión es válida
+            localStorage.setItem("lastActivity", Date.now());
         }
 
-        // Cargar tasas de cambio
-        await fetchAllExchangeRates();
+    // Si hay sesión activa y no ha expirado
+    if (isLoggedIn && (Date.now() - lastActivity < sessionTimeout)) {
+        const storedUser = localStorage.getItem("currentUser");
+        const storedRole = localStorage.getItem("userRole");
 
-        // Configurar eventos según la página
-        if (window.location.pathname.includes("calculator.html") || window.location.pathname === "/") {
-            setupCalculatorPage();
-        } else if (window.location.pathname.includes("orders.html")) {
-            setupOrdersPage();
+        if (storedUser && storedRole) {
+            const user = JSON.parse(storedUser);
+            currentUser = user.name;
+            userCurrency = user.country;
+
+            // Actualizar última actividad
+            localStorage.setItem("lastActivity", Date.now());
+
+            // Resto de tu lógica de carga...
+            if (window.location.pathname.includes("profile.html")) {
+                document.getElementById("userName").textContent = user.name;
+                document.getElementById("userRole").textContent = storedRole;
+                document.getElementById("userCurrency").textContent = userCurrency;
+                await setupProfilePage();
+            }
+
+            await fetchAllExchangeRates();
+
+            if (window.location.pathname.includes("calculator.html") || window.location.pathname === "/") {
+                setupCalculatorPage();
+            } else if (window.location.pathname.includes("orders.html")) {
+                setupOrdersPage();
+            }
         }
     } 
-    // Páginas públicas
+    // Redirigir a login si no está autenticado en páginas privadas
     else if (!window.location.pathname.includes("login.html") && 
              !window.location.pathname.includes("register.html") && 
-             window.location.pathname.includes("index.html")) {
-        // No hacer nada, permitir acceso a la calculadora pública
-        setupCalculatorPage();
-    } 
-    // Redirigir a login si no está autenticado
-    else if (!window.location.pathname.includes("login.html") && 
-             !window.location.pathname.includes("register.html")) {
+             !window.location.pathname.includes("index.html")) {
+        // Limpiar datos de sesión inválidos
+        localStorage.removeItem("isLoggedIn");
         window.location.href = "login.html";
     }
     
@@ -298,9 +321,13 @@ function login() {
         })
         .then((data) => {
             if (data.success) {
+                // Guardar todos los datos relevantes en localStorage
                 localStorage.setItem("currentUser", JSON.stringify(data.user));
                 localStorage.setItem("userRole", data.role);
                 localStorage.setItem("userCurrency", data.user.country);
+                localStorage.setItem("userEmail", data.user.email); // Guardar email para futuras verificaciones
+                localStorage.setItem("isLoggedIn", "true"); // Bandera de sesión activa
+                localStorage.setItem("lastActivity", Date.now()); // Registrar última actividad
 
                 currentUser = data.user.name;
                 userCurrency = data.user.country;
@@ -354,13 +381,20 @@ function register() {
 }
 
 function logout() {
+    // Limpiar todas las variables globales
     currentUser = "";
     userCurrency = "";
-
+    lastFetchedOrders = [];
+    
+    // Limpiar todo el localStorage relacionado con la sesión
     localStorage.removeItem("currentUser");
     localStorage.removeItem("userRole");
     localStorage.removeItem("userCurrency");
-
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("lastActivity");
+    
+    // Redirigir a la página de inicio
     window.location.href = "index.html";
 }
 
@@ -370,10 +404,27 @@ function logout() {
 function toggleMenu() {
     const menu = document.getElementById("menu");
     if (menu) {
+        // Mostrar opciones diferentes según si hay sesión activa
+        if (localStorage.getItem("isLoggedIn") === "true") {
+            menu.innerHTML = `
+                <div class="menu-content">
+                    <a href="calculator.html">Cotizador</a>
+                    <a href="orders.html">Órdenes</a>
+                    <a href="profile.html">Perfil</a>
+                    <a onclick="logout()">Cerrar Sesión</a>
+                </div>
+            `;
+        } else {
+            menu.innerHTML = `
+                <div class="menu-content">
+                    <a href="login.html" class="login-button">Iniciar Sesión</a>
+                    <a href="register.html" class="register-button">Registrarse</a>
+                </div>
+            `;
+        }
         menu.style.display = menu.style.display === "block" ? "none" : "block";
     }
 }
-
 document.addEventListener('click', function(event) {
     const menu = document.getElementById("menu");
     const menuIcon = document.querySelector('.menu-icon');
