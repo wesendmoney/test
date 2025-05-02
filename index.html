@@ -74,6 +74,11 @@
     <div id="overlay" style="display: none;"></div>
     <div class="loader" style="display: none;"></div>
 
+    <script>
+        if (localStorage.getItem("isLoggedIn") === "true") {
+            window.location.href = "calculator.html";
+        }
+    </script>
     <script src="scripts.js"></script>
 
 </body>
