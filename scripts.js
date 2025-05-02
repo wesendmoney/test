@@ -116,6 +116,10 @@ async function fetchAllExchangeRates() {
 }
 
 function setupCalculatorPage() {
+    // Cargar tasa de cambio al inicio
+    updateExchangeRate(); // Para calculator.html
+    updateExchangeRateOut(); // Para index.html
+    
     if (document.getElementById("from-amount")) {
         document.getElementById("from-amount").addEventListener("input", function() {
             lastEditedField = "from";
@@ -499,21 +503,16 @@ function convertCurrency() {
 }
 
 function updateExchangeRate() {
-    clearAmountFields();
+    const fromCurrency = document.getElementById("from-currency")?.value;
+    const toCurrency = document.getElementById("to-currency")?.value;
+    const rateElement = document.getElementById("exchange-rate");
 
-    const fromCurrency = document.getElementById("from-currency").value;
-    const toCurrency = document.getElementById("to-currency").value;
+    if (!fromCurrency || !toCurrency || !rateElement) return;
 
-    try {
-        const rate = exchangeRatesCache[`${fromCurrency}_${toCurrency}`];
-        if (rate === undefined) {
-            throw new Error("Tasa de cambio no disponible");
-        }
-
-        document.getElementById("exchange-rate").textContent = `Tasa de cambio: 1 ${fromCurrency} = ${rate} ${toCurrency}`;
-    } catch (error) {
-        document.getElementById("exchange-rate").textContent = "Tasa de cambio no disponible";
-    }
+    const rate = exchangeRatesCache[`${fromCurrency}_${toCurrency}`];
+    rateElement.textContent = rate !== undefined 
+        ? `Tasa de cambio: 1 ${fromCurrency} = ${rate} ${toCurrency}`
+        : "Tasa no disponible";
 }
 
 function convertCurrencyOut() {
@@ -551,22 +550,17 @@ function convertCurrencyOut() {
     }
 }
 
-function updateExchangeRateOut() {
-    clearAmountFieldsOut();
+function updateExchangeRate() {
+    const fromCurrency = document.getElementById("from-currency")?.value;
+    const toCurrency = document.getElementById("to-currency")?.value;
+    const rateElement = document.getElementById("exchange-rate");
 
-    const fromCurrencyOut = document.getElementById("from-currency-out").value;
-    const toCurrencyOut = document.getElementById("to-currency-out").value;
+    if (!fromCurrency || !toCurrency || !rateElement) return;
 
-    try {
-        const rateOut = exchangeRatesCache[`${fromCurrencyOut}_${toCurrencyOut}`];
-        if (rateOut === undefined) {
-            throw new Error("Tasa de cambio no disponible");
-        }
-
-        document.getElementById("exchange-rate-out").textContent = `Tasa de cambio: 1 ${fromCurrencyOut} = ${rateOut} ${toCurrencyOut}`;
-    } catch (error) {
-        document.getElementById("exchange-rate-out").textContent = "Tasa de cambio no disponible";
-    }
+    const rate = exchangeRatesCache[`${fromCurrency}_${toCurrency}`];
+    rateElement.textContent = rate !== undefined 
+        ? `Tasa de cambio: 1 ${fromCurrency} = ${rate} ${toCurrency}`
+        : "Tasa no disponible";
 }
 
 function updateTotal() {
