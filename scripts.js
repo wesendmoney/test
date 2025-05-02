@@ -68,27 +68,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     setupCommonEvents();
 });
 
+
+let lastRatesUpdate = 0;
+const RATES_CACHE_TIME = 3000000;
+
 async function fetchAllExchangeRates() {
+    const now = Date.now();
+    if (now - lastRatesUpdate < RATES_CACHE_TIME && Object.keys(exchangeRatesCache).length > 0) {
+        return;
+    }
+    
     try {
+        showLoader();
         const response = await fetch(`${apiUrl}?path=getExchangeRate`);
         const data = await response.json();
         
         if (data.status === 200) {
             exchangeRatesCache = data.exchangeRates;
-            console.log("Tasas de cambio cargadas:", exchangeRatesCache);
-            
-            // Actualizar tasas en la calculadora si está presente
-            if (document.getElementById("exchange-rate")) {
-                updateExchangeRate();
-            }
-            if (document.getElementById("exchange-rate-out")) {
-                updateExchangeRateOut();
-            }
-        } else {
-            console.error("Error al obtener las tasas de cambio:", data.message);
+            lastRatesUpdate = now;
         }
-    } catch (error) {
-        console.error("Error en la solicitud:", error);
+    } finally {
+        hideLoader();
     }
 }
 
@@ -1190,29 +1190,6 @@ function triggerFileInput() {
     document.getElementById("imageInput").click();
 }
 
-
-let lastRatesUpdate = 0;
-const RATES_CACHE_TIME = 3000000;
-
-async function fetchAllExchangeRates() {
-    const now = Date.now();
-    if (now - lastRatesUpdate < RATES_CACHE_TIME && Object.keys(exchangeRatesCache).length > 0) {
-        return;
-    }
-    
-    try {
-        showLoader();
-        const response = await fetch(`${apiUrl}?path=getExchangeRate`);
-        const data = await response.json();
-        
-        if (data.status === 200) {
-            exchangeRatesCache = data.exchangeRates;
-            lastRatesUpdate = now;
-        }
-    } finally {
-        hideLoader();
-    }
-}
 
 function updateTotal() {
     const fromAmount = parseFloat(document.getElementById("from-amount-out").value) || 0;
