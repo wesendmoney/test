@@ -883,6 +883,54 @@ function showReceipt(receiptUrls, orderId) {
 // ==============================================
 // FUNCIONES DE GESTIÓN DE PAGOS
 // ==============================================
+async function submitPayment() {
+    const fromAmount = document.getElementById("from-amount").value;
+    const fromCurrency = document.getElementById("from-currency").value;
+    const toAmount = document.getElementById("to-amount").value;
+    const toCurrency = document.getElementById("to-currency").value;
+    const beneficiary = document.getElementById("beneficiaryData").value;
+
+    if (!fromAmount || !fromCurrency || !toAmount || !toCurrency || !beneficiary || !receiptUrl) {
+        alert("Por favor complete todos los campos y suba una imagen.");
+        return;
+    }
+
+    // Deshabilitar botón y mostrar loader
+    const submitBtn = document.getElementById("submitPayment");
+    submitBtn.disabled = true;
+    showLoader();
+
+    try {
+        const response = await fetch(
+            `${apiUrl}?path=submitPayment` +
+            `&reseller=${encodeURIComponent(currentUser)}` +
+            `&fromAmount=${encodeURIComponent(fromAmount)}` +
+            `&fromCurrency=${encodeURIComponent(fromCurrency)}` +
+            `&toAmount=${encodeURIComponent(toAmount)}` +
+            `&toCurrency=${encodeURIComponent(toCurrency)}` +
+            `&receiptUrl=${encodeURIComponent(receiptUrl)}` +
+            `&beneficiary=${encodeURIComponent(beneficiary)}`
+        );
+        
+        const data = await response.json();
+        
+        if (data.status === 200) {
+            alert("Pago enviado exitosamente");
+            resetPaymentForm();
+        } else {
+            throw new Error(data.message || "Error al enviar el pago");
+        }
+    } catch (error) {
+        console.error("Error al enviar el pago:", error);
+        alert(`Error: ${error.message}`);
+    } finally {
+        // Restaurar botón y ocultar loader
+        submitBtn.disabled = false;
+        hideLoader();
+        fetchOrders(); // Actualizar lista de órdenes
+    }
+}
+
 function validatePayment(orderId) {
     const storedUser = localStorage.getItem("currentUser");
     if (!storedUser) {
@@ -934,36 +982,50 @@ function rejectPayment(orderId, reason) {
         });
 }
 
-function takeOrder(orderId, toAmount, toCurrency, beneficiaryName) {
+async function takeOrder(orderId, toAmount, toCurrency, beneficiaryName) {
     currentOrderId = orderId;
     currentToAmount = toAmount;
     currentToCurrency = toCurrency;
 
     const userRole = localStorage.getItem("userRole");
-    
-    fetch(`${apiUrl}?path=takeOrder&orderId=${encodeURIComponent(orderId)}&takerName=${encodeURIComponent(currentUser)}&role=${encodeURIComponent(userRole)}`)
-        .then((response) => response.json())
-        .then((data) => {
-            if (data.status === 200) {
-                const orderIdConfirmation = document.getElementById("orderIdConfirmation");
-                const toAmountConfirmation = document.getElementById("toAmountConfirmation");
-                const beneficiaryNameElement = document.getElementById("beneficiaryName");
-                const takeOrderModal = document.getElementById("takeOrderModal");
+    const takeOrderBtn = document.querySelector(`button[onclick*="${orderId}"]`); // Botón "Tomar Orden"
 
-                if (orderIdConfirmation) orderIdConfirmation.innerText = orderId;
-                if (toAmountConfirmation) toAmountConfirmation.innerText = `${toAmount} ${toCurrency}`;
-                if (beneficiaryNameElement) beneficiaryNameElement.innerText = decodeURIComponent(beneficiaryName);
-                if (takeOrderModal) takeOrderModal.style.display = "block";
-                
-                fetchValidatedPayments();
-            } else {
-                alert(data.message);
-            }
-        })
-        .catch((error) => {
-            console.error("Error taking order:", error);
-            alert("Error al tomar la orden.");
-        });
+    // Deshabilitar botón y mostrar loader
+    if (takeOrderBtn) takeOrderBtn.disabled = true;
+    showLoader();
+
+    try {
+        const response = await fetch(
+            `${apiUrl}?path=takeOrder` +
+            `&orderId=${encodeURIComponent(orderId)}` +
+            `&takerName=${encodeURIComponent(currentUser)}` +
+            `&role=${encodeURIComponent(userRole)}`
+        );
+        
+        const data = await response.json();
+        
+        if (data.status === 200) {
+            const orderIdConfirmation = document.getElementById("orderIdConfirmation");
+            const toAmountConfirmation = document.getElementById("toAmountConfirmation");
+            const beneficiaryNameElement = document.getElementById("beneficiaryName");
+            const takeOrderModal = document.getElementById("takeOrderModal");
+
+            if (orderIdConfirmation) orderIdConfirmation.innerText = orderId;
+            if (toAmountConfirmation) toAmountConfirmation.innerText = `${toAmount} ${toCurrency}`;
+            if (beneficiaryNameElement) beneficiaryNameElement.innerText = decodeURIComponent(beneficiaryName);
+            if (takeOrderModal) takeOrderModal.style.display = "block";
+        } else {
+            throw new Error(data.message || "Error al tomar la orden");
+        }
+    } catch (error) {
+        console.error("Error al tomar la orden:", error);
+        alert(`Error: ${error.message}`);
+    } finally {
+        // Restaurar botón y ocultar loader
+        if (takeOrderBtn) takeOrderBtn.disabled = false;
+        hideLoader();
+        fetchValidatedPayments(); // Actualizar lista
+    }
 }
 
 function confirmOrder() {
@@ -1016,40 +1078,6 @@ async function markAsPaid(orderId, imgurUrls) {
         alert(`Error al marcar como pagado: ${error.message}`);
         return false;
     }
-}
-
-function submitPayment() {
-    const fromAmount = document.getElementById("from-amount").value;
-    const fromCurrency = document.getElementById("from-currency").value;
-    const toAmount = document.getElementById("to-amount").value;
-    const toCurrency = document.getElementById("to-currency").value;
-    const beneficiary = document.getElementById("beneficiaryData").value;
-
-    if (!fromAmount || !fromCurrency || !toAmount || !toCurrency || !beneficiary || !receiptUrl) {
-        alert("Por favor complete todos los campos y suba una imagen.");
-        return;
-    }
-
-    showLoader();
-
-    fetch(`${apiUrl}?path=submitPayment&reseller=${encodeURIComponent(currentUser)}&fromAmount=${encodeURIComponent(fromAmount)}&fromCurrency=${encodeURIComponent(fromCurrency)}&toAmount=${encodeURIComponent(toAmount)}&toCurrency=${encodeURIComponent(toCurrency)}&receiptUrl=${encodeURIComponent(receiptUrl)}&beneficiary=${encodeURIComponent(beneficiary)}`)
-        .then((response) => response.json())
-        .then((data) => {
-            if (data.status === 200) {
-                alert("Pago enviado exitosamente");
-                resetPaymentForm();
-            } else {
-                alert("Error al enviar el pago: " + data.message);
-            }
-        })
-        .catch((error) => {
-            console.error("Error al enviar el pago:", error);
-            alert("Error al enviar el pago.");
-        })
-        .finally(() => {
-            hideLoader();
-            fetchOrders();
-        });
 }
 
 function resetPaymentForm() {
