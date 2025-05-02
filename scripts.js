@@ -550,15 +550,15 @@ function convertCurrencyOut() {
     }
 }
 
-function updateExchangeRate() {
-    const fromCurrency = document.getElementById("from-currency")?.value;
-    const toCurrency = document.getElementById("to-currency")?.value;
-    const rateElement = document.getElementById("exchange-rate");
+function updateExchangeRateOut() {
+    const fromCurrency = document.getElementById("from-currency-out")?.value;
+    const toCurrency = document.getElementById("to-currency-out")?.value;
+    const rateElement = document.getElementById("exchange-rate-out");
 
     if (!fromCurrency || !toCurrency || !rateElement) return;
 
     const rate = exchangeRatesCache[`${fromCurrency}_${toCurrency}`];
-    rateElement.textContent = rate !== undefined 
+    rateElement.textContent = rate !== undefined
         ? `Tasa de cambio: 1 ${fromCurrency} = ${rate} ${toCurrency}`
         : "Tasa no disponible";
 }
