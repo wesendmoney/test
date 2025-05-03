@@ -151,6 +151,27 @@
                 justify-content: center;
             }
         }
+
+            .copy-tooltip {
+            position: absolute;
+            background-color: #bb8a04;
+            color: #0D1a30;
+            padding: 5px 10px;
+            border-radius: 4px;
+            z-index: 1000;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            font-size: 0.8rem;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .copy-tooltip.show {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -441,7 +462,7 @@
             }
         ];
 
-        // Función para renderizar el mapa bancario
+ // Función para renderizar el mapa bancario
         function renderBankMap(filter = 'all', searchTerm = '') {
             const container = document.getElementById('bankMapContainer');
             container.innerHTML = '';
@@ -461,7 +482,6 @@
                     let bankHTML = '';
                     
                     bank.accounts.forEach(account => {
-                        // Verificar si coincide con la búsqueda
                         let accountText = JSON.stringify(account).toLowerCase();
                         if (searchTerm && !searchRegex.test(accountText)) return;
                         
@@ -472,7 +492,6 @@
                         bankHTML += `<div class="bank-account">
                             <h4>${bank.name} <i class="far fa-copy copy-icon" title="Copiar todo"></i></h4>`;
                         
-                        // Agregar campos dinámicamente
                         for (const [key, value] of Object.entries(account)) {
                             if (key === 'nota') continue;
                             bankHTML += `<p data-value="${value}"><strong>${key.charAt(0).toUpperCase() + key.slice(1)}:</strong> ${value} <i class="far fa-copy copy-icon" title="Copiar ${value}"></i></p>`;
@@ -499,66 +518,60 @@
             
             document.querySelector('.no-results').style.display = hasResults ? 'none' : 'block';
             
-            // Agregar event listeners para copiar
-document.querySelectorAll('.copy-icon').forEach(icon => {
-    icon.addEventListener('click', function(e) {
-        e.stopPropagation();
-        const bankName = this.parentElement.textContent.replace(' Copiar todo', '').trim();
-        
-        let textToCopy = '';
-        
-        if (this.parentElement.tagName === 'H4') {
-            // Copiar toda la información del banco (incluyendo el nombre)
-            textToCopy = `*${bankName}*\n`;
-            const accountElements = this.parentElement.parentElement.querySelectorAll('p[data-value]');
-            
-            accountElements.forEach(p => {
-                const label = p.querySelector('strong').textContent.replace(':', '').trim();
-                const value = p.getAttribute('data-value');
-                textToCopy += `${label}: ${value}\n`;
+            // Función mejorada de copiado
+            document.querySelectorAll('.copy-icon').forEach(icon => {
+                icon.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const bankName = this.parentElement.textContent.replace(' Copiar todo', '').trim();
+                    
+                    let textToCopy = '';
+                    
+                    if (this.parentElement.tagName === 'H4') {
+                        // Copiar toda la información del banco
+                        textToCopy = `*${bankName}*\n`;
+                        const accountElements = this.parentElement.parentElement.querySelectorAll('p[data-value]');
+                        
+                        accountElements.forEach(p => {
+                            const label = p.querySelector('strong').textContent.replace(':', '').trim();
+                            const value = p.getAttribute('data-value');
+                            textToCopy += `${label}: ${value}\n`;
+                        });
+                        
+                        const noteElement = this.parentElement.parentElement.querySelector('.note');
+                        if (noteElement) {
+                            textToCopy += `\n${noteElement.textContent}`;
+                        }
+                    } else {
+                        // Copiar solo el valor específico
+                        textToCopy = this.parentElement.getAttribute('data-value');
+                    }
+                    
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        const originalIcon = this.className;
+                        this.className = 'fas fa-check copy-icon';
+                        
+                        // Crear y mostrar tooltip
+                        let tooltip = this.parentElement.querySelector('.copy-tooltip');
+                        if (!tooltip) {
+                            tooltip = document.createElement('div');
+                            tooltip.className = 'copy-tooltip';
+                            this.parentElement.style.position = 'relative';
+                            this.parentElement.appendChild(tooltip);
+                        }
+                        
+                        tooltip.textContent = '¡Copiado!';
+                        tooltip.classList.add('show');
+                        
+                        setTimeout(() => {
+                            this.className = originalIcon;
+                            tooltip.classList.remove('show');
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Error al copiar: ', err);
+                    });
+                });
             });
-            
-            // Agregar nota si existe
-            const noteElement = this.parentElement.parentElement.querySelector('.note');
-            if (noteElement) {
-                textToCopy += `\n${noteElement.textContent}`;
-            }
-        } else {
-            // Copiar solo el valor específico
-            textToCopy = this.parentElement.getAttribute('data-value');
         }
-        
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            const originalIcon = this.className;
-            this.className = 'fas fa-check copy-icon';
-            
-            // Mostrar tooltip de confirmación
-            const tooltip = document.createElement('div');
-            tooltip.textContent = '¡Copiado!';
-            tooltip.style.position = 'absolute';
-            tooltip.style.backgroundColor = '#bb8a04';
-            tooltip.style.color = '#0D1a30';
-            tooltip.style.padding = '5px 10px';
-            tooltip.style.borderRadius = '4px';
-            tooltip.style.zIndex = '1000';
-            tooltip.style.top = '-35px';
-            tooltip.style.left = '50%';
-            tooltip.style.transform = 'translateX(-50%)';
-            tooltip.style.whiteSpace = 'nowrap';
-            
-            this.parentElement.style.position = 'relative';
-            this.parentElement.appendChild(tooltip);
-            
-            setTimeout(() => {
-                this.className = originalIcon;
-                tooltip.remove();
-            }, 2000);
-        }).catch(err => {
-            console.error('Error al copiar: ', err);
-        });
-    });
-});
-
         // Inicializar el mapa bancario
         document.addEventListener('DOMContentLoaded', () => {
             renderBankMap();
