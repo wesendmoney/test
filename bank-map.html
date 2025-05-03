@@ -291,7 +291,7 @@
                         name: "Banco Guayaquil",
                         accounts: [
                             {
-                                titular: "Meza Torres Yosiany Yakari",
+                                titular: "Yosiany Meza",
                                 ci: "0964855142",
                                 tipo: "Ahorro",
                                 numero: "0015366197"
@@ -415,7 +415,7 @@
                         name: "Zelle",
                         accounts: [
                             {
-                                titular: "Javier Rizza",
+                                titular: "Venecia Pacheco",
                                 email: "kingriver232@gmail.com"
                             }
                         ]
@@ -500,25 +500,64 @@
             document.querySelector('.no-results').style.display = hasResults ? 'none' : 'block';
             
             // Agregar event listeners para copiar
-            document.querySelectorAll('.copy-icon').forEach(icon => {
-                icon.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const textToCopy = this.parentElement.tagName === 'H4' 
-                        ? Array.from(this.parentElement.parentElement.querySelectorAll('p[data-value]'))
-                            .map(p => `${p.querySelector('strong').textContent} ${p.getAttribute('data-value')}`)
-                            .join('\n')
-                        : this.parentElement.getAttribute('data-value');
-                    
-                    navigator.clipboard.writeText(textToCopy).then(() => {
-                        const originalIcon = this.className;
-                        this.className = 'fas fa-check copy-icon';
-                        setTimeout(() => {
-                            this.className = originalIcon;
-                        }, 2000);
-                    });
-                });
+document.querySelectorAll('.copy-icon').forEach(icon => {
+    icon.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const bankName = this.parentElement.textContent.replace(' Copiar todo', '').trim();
+        
+        let textToCopy = '';
+        
+        if (this.parentElement.tagName === 'H4') {
+            // Copiar toda la información del banco (incluyendo el nombre)
+            textToCopy = `*${bankName}*\n`;
+            const accountElements = this.parentElement.parentElement.querySelectorAll('p[data-value]');
+            
+            accountElements.forEach(p => {
+                const label = p.querySelector('strong').textContent.replace(':', '').trim();
+                const value = p.getAttribute('data-value');
+                textToCopy += `${label}: ${value}\n`;
             });
+            
+            // Agregar nota si existe
+            const noteElement = this.parentElement.parentElement.querySelector('.note');
+            if (noteElement) {
+                textToCopy += `\n${noteElement.textContent}`;
+            }
+        } else {
+            // Copiar solo el valor específico
+            textToCopy = this.parentElement.getAttribute('data-value');
         }
+        
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            const originalIcon = this.className;
+            this.className = 'fas fa-check copy-icon';
+            
+            // Mostrar tooltip de confirmación
+            const tooltip = document.createElement('div');
+            tooltip.textContent = '¡Copiado!';
+            tooltip.style.position = 'absolute';
+            tooltip.style.backgroundColor = '#bb8a04';
+            tooltip.style.color = '#0D1a30';
+            tooltip.style.padding = '5px 10px';
+            tooltip.style.borderRadius = '4px';
+            tooltip.style.zIndex = '1000';
+            tooltip.style.top = '-35px';
+            tooltip.style.left = '50%';
+            tooltip.style.transform = 'translateX(-50%)';
+            tooltip.style.whiteSpace = 'nowrap';
+            
+            this.parentElement.style.position = 'relative';
+            this.parentElement.appendChild(tooltip);
+            
+            setTimeout(() => {
+                this.className = originalIcon;
+                tooltip.remove();
+            }, 2000);
+        }).catch(err => {
+            console.error('Error al copiar: ', err);
+        });
+    });
+});
 
         // Inicializar el mapa bancario
         document.addEventListener('DOMContentLoaded', () => {
