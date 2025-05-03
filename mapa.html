@@ -3,497 +3,570 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Datos para Transferencias Internacionales</title>
+    <title>Mapa Bancario - WE SEND MONEY</title>
+    <link rel="icon" href="logo.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-<style>
-    * { box-sizing: border-box; }
-    
-    body {
-        font-family: 'Ginebra', sans-serif;
-        background-color: #0D1a30;
-        color: #e6e8e0;
-        margin: 0;
-        padding: 1rem;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        min-height: 100vh;
-    }
-    
-    h1 {
-        font-size: 2rem;
-        font-weight: bold;
-        margin-bottom: 1rem;
-        color: #E6E0d8;
-        text-align: center;
-    }
-    
-    .country-selector {
-        margin-bottom: 20px;
-        text-align: center;
-        width: 100%;
-    }
-    
-    select {
-        padding: 12px;
-        font-size: 16px;
-        border-radius: 8px;
-        border: 1px solid #2c3e50;
-        width: 100%;
-        max-width: 400px;
-        background-color: #1a2a40;
-        color: #e6e8e0;
-        transition: border-color 0.3s;
-    }
-    
-    select:focus {
-        border-color: #bb8a04;
-        outline: none;
-    }
-    
-    .country-info {
-        background-color: #1a2a40;
-        border-radius: 8px;
-        padding: 20px;
-        margin-top: 20px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        width: 100%;
-        max-width: 900px;
-        border: 1px solid #2c3e50;
-    }
-    
-    .country-info h2 {
-        color: #bb8a04;
-        margin-top: 0;
-        border-bottom: 1px solid #2c3e50;
-        padding-bottom: 10px;
-        font-size: 1.5rem;
-    }
-    
-    .info-item {
-        margin-bottom: 15px;
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-    
-    .info-item strong {
-        display: inline-block;
-        width: 180px;
-        color: #e6e8e0;
-        font-size: 0.875rem;
-        font-weight: bold;
-    }
-    
-    .info-item span {
-        flex: 1;
-        min-width: 200px;
-        padding: 8px 0;
-    }
-    
-    .note {
-        font-style: italic;
-        color: #bb8a04;
-        margin-top: 20px;
-        font-size: 14px;
-        border-top: 1px solid #2c3e50;
-        padding-top: 10px;
-    }
-    
-    .hidden {
-        display: none;
-    }
-    
-    .copy-btn {
-        background-color: #bb8a04;
-        color: #0D1a30;
-        border: none;
-        padding: 8px 12px;
-        border-radius: 5px;
-        cursor: pointer;
-        margin-left: 10px;
-        font-size: 14px;
-        font-weight: bold;
-        transition: background-color 0.3s, transform 0.2s;
-    }
-    
-    .copy-btn:hover {
-        background-color: #a67a03;
-        transform: scale(1.05);
-    }
-    
-    @media (max-width: 768px) {
-        .info-item strong {
-            width: 100%;
-            margin-bottom: 5px;
+        /* Estilos específicos para el mapa bancario */
+        .bank-map-container {
+            background-color: #1a2a40;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px auto;
+            border: 1px solid #2c3e50;
+            max-width: 900px;
         }
-        
-        .info-item span {
-            width: 100%;
+
+        .country-title {
+            color: #bb8a04;
+            font-size: 1.5rem;
+            margin: 25px 0 15px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #bb8a04;
+            display: flex;
+            align-items: center;
         }
-        
-        .copy-btn {
-            margin-left: 0;
-            margin-top: 8px;
-            width: 100%;
+
+        .bank-account {
+            background-color: #0D1a30;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #bb8a04;
+            position: relative;
         }
-    }
-    
-    /* Estilos para el header si decides agregarlo */
-    header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px;
-        background-color: #0D1a30;
-        color: #e6e8e0;
-        width: 100%;
-        max-width: 1200px;
-        margin-bottom: 20px;
-    }
-    
-    .logo-container h1 {
-        color: #E6E0D8;
-        margin-left: -24px;
-        font-size: 1.5rem;
-        font-weight: bold;
-    }
-    
-    .logo-container {
-        display: flex;
-        align-items: center;
-    }
-    
-    .menu-icon {
-        cursor: pointer;
-        font-size: 24px;
-        color: #bb8a04;
-    }
-    
-    .earnings-container {
-        display: flex;
-        align-items: center;
-        margin-left: auto;
-        color: white;
-        padding: 10px 15px;
-        border-radius: 5px;
-        font-size: 16px;
-        font-weight: bold;
-        background-color: #1a2a40;
-        border: 2px solid #bb8a04;
-        transition: background-color 0.3s;
-    }
+
+        .bank-account h4 {
+            color: #e6e8e0;
+            margin-top: 0;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .bank-account p {
+            margin: 5px 0;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+        .bank-account p:hover {
+            background-color: rgba(187, 138, 4, 0.1);
+        }
+
+        .bank-account .note {
+            color: #bb8a04;
+            font-style: italic;
+            margin-top: 10px;
+        }
+
+        .copy-icon {
+            margin-left: 10px;
+            color: #bb8a04;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .copy-icon:hover {
+            transform: scale(1.2);
+        }
+
+        .search-container {
+            margin: 20px 0;
+            position: relative;
+        }
+
+        #bankSearch {
+            width: 100%;
+            padding: 12px 20px;
+            border: 1px solid #2c3e50;
+            border-radius: 25px;
+            background-color: #0D1a30;
+            color: #e6e8e0;
+            font-size: 16px;
+        }
+
+        #bankSearch:focus {
+            outline: none;
+            border-color: #bb8a04;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 12px;
+            color: #bb8a04;
+        }
+
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-btn {
+            background-color: #0D1a30;
+            color: #e6e8e0;
+            border: 1px solid #2c3e50;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.active {
+            background-color: #bb8a04;
+            color: #0D1a30;
+            border-color: #bb8a04;
+        }
+
+        .filter-btn:hover {
+            border-color: #bb8a04;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 30px;
+            color: #bb8a04;
+            font-size: 1.2rem;
+            display: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .bank-account {
+                padding: 10px;
+            }
+            
+            .country-title {
+                font-size: 1.3rem;
+            }
+            
+            .filter-buttons {
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>Datos para Recibir Transferencias Internacionales</h1>
-    
-    <div class="country-selector">
-        <select id="countrySelect" onchange="showCountryInfo()">
-            <option value="">Selecciona un país</option>
-            <option value="chile">Chile</option>
-            <option value="colombia">Colombia</option>
-            <option value="peru">Perú</option>
-            <option value="ecuador">Ecuador</option>
-            <option value="venezuela">Venezuela</option>
-            <option value="espana">España</option>
-            <option value="usa">Estados Unidos</option>
-        </select>
+    <header>
+        <div class="logo-container">
+            <img src="logo.svg" alt="Logo" width="70" height="70">
+            <h1>esendMoney</h1>
+        </div>
+        <span class="menu-icon" onclick="toggleMenu()">☰</span>
+    </header>
+
+    <div id="menu" class="menu">
+        <div class="menu-content">
+            <a href="calculator.html">Cotizador</a>
+            <a href="orders.html">Órdenes</a>
+            <a href="bank-map.html">Mapa Bancario</a>
+            <a href="profile.html">Perfil</a>
+            <a onclick="logout()">Cerrar Sesión</a>
+        </div>
     </div>
-    
-    <div id="chile" class="country-info hidden">
-        <h2>Chile</h2>
-        <div class="info-item">
-            <strong>Nombre del Banco:</strong> 
-            <span id="chile-banco">Ejemplo: Banco de Chile</span>
-            <button class="copy-btn" onclick="copyToClipboard('chile-banco')">Copiar</button>
+
+    <div class="container">
+        <h1>Mapa Bancario</h1>
+        
+        <div class="search-container">
+            <input type="text" id="bankSearch" placeholder="Buscar banco, titular o número de cuenta...">
+            <i class="fas fa-search search-icon"></i>
         </div>
-        <div class="info-item">
-            <strong>Tipo de Cuenta:</strong> 
-            <span id="chile-tipo">Corriente o Vista (RUT)</span>
-            <button class="copy-btn" onclick="copyToClipboard('chile-tipo')">Copiar</button>
+        
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-filter="all">Todos</button>
+            <button class="filter-btn" data-filter="CLP">Chile</button>
+            <button class="filter-btn" data-filter="ECU">Ecuador</button>
+            <button class="filter-btn" data-filter="PEN">Perú</button>
+            <button class="filter-btn" data-filter="COP">Colombia</button>
+            <button class="filter-btn" data-filter="VES">Venezuela</button>
+            <button class="filter-btn" data-filter="USD">Estados Unidos</button>
+            <button class="filter-btn" data-filter="EUR">Europa</button>
         </div>
-        <div class="info-item">
-            <strong>Número de Cuenta:</strong> 
-            <span id="chile-cuenta">Ejemplo: 1234567890</span>
-            <button class="copy-btn" onclick="copyToClipboard('chile-cuenta')">Copiar</button>
+        
+        <div class="no-results">
+            No se encontraron resultados para tu búsqueda.
         </div>
-        <div class="info-item">
-            <strong>RUT:</strong> 
-            <span id="chile-rut">Ejemplo: 12.345.678-9</span>
-            <button class="copy-btn" onclick="copyToClipboard('chile-rut')">Copiar</button>
+        
+        <div class="bank-map-container" id="bankMapContainer">
+            <!-- El contenido se cargará dinámicamente desde JavaScript -->
         </div>
-        <div class="info-item">
-            <strong>Nombre del Titular:</strong> 
-            <span id="chile-nombre">Nombre Apellido</span>
-            <button class="copy-btn" onclick="copyToClipboard('chile-nombre')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Email:</strong> 
-            <span id="chile-email">ejemplo@email.com</span>
-            <button class="copy-btn" onclick="copyToClipboard('chile-email')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Código SWIFT/BIC:</strong> 
-            <span id="chile-swift">Ejemplo: BCHICLRM</span>
-            <button class="copy-btn" onclick="copyToClipboard('chile-swift')">Copiar</button>
-        </div>
-        <p class="note">Nota: Las transferencias nacionales usan el RUT y número de cuenta.</p>
     </div>
-    
-    <div id="colombia" class="country-info hidden">
-        <h2>Colombia</h2>
-        <div class="info-item">
-            <strong>Nombre del Banco:</strong> 
-            <span id="colombia-banco">Ejemplo: Bancolombia</span>
-            <button class="copy-btn" onclick="copyToClipboard('colombia-banco')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Tipo de Cuenta:</strong> 
-            <span id="colombia-tipo">Ahorros o Corriente</span>
-            <button class="copy-btn" onclick="copyToClipboard('colombia-tipo')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Número de Cuenta:</strong> 
-            <span id="colombia-cuenta">Ejemplo: 12345678901</span>
-            <button class="copy-btn" onclick="copyToClipboard('colombia-cuenta')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Cédula:</strong> 
-            <span id="colombia-cedula">Ejemplo: 1234567890</span>
-            <button class="copy-btn" onclick="copyToClipboard('colombia-cedula')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Nombre del Titular:</strong> 
-            <span id="colombia-nombre">Nombre Apellido</span>
-            <button class="copy-btn" onclick="copyToClipboard('colombia-nombre')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Código SWIFT/BIC:</strong> 
-            <span id="colombia-swift">Ejemplo: COLOCOBM</span>
-            <button class="copy-btn" onclick="copyToClipboard('colombia-swift')">Copiar</button>
-        </div>
-        <p class="note">Nota: Para transferencias nacionales solo se necesita el número de cuenta.</p>
-    </div>
-    
-    <div id="peru" class="country-info hidden">
-        <h2>Perú</h2>
-        <div class="info-item">
-            <strong>Nombre del Banco:</strong> 
-            <span id="peru-banco">Ejemplo: BCP</span>
-            <button class="copy-btn" onclick="copyToClipboard('peru-banco')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Tipo de Cuenta:</strong> 
-            <span id="peru-tipo">Ahorros o Corriente</span>
-            <button class="copy-btn" onclick="copyToClipboard('peru-tipo')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Número de Cuenta:</strong> 
-            <span id="peru-cuenta">Ejemplo: 1234567890123456</span>
-            <button class="copy-btn" onclick="copyToClipboard('peru-cuenta')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>DNI:</strong> 
-            <span id="peru-dni">Ejemplo: 12345678</span>
-            <button class="copy-btn" onclick="copyToClipboard('peru-dni')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Nombre del Titular:</strong> 
-            <span id="peru-nombre">Nombre Apellido</span>
-            <button class="copy-btn" onclick="copyToClipboard('peru-nombre')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Código SWIFT/BIC:</strong> 
-            <span id="peru-swift">Ejemplo: BCPLPEPL</span>
-            <button class="copy-btn" onclick="copyToClipboard('peru-swift')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Código Interbancario (CCI):</strong> 
-            <span id="peru-cci">Ejemplo: 0021231234567890123456</span>
-            <button class="copy-btn" onclick="copyToClipboard('peru-cci')">Copiar</button>
-        </div>
-        <p class="note">Nota: Para transferencias nacionales se usa el número de cuenta. El CCI se usa para transferencias interbancarias.</p>
-    </div>
-    
-    <div id="ecuador" class="country-info hidden">
-        <h2>Ecuador</h2>
-        <div class="info-item">
-            <strong>Nombre del Banco:</strong> 
-            <span id="ecuador-banco">Ejemplo: Banco Pichincha</span>
-            <button class="copy-btn" onclick="copyToClipboard('ecuador-banco')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Tipo de Cuenta:</strong> 
-            <span id="ecuador-tipo">Ahorros o Corriente</span>
-            <button class="copy-btn" onclick="copyToClipboard('ecuador-tipo')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Número de Cuenta:</strong> 
-            <span id="ecuador-cuenta">Ejemplo: 1234567890</span>
-            <button class="copy-btn" onclick="copyToClipboard('ecuador-cuenta')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Cédula/RUC:</strong> 
-            <span id="ecuador-cedula">Ejemplo: 1234567890</span>
-            <button class="copy-btn" onclick="copyToClipboard('ecuador-cedula')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Nombre del Titular:</strong> 
-            <span id="ecuador-nombre">Nombre Apellido</span>
-            <button class="copy-btn" onclick="copyToClipboard('ecuador-nombre')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Código SWIFT/BIC:</strong> 
-            <span id="ecuador-swift">Ejemplo: PICHECEQ</span>
-            <button class="copy-btn" onclick="copyToClipboard('ecuador-swift')">Copiar</button>
-        </div>
-        <p class="note">Nota: Ecuador usa el dólar estadounidense como moneda oficial. </p>
-    </div>
-    
-    <div id="venezuela" class="country-info hidden">
-        <h2>Venezuela</h2>
-        <div class="info-item">
-            <strong>Nombre del Banco:</strong> 
-            <span id="venezuela-banco">Ejemplo: Banco de Venezuela</span>
-            <button class="copy-btn" onclick="copyToClipboard('venezuela-banco')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Tipo de Cuenta:</strong> 
-            <span id="venezuela-tipo">Ahorros o Corriente</span>
-            <button class="copy-btn" onclick="copyToClipboard('venezuela-tipo')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Número de Cuenta:</strong> 
-            <span id="venezuela-cuenta">Ejemplo: 0102033445566778899</span>
-            <button class="copy-btn" onclick="copyToClipboard('venezuela-cuenta')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Cédula:</strong> 
-            <span id="venezuela-cedula">Ejemplo: V-12345678</span>
-            <button class="copy-btn" onclick="copyToClipboard('venezuela-cedula')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Nombre del Titular:</strong> 
-            <span id="venezuela-nombre">Nombre Apellido</span>
-            <button class="copy-btn" onclick="copyToClipboard('venezuela-nombre')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Código SWIFT/BIC:</strong> 
-            <span id="venezuela-swift">Ejemplo: BDVZVECA</span>
-            <button class="copy-btn" onclick="copyToClipboard('venezuela-swift')">Copiar</button>
-        </div>
-        <p class="note">Nota: Debido a regulaciones, las transferencias internacionales pueden estar sujetas a restricciones. Verificar con el banco.</p>
-    </div>
-    
-    <div id="espana" class="country-info hidden">
-        <h2>España</h2>
-        <div class="info-item">
-            <strong>Nombre del Banco:</strong> 
-            <span id="espana-banco">Ejemplo: Banco Santander</span>
-            <button class="copy-btn" onclick="copyToClipboard('espana-banco')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>IBAN:</strong> 
-            <span id="espana-iban">Ejemplo: ES91 2100 0418 4502 0005 1332</span>
-            <button class="copy-btn" onclick="copyToClipboard('espana-iban')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Número de Cuenta:</strong> 
-            <span id="espana-cuenta">Ejemplo: 2100 0418 4502 0005 1332</span>
-            <button class="copy-btn" onclick="copyToClipboard('espana-cuenta')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>DNI/NIE:</strong> 
-            <span id="espana-dni">Ejemplo: 12345678A</span>
-            <button class="copy-btn" onclick="copyToClipboard('espana-dni')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Nombre del Titular:</strong> 
-            <span id="espana-nombre">Nombre Apellido</span>
-            <button class="copy-btn" onclick="copyToClipboard('espana-nombre')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Código SWIFT/BIC:</strong> 
-            <span id="espana-swift">Ejemplo: BSCHESMM</span>
-            <button class="copy-btn" onclick="copyToClipboard('espana-swift')">Copiar</button>
-        </div>
-        <p class="note">Nota: Para transferencias dentro de la UE se puede usar solo el IBAN. </p>
-    </div>
-    
-    <div id="usa" class="country-info hidden">
-        <h2>Estados Unidos</h2>
-        <div class="info-item">
-            <strong>Nombre del Banco:</strong> 
-            <span id="usa-banco">Ejemplo: Bank of America</span>
-            <button class="copy-btn" onclick="copyToClipboard('usa-banco')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Número de Ruta (ABA):</strong> 
-            <span id="usa-aba">Ejemplo: 026009593</span>
-            <button class="copy-btn" onclick="copyToClipboard('usa-aba')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Número de Cuenta:</strong> 
-            <span id="usa-cuenta">Ejemplo: 123456789012</span>
-            <button class="copy-btn" onclick="copyToClipboard('usa-cuenta')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Tipo de Cuenta:</strong> 
-            <span id="usa-tipo">Checking (corriente) o Savings (ahorros)</span>
-            <button class="copy-btn" onclick="copyToClipboard('usa-tipo')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Nombre del Titular:</strong> 
-            <span id="usa-nombre">Nombre Apellido</span>
-            <button class="copy-btn" onclick="copyToClipboard('usa-nombre')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Dirección del Banco:</strong> 
-            <span id="usa-direccion">Ejemplo: 100 N Tryon St, Charlotte, NC 28202</span>
-            <button class="copy-btn" onclick="copyToClipboard('usa-direccion')">Copiar</button>
-        </div>
-        <div class="info-item">
-            <strong>Código SWIFT/BIC:</strong> 
-            <span id="usa-swift">Ejemplo: BOFAUS3N</span>
-            <button class="copy-btn" onclick="copyToClipboard('usa-swift')">Copiar</button>
-        </div>
-        <p class="note">Nota: Para transferencias nacionales (dentro de EE.UU.) se necesita el número de ruta ABA y número de cuenta.</p>
+
+    <div class="toolbar">
+        <span class="toolbar-text" onclick="window.location.href='calculator.html'">
+            <i class="fas fa-dollar-sign"></i>
+        </span>
+        <span class="toolbar-text" onclick="window.location.href='orders.html'">
+            <i class="fas fa-list-alt"></i>
+        </span>
+        <span class="toolbar-text" onclick="window.location.href='bank-map.html'">
+            <i class="fas fa-map-marked-alt"></i>
+        </span>
+        <span class="toolbar-text" onclick="window.location.href='profile.html'">
+            <i class="fas fa-user"></i>
+        </span>
     </div>
 
     <script>
-        function showCountryInfo() {
-            // Ocultar todos los divs primero
-            const allCountries = document.querySelectorAll('.country-info');
-            allCountries.forEach(country => {
-                country.classList.add('hidden');
+        // Datos del mapa bancario
+        const bankData = [
+            {
+                country: "🇨🇱 Chile",
+                countryCode: "CLP",
+                banks: [
+                    {
+                        name: "Banco Falabella",
+                        accounts: [
+                            {
+                                titular: "Maria Fuenmayor",
+                                rut: "26.540.119-8",
+                                tipo: "Cuenta Corriente",
+                                numero: "15840991994",
+                                nota: "*Solo transferencias*"
+                            }
+                        ]
+                    },
+                    {
+                        name: "Banco de Chile",
+                        accounts: [
+                            {
+                                titular: "Maria Fuenmayor",
+                                rut: "26.540.119-8",
+                                tipo: "Cuenta Vista",
+                                numero: "00-041-48202-87",
+                                email: "cede.95@hotmail.com"
+                            }
+                        ]
+                    },
+                    {
+                        name: "Banco Estado",
+                        accounts: [
+                            {
+                                titular: "Maria Fuenmayor",
+                                rut: "26.540.119-8",
+                                tipo: "Corriente",
+                                numero: "23500246197",
+                                nota: "*Caja vecina y depósitos en efectivo*"
+                            }
+                        ]
+                    },
+                    {
+                        name: "Banco Santander",
+                        accounts: [
+                            {
+                                titular: "Cedella Fuenmayor Sanchez",
+                                rut: "26.540.119-8",
+                                tipo: "Corriente",
+                                numero: "0 000 92 03414 3",
+                                email: "Mariacedellafs@gmail.com"
+                            }
+                        ]
+                    },
+                    {
+                        name: "Mercado Pago",
+                        accounts: [
+                            {
+                                titular: "Maria Fuenmayor",
+                                rut: "265401198",
+                                tipo: "Cuenta Vista",
+                                numero: "1054536349"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                country: "🇪🇨 Ecuador",
+                countryCode: "ECU",
+                banks: [
+                    {
+                        name: "Banco Guayaquil",
+                        accounts: [
+                            {
+                                titular: "Meza Torres Yosiany Yakari",
+                                ci: "0964855142",
+                                tipo: "Ahorro",
+                                numero: "0015366197"
+                            }
+                        ]
+                    },
+                    {
+                        name: "Banco Pichincha",
+                        accounts: [
+                            {
+                                titular: "Yosiany Meza",
+                                ci: "0964855142",
+                                tipo: "Ahorros",
+                                numero: "2208217873"
+                            }
+                        ]
+                    },
+                    {
+                        name: "Produbanco",
+                        accounts: [
+                            {
+                                titular: "Yosiany Meza",
+                                ci: "0964855142",
+                                tipo: "Ahorros",
+                                numero: "12022120659"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                country: "🇵🇪 Perú",
+                countryCode: "PEN",
+                banks: [
+                    {
+                        name: "BCP",
+                        accounts: [
+                            {
+                                titular: "Fabiola Jiménez",
+                                tipo: "Soles",
+                                numero: "19496424769054",
+                                interbancario: "00219419642476905494"
+                            }
+                        ]
+                    },
+                    {
+                        name: "Yape",
+                        accounts: [
+                            {
+                                titular: "Fabiola Jiménez",
+                                telefono: "976 679 162"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                country: "🇨🇴 Colombia",
+                countryCode: "COP",
+                banks: [
+                    {
+                        name: "Bancolombia",
+                        accounts: [
+                            {
+                                titular: "Grisel Yovera",
+                                tipo: "Ahorro",
+                                numero: "91269765131"
+                            }
+                        ]
+                    },
+                    {
+                        name: "Nequi",
+                        accounts: [
+                            {
+                                titular: "Grisel Yovera",
+                                telefono: "3197710793"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                country: "🇻🇪 Venezuela",
+                countryCode: "VES",
+                banks: [
+                    {
+                        name: "Banco de Venezuela",
+                        accounts: [
+                            {
+                                titular: "Javier rizza",
+                                numero: "01020311210103124139"
+                            }
+                        ]
+                    },
+                    {
+                        name: "Banco Mercantil",
+                        accounts: [
+                            {
+                                titular: "Javier rizza",
+                                ci: "21404651",
+                                numero: "01050062171062349741"
+                            }
+                        ]
+                    },
+                    {
+                        name: "Banco Provincial",
+                        accounts: [
+                            {
+                                titular: "Javier rizza",
+                                numero: "0108 0122 2101 0009 8311"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                country: "🇺🇸 Estados Unidos",
+                countryCode: "USD",
+                banks: [
+                    {
+                        name: "Zelle",
+                        accounts: [
+                            {
+                                titular: "Javier Rizza",
+                                email: "kingriver232@gmail.com"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                country: "🇪🇺 Europa (Euro)",
+                countryCode: "EUR",
+                banks: [
+                    {
+                        name: "Revolut",
+                        accounts: [
+                            {
+                                titular: "Javier Rizza",
+                                iban: "GB78 REVO 0099 7056 9966 48",
+                                swift: "REVOGB21",
+                                direccion: "Revolut Ltd, 7 Westferry Circus, E14 4HD, London, United Kingdom"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        // Función para renderizar el mapa bancario
+        function renderBankMap(filter = 'all', searchTerm = '') {
+            const container = document.getElementById('bankMapContainer');
+            container.innerHTML = '';
+            
+            let hasResults = false;
+            let searchRegex = new RegExp(searchTerm, 'i');
+            
+            bankData.forEach(country => {
+                if (filter !== 'all' && country.countryCode !== filter) return;
+                
+                let countryHasResults = false;
+                let countryHTML = `<div class="country-banks" data-country="${country.countryCode}">
+                    <h3 class="country-title">${country.country}</h3>`;
+                
+                country.banks.forEach(bank => {
+                    let bankHasResults = false;
+                    let bankHTML = '';
+                    
+                    bank.accounts.forEach(account => {
+                        // Verificar si coincide con la búsqueda
+                        let accountText = JSON.stringify(account).toLowerCase();
+                        if (searchTerm && !searchRegex.test(accountText)) return;
+                        
+                        hasResults = true;
+                        countryHasResults = true;
+                        bankHasResults = true;
+                        
+                        bankHTML += `<div class="bank-account">
+                            <h4>${bank.name} <i class="far fa-copy copy-icon" title="Copiar todo"></i></h4>`;
+                        
+                        // Agregar campos dinámicamente
+                        for (const [key, value] of Object.entries(account)) {
+                            if (key === 'nota') continue;
+                            bankHTML += `<p data-value="${value}"><strong>${key.charAt(0).toUpperCase() + key.slice(1)}:</strong> ${value} <i class="far fa-copy copy-icon" title="Copiar ${value}"></i></p>`;
+                        }
+                        
+                        if (account.nota) {
+                            bankHTML += `<p class="note">${account.nota}</p>`;
+                        }
+                        
+                        bankHTML += `</div>`;
+                    });
+                    
+                    if (bankHasResults) {
+                        countryHTML += bankHTML;
+                    }
+                });
+                
+                countryHTML += `</div>`;
+                
+                if (countryHasResults) {
+                    container.innerHTML += countryHTML;
+                }
             });
             
-            // Mostrar solo el seleccionado
-            const selectedCountry = document.getElementById('countrySelect').value;
-            if (selectedCountry) {
-                document.getElementById(selectedCountry).classList.remove('hidden');
-            }
+            document.querySelector('.no-results').style.display = hasResults ? 'none' : 'block';
+            
+            // Agregar event listeners para copiar
+            document.querySelectorAll('.copy-icon').forEach(icon => {
+                icon.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const textToCopy = this.parentElement.tagName === 'H4' 
+                        ? Array.from(this.parentElement.parentElement.querySelectorAll('p[data-value]'))
+                            .map(p => `${p.querySelector('strong').textContent} ${p.getAttribute('data-value')}`)
+                            .join('\n')
+                        : this.parentElement.getAttribute('data-value');
+                    
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        const originalIcon = this.className;
+                        this.className = 'fas fa-check copy-icon';
+                        setTimeout(() => {
+                            this.className = originalIcon;
+                        }, 2000);
+                    });
+                });
+            });
         }
-        
-        function copyToClipboard(elementId) {
-            const element = document.getElementById(elementId);
-            const textToCopy = element.textContent;
+
+        // Inicializar el mapa bancario
+        document.addEventListener('DOMContentLoaded', () => {
+            renderBankMap();
             
-            // Crear un área de texto temporal
-            const textarea = document.createElement('textarea');
-            textarea.value = textToCopy;
-            document.body.appendChild(textarea);
+            // Filtrado por país
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    renderBankMap(this.dataset.filter, document.getElementById('bankSearch').value);
+                });
+            });
             
-            // Seleccionar y copiar el texto
-            textarea.select();
-            document.execCommand('copy');
+            // Búsqueda
+            document.getElementById('bankSearch').addEventListener('input', function() {
+                const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+                renderBankMap(activeFilter, this.value);
+            });
+        });
+
+        // Función para alternar el menú (de scripts.js)
+        function toggleMenu() {
+            const menu = document.getElementById("menu");
+            menu.style.display = menu.style.display === "block" ? "none" : "block";
+        }
+
+        // Cerrar menú al hacer clic fuera de él
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById("menu");
+            const menuIcon = document.querySelector('.menu-icon');
             
-            // Eliminar el área de texto temporal
-            document.body.removeChild(textarea);
-            
-            // Mostrar feedback (opcional)
-            alert('Texto copiado: ' + textToCopy);
+            if (menu && menuIcon) {
+                if (!menu.contains(event.target) && event.target !== menuIcon) {
+                    menu.style.display = 'none';
+                }
+            }
+        });
+
+        // Función para cerrar sesión (de scripts.js)
+        function logout() {
+            localStorage.removeItem("currentUser");
+            localStorage.removeItem("userRole");
+            localStorage.removeItem("userCurrency");
+            localStorage.removeItem("userEmail");
+            localStorage.removeItem("isLoggedIn");
+            localStorage.removeItem("lastActivity");
+            window.location.href = "index.html";
         }
     </script>
 </body>
