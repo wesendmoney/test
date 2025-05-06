@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tasas de Cambio - WE SEND MONEY</title>
+    <link rel="icon" href="logo.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        /* Estilos adicionales para el diseño tipo OIP.jpg */
+        .rates-card {
+            background-color: #0D1a30;
+            border-radius: 10px;
+            padding: 20px;
+            color: white;
+            font-family: Arial, sans-serif;
+            max-width: 540px;
+            margin: 0 auto;
+            border: 1px solid #bb8a04;
+        }
+        
+        .rates-header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #bb8a04;
+            padding-bottom: 10px;
+        }
+        
+        .rates-header h2 {
+            color: #bb8a04;
+            margin: 10px 0;
+        }
+        
+        .rate-change {
+    font-size: 0.8em;
+    color: #4CAF50;
+    min-width: 70px;
+    text-align: right;
+}
+
+.rate-change.down {
+    color: #F44336;
+}
+
+.rate-change.equal {
+    color: #718096;
+}
+    
+    /* Ajuste para las filas de tasas */
+    .rate-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center; /* Centrado vertical */
+        margin: 10px 0;
+        padding: 8px;
+        border-bottom: 1px solid #2c3e50;
+    }
+    
+    .rate-currency {
+        font-weight: bold;
+        color: #bb8a04;
+        flex: 1; /* Ocupa espacio disponible */
+    }
+    
+    .rate-value {
+        font-weight: bold;
+        margin: 0 15px; /* Espacio a ambos lados */
+    }
+        .rate-footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.8em;
+            color: #718096;
+        }
+        
+        .action-button {
+            background-color: #bb8a04;
+            color: #0D1a30;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: bold;
+        }
+        
+        .rates-controls {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+        }
+        
+        .modal-content {
+            background-color: #1a2a40;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #bb8a04;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 8px;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .rate-option {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #2c3e50;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .rate-option:hover {
+            background-color: #2c3e50;
+        }
+        
+        .rate-option.selected {
+            background-color: #bb8a04;
+            color: #0D1a30;
+        }
+        
+        #availableRates {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        #phoneInput {
+            background: transparent;
+            border: 1px solid #2c3e50;
+            color: white;
+            padding: 5px;
+            border-radius: 4px;
+            width: 150px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <img src="logo.svg" alt="Logo" width="70" height="70">
+            <h1>esendMoney</h1>
+        </div>
+        <span class="menu-icon" onclick="toggleMenu()">☰</span>
+    </header>
+
+    <div id="menu" class="menu">
+        <div class="menu-content">
+            <a href="calculator.html">Cotizador</a>
+            <a href="orders.html">Órdenes</a>
+            <a href="profile.html">Perfil</a>
+            <a href="rates.html">Tasas de Cambio</a>
+            <a onclick="logout()">Cerrar Sesión</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>Tasas de Cambio</h1>
+        
+        <div class="rates-controls">
+            <button id="selectRatesBtn" class="action-button">
+                <i class="fas fa-sliders-h"></i> Seleccionar Tasas
+            </button>
+        </div>
+        
+        <div id="ratesCard" class="rates-card">
+            <div class="rates-header">
+                <img src="logo.svg" alt="Logo" width="70" height="70">
+                <h2>Tasas de Cambio</h2>
+                <p id="ratesDate">Actualizado: ${new Date().toLocaleDateString()}</p>
+            </div>
+            
+            <div id="selectedRatesGrid">
+                <!-- Las tasas seleccionadas se mostrarán aquí -->
+                <div class="no-rates-selected">
+                    <i class="fas fa-exchange-alt"></i>
+                    <p>Selecciona las tasas que deseas mostrar</p>
+                </div>
+            </div>
+            
+            <div class="rate-footer">
+                <p>@We_SendMoney - Envíos rápidos y seguros</p>
+                <p>WhatsApp: <span id="phoneDisplay">+58 412 1542322</span>
+                   <button id="editPhoneBtn" style="background: none; border: none; color: #bb8a04; cursor: pointer;">
+                       <i class="fas fa-edit"></i>
+                   </button>
+                </p>
+                <div id="phoneEditContainer" style="display: none;">
+                    <input type="text" id="phoneInput" value="+58 412 1542322">
+                    <button id="savePhoneBtn" class="action-button" style="padding: 5px 10px; margin-left: 5px;">Guardar</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="selectModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeSelectModal()">&times;</span>
+                <h2>Seleccionar Tasas de Cambio</h2>
+                <p>Elige las tasas que deseas mostrar en tu imagen</p>
+                
+                <div class="available-rates" id="availableRates">
+                    <!-- Todas las tasas disponibles se cargarán aquí -->
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <button id="saveSelectionBtn" class="action-button">Guardar Selección</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="rates-controls">
+            <button id="downloadBtn" class="action-button">
+                <i class="fas fa-download"></i> Descargar Imagen
+            </button>
+            <button id="shareBtn" class="action-button">
+                <i class="fas fa-share-alt"></i> Compartir
+            </button>
+            
+        </div>
+
+    </div>
+
+    <div class="toolbar">
+        <span class="toolbar-text" onclick="window.location.href='calculator.html'">
+            <i class="fas fa-dollar-sign"></i>
+        </span>
+        <span class="toolbar-text" onclick="window.location.href='orders.html'">
+            <i class="fas fa-list-alt"></i>
+        </span>
+        <span class="toolbar-text" onclick="window.location.href='rates.html'">
+            <i class="fas fa-chart-line"></i>
+        </span>
+        <span class="toolbar-text" onclick="window.location.href='profile.html'">
+            <i class="fas fa-user"></i>
+        </span>
+    </div>
+
+    <script src="scripts.js"></script>
+    <script>
+        // Mapeo de códigos de moneda a países
+        const currencyToCountry = {
+            'USD': 'Estados Unidos',
+            'EUR': 'España',
+            'COP': 'Colombia',
+            'CLP': 'Chile',
+            'PEN': 'Perú',
+            'VES': 'Venezuela',
+            'ECU': 'Ecuador',
+            'EFC': 'Venezuela (Efectivo)'
+        };
+
+        // Variables globales
+        let exchangeRates = {};
+        let selectedRates = [];
+        let phoneNumber = "+58 412 1542322";
+        
+        // Cargar tasas al iniciar
+        document.addEventListener("DOMContentLoaded", async () => {
+            // Cargar número de teléfono guardado
+            const savedPhone = localStorage.getItem('savedPhone');
+            if (savedPhone) {
+                phoneNumber = savedPhone;
+                document.getElementById('phoneDisplay').textContent = phoneNumber;
+                document.getElementById('phoneInput').value = phoneNumber;
+            }
+            
+            await loadExchangeRates();
+            loadUserSelections();
+            renderSelectedRates();
+            setupEventListeners();
+            
+            // Verificar si el usuario está logueado
+            if (localStorage.getItem("isLoggedIn") !== "true") {
+                window.location.href = "index.html";
+            }
+        });
+        
+        // Cargar tasas de cambio
+        async function loadExchangeRates() {
+            try {
+                const response = await fetch(`${apiUrl}?path=getExchangeRate`);
+                const data = await response.json();
+                
+                if (data.status === 200) {
+                    exchangeRates = data.exchangeRates;
+                    updateRatesDate();
+                    renderAvailableRates();
+                } else {
+                    console.error("Error al cargar tasas:", data.message);
+                }
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+        
+        // Cargar selecciones del usuario
+        function loadUserSelections() {
+            const savedSelections = localStorage.getItem('userSelectedRates');
+            if (savedSelections) {
+                selectedRates = JSON.parse(savedSelections);
+            }
+        }
+        
+        // Guardar selecciones del usuario
+        function saveUserSelections() {
+            localStorage.setItem('userSelectedRates', JSON.stringify(selectedRates));
+        }
+        
+        // Renderizar tasas seleccionadas mostrando países
+        function renderSelectedRates() {
+    const selectedGrid = document.getElementById("selectedRatesGrid");
+    
+    if (selectedRates.length === 0) {
+        selectedGrid.innerHTML = `
+            <div class="no-rates-selected">
+                <i class="fas fa-exchange-alt"></i>
+                <p>Selecciona las tasas que deseas mostrar</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    
+    selectedRates.forEach(rateKey => {
+        const [from, to] = rateKey.split('_');
+        const currentRate = parseFloat(exchangeRates[rateKey]) || 0;
+        const lastRate = parseFloat(lastGeneratedRates[rateKey]) || currentRate;
+        
+        // Calcular cambio porcentual solo si hay una tasa anterior válida
+        let change = 0;
+        let changeText = '=';
+        
+        if (lastRate > 0 && lastRate !== currentRate) {
+            change = ((currentRate - lastRate) / lastRate) * 100;
+            const isUp = change >= 0;
+            const changeFormatted = Math.abs(change).toFixed(2);
+            changeText = `${isUp ? '↑' : '↓'} ${changeFormatted}%`;
+        }
+        
+        html += `
+            <div class="rate-row">
+                <span class="rate-currency">${currencyToCountry[from] || from} → ${currencyToCountry[to] || to}</span>
+                <span class="rate-value">${currentRate.toFixed(2)}</span>
+                <span class="rate-change ${change >= 0 ? '' : 'down'}">${changeText}</span>
+            </div>
+        `;
+    });
+    
+    selectedGrid.innerHTML = html;
+}
+        
+        // Renderizar todas las tasas disponibles para selección con nombres de países
+        function renderAvailableRates() {
+            const availableRates = document.getElementById("availableRates");
+            availableRates.innerHTML = "";
+            
+            // Monedas principales
+            const mainCurrencies = ['USD', 'EUR', 'COP', 'CLP', 'PEN', 'VES', 'ECU', 'EFC'];
+            
+            // Crear todas las combinaciones posibles
+            for (const from of mainCurrencies) {
+                for (const to of mainCurrencies) {
+                    if (from !== to) {
+                        const rateKey = `${from}_${to}`;
+                        const rate = exchangeRates[rateKey] || '-';
+                        const isSelected = selectedRates.includes(rateKey);
+                        
+                        const rateElement = document.createElement('div');
+                        rateElement.className = `rate-option ${isSelected ? 'selected' : ''}`;
+                        rateElement.dataset.key = rateKey;
+                        rateElement.innerHTML = `
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>${currencyToCountry[from] || from} → ${currencyToCountry[to] || to}</span>
+                                <span>${rate}</span>
+                            </div>
+                        `;
+                        
+                        rateElement.addEventListener('click', () => toggleRateSelection(rateKey));
+                        availableRates.appendChild(rateElement);
+                    }
+                }
+            }
+        }
+        
+        // Alternar selección de una tasa
+        function toggleRateSelection(rateKey) {
+            const index = selectedRates.indexOf(rateKey);
+            
+            if (index === -1) {
+                selectedRates.push(rateKey);
+            } else {
+                selectedRates.splice(index, 1);
+            }
+            
+            // Actualizar UI
+            renderAvailableRates();
+        }
+        
+        // Actualizar fecha de las tasas
+        function updateRatesDate() {
+            document.getElementById("ratesDate").textContent = `Actualizado: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
+        }
+        
+        // Configurar event listeners
+        function setupEventListeners() {
+            // Botón de descarga
+            document.getElementById("downloadBtn").addEventListener("click", downloadRatesImage);
+            
+            // Botón de compartir
+            document.getElementById("shareBtn").addEventListener("click", shareRates);
+            
+            // Botón de selección
+            document.getElementById("selectRatesBtn").addEventListener("click", openSelectModal);
+            
+            // Botón guardar selección
+            document.getElementById("saveSelectionBtn").addEventListener("click", saveSelection);
+            
+            // Botón editar teléfono
+            document.getElementById("editPhoneBtn").addEventListener("click", showPhoneEditor);
+            
+            // Botón guardar teléfono
+            document.getElementById("savePhoneBtn").addEventListener("click", savePhoneNumber);
+        }
+        
+        // Mostrar editor de teléfono
+        function showPhoneEditor() {
+            document.getElementById('phoneDisplay').style.display = 'none';
+            document.getElementById('editPhoneBtn').style.display = 'none';
+            document.getElementById('phoneEditContainer').style.display = 'block';
+            document.getElementById('phoneInput').focus();
+        }
+        
+        // Guardar número de teléfono
+        function savePhoneNumber() {
+            const newPhone = document.getElementById('phoneInput').value.trim();
+            if (newPhone) {
+                phoneNumber = newPhone;
+                document.getElementById('phoneDisplay').textContent = phoneNumber;
+                localStorage.setItem('savedPhone', phoneNumber);
+            }
+            
+            document.getElementById('phoneDisplay').style.display = 'inline';
+            document.getElementById('editPhoneBtn').style.display = 'inline';
+            document.getElementById('phoneEditContainer').style.display = 'none';
+        }
+        
+        // Descargar imagen de las tasas
+async function downloadRatesImage() {
+    if (selectedRates.length === 0) {
+        alert("Por favor selecciona al menos una tasa para descargar.");
+        return;
+    }
+
+    // Guardar valores actuales como referencia para el próximo cálculo
+    selectedRates.forEach(rateKey => {
+        lastGeneratedRates[rateKey] = exchangeRates[rateKey] || 0;
+    });
+    localStorage.setItem('lastRatesData', JSON.stringify(lastGeneratedRates));
+
+    try {
+        const card = document.getElementById("ratesCard");
+        const canvas = await html2canvas(card, {
+            scale: 2,
+            backgroundColor: '#0D1a30',
+            logging: false,
+            useCORS: true
+        });
+        
+        const link = document.createElement('a');
+        link.download = `tasas-weSendMoney-${new Date().toISOString().split('T')[0]}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    } catch (error) {
+        console.error("Error al generar imagen:", error);
+        alert("Error al generar la imagen. Intente nuevamente.");
+    }
+}
+        
+        // Compartir tasas
+        function shareRates() {
+            if (selectedRates.length === 0) {
+                alert("Por favor selecciona al menos una tasa para compartir.");
+                return;
+            }
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Mis Tasas de Cambio weSendMoney',
+                    text: 'Estas son las tasas de cambio que seleccioné:',
+                    url: window.location.href
+                }).catch(err => {
+                    console.error('Error al compartir:', err);
+                    fallbackShare();
+                });
+            } else {
+                fallbackShare();
+            }
+        }
+        
+        // Método alternativo para compartir
+        function fallbackShare() {
+            const shareText = selectedRates.map(rateKey => {
+                const [from, to] = rateKey.split('_');
+                const rate = exchangeRates[rateKey] || '-';
+                return `1 ${currencyToCountry[from] || from} = ${rate} ${currencyToCountry[to] || to}`;
+            }).join('%0A');
+            
+            const shareUrl = `https://wa.me/?text=Mis%20tasas%20de%20cambio%20en%20weSendMoney:%0A%0A${shareText}%0A%0AVisita%20${window.location.href}`;
+            window.open(shareUrl, '_blank');
+        }
+        
+        // Abrir modal de selección
+        function openSelectModal() {
+            document.getElementById("selectModal").style.display = "block";
+        }
+        
+        // Cerrar modal de selección
+        function closeSelectModal() {
+            document.getElementById("selectModal").style.display = "none";
+        }
+        
+        // Guardar selección
+        function saveSelection() {
+            saveUserSelections();
+            renderSelectedRates();
+            closeSelectModal();
+        }
+        
+        function resetRateHistory() {
+    if (confirm("¿Estás seguro de que deseas reiniciar el historial de cambios?")) {
+        lastGeneratedRates = {};
+        localStorage.removeItem('lastRatesData');
+        renderSelectedRates();
+        alert("Historial de cambios reiniciado. Los próximos cambios se calcularán desde cero.");
+    }
+}
+
+        // Cerrar modal al hacer clic fuera
+        document.addEventListener("DOMContentLoaded", async () => {
+    // Cargar número de teléfono guardado
+    const savedPhone = localStorage.getItem('savedPhone');
+    if (savedPhone) {
+        phoneNumber = savedPhone;
+        document.getElementById('phoneDisplay').textContent = phoneNumber;
+        document.getElementById('phoneInput').value = phoneNumber;
+    }
+    
+    // Cargar historial de tasas
+    const savedHistory = localStorage.getItem('lastRatesData');
+    if (savedHistory) {
+        lastGeneratedRates = JSON.parse(savedHistory);
+    } else {
+        // Inicializar con tasas actuales si no hay historial
+        lastGeneratedRates = {};
+    }
+    
+    await loadExchangeRates();
+    loadUserSelections();
+    renderSelectedRates();
+    setupEventListeners();
+    
+    // Verificar si el usuario está logueado
+    if (localStorage.getItem("isLoggedIn") !== "true") {
+        window.location.href = "index.html";
+    }
+});
+    </script>
+</body>
+</html>
