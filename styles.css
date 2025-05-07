@@ -328,6 +328,7 @@ header { color: #bb8a04; }
 
 .notification-message { color: #bb8a04; margin-top: 20px; }
 
+/* Toolbar con texto debajo de iconos */
 .toolbar {
     display: flex;
     justify-content: space-between;
@@ -336,21 +337,41 @@ header { color: #bb8a04; }
     left: 0;
     right: 0;
     background-color: #1a2a40;
-    height: 50px;
+    height: 70px; /* Aumentamos altura para el texto */
     z-index: 1000;
+    padding-top: 8px; /* Espacio arriba para balancear */
 }
 
 .toolbar-text {
     flex: 1;
-    text-align: center;
-    line-height: 50px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     color: #e6e8e0;
     cursor: pointer;
+    text-decoration: none;
 }
 
-.toolbar-text:hover { color: #bb8a04; }
+.toolbar-text i {
+    font-size: 24px;
+    margin-bottom: 4px; /* Espacio entre icono y texto */
+}
 
-.toolbar-text i { font-size: 24px; transition: color 0.3s; }
+.icon-label {
+    font-size: 12px;
+    display: block;
+    text-align: center;
+}
+
+.toolbar-text:hover, .toolbar-text:hover .icon-label {
+    color: #bb8a04;
+}
+
+/* Ajuste para que el contenido no quede oculto */
+.container {
+    margin-bottom: 80px;
+}
 
 .rejection-button {
     background-color: transparent;
