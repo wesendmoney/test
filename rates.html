@@ -10,18 +10,21 @@
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
    .rates-card {
-    background: 
-        url('background-pattern.svg') center/cover,
-        linear-gradient(135deg, #0D1a30 0%, #0a1424 100%);
+    background-color: #0D1a30;
+    background-image: url('background-pattern.svg');
+    background-size: 410px; /* Tamaño fijo para el patrón */
+    background-position: center center; /* Centrado horizontal y vertical */
     border-radius: 10px;
-    padding: 20px;
+    padding: 10px;
     color: white;
     font-family: Arial, sans-serif;
     max-width: 540px;
     margin: 0 auto;
     border: 1px solid #bb8a04;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     position: relative;
+    overflow: hidden;
+    /* Efecto de superposición para mejorar legibilidad */
+    box-shadow: inset 0 0 50px rgba(13, 26, 48, 0.8);
 }
 
 .rates-card::before {
@@ -78,11 +81,11 @@
     }
     
     .rate-currency {
-    font-weight: bold;
-    color: #bb8a04;
-    flex: 1;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5); /* Mejor contraste */
-}
+        font-weight: bold;
+        color: #bb8a04;
+        flex: 1; /* Ocupa espacio disponible */
+    }
+    
     .rate-value {
         font-weight: bold;
         margin: 0 15px; /* Espacio a ambos lados */
