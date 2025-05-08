@@ -9,25 +9,23 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
-  .rates-card {
-            background-color: #0D1a30;
-            background-image: url('background-pattern.svg');
-            background-size: 410px;
-            background-position: center center;
-            border-radius: 10px;
-            padding: 40px 20px; /* Más padding para WhatsApp */
-            color: white;
-            font-family: Arial, sans-serif;
-            text-rendering: optimizeLegibility;
-            -webkit-font-smoothing: antialiased;
-            width: 100%;
-            max-width: 500px; /* Ancho más adecuado para móviles */
-            margin: 0 auto;
-            border: 1px solid #bb8a04;
-            position: relative;
-            overflow: hidden;
-            box-shadow: inset 0 0 50px rgba(13, 26, 48, 0.8);
-        }
+   .rates-card {
+    background-color: #0D1a30;
+    background-image: url('background-pattern.svg');
+    background-size: 410px; /* Tamaño fijo para el patrón */
+    background-position: center center; /* Centrado horizontal y vertical */
+    border-radius: 10px;
+    padding: 10px;
+    color: white;
+    font-family: Arial, sans-serif;
+    max-width: 540px;
+    margin: 0 auto;
+    border: 1px solid #bb8a04;
+    position: relative;
+    overflow: hidden;
+    /* Efecto de superposición para mejorar legibilidad */
+    box-shadow: inset 0 0 50px rgba(13, 26, 48, 0.8);
+}
 
 .rates-card::before {
     content: '';
@@ -178,62 +176,6 @@
             width: 150px;
             text-align: center;
         }
-
-        /* Estilos para la versión de descarga */
-.rates-card.download-version {
-    width: 1080px !important;
-    height: 1920px !important;
-    max-width: none;
-    padding: 150px 80px; /* Más espacio interno */
-    box-sizing: border-box;
-    background-size: cover; /* Cambiado de 410px a cover */
-    background-repeat: no-repeat; /* Evita la repetición */
-}
-
-.download-version .rates-header {
-    margin-bottom: 50px !important;
-}
-
-.download-version .rates-header img {
-    width: 200px !important;
-    height: 200px !important;
-    margin-bottom: 40px;
-}
-
-.download-version h2 {
-    font-size: 3.5rem !important;
-    margin: 30px 0 !important;
-    color: #bb8a04 !important;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Mejor contraste */
-}
-
-.download-version #ratesDate {
-    font-size: 2rem !important;
-    margin-top: 20px !important;
-}
-
-.download-version .rate-row {
-    padding: 30px 15px !important;
-    font-size: 2.5rem !important;
-    margin: 20px 0 !important;
-    border-bottom: 2px solid #bb8a04 !important;
-}
-
-.download-version .rate-currency {
-    font-size: 2.5rem !important;
-}
-
-.download-version .rate-value {
-    font-size: 2.8rem !important;
-}
-
-.download-version .rate-footer {
-    margin-top: 80px !important;
-    font-size: 1.8rem !important;
-    padding-top: 40px !important;
-    border-top: 2px solid #bb8a04 !important;
-}
-
     </style>
 </head>
 <body>
@@ -416,7 +358,7 @@
         }
         
         // Renderizar tasas seleccionadas mostrando países
-        function renderSelectedRates() {
+       function renderSelectedRates() {
     const selectedGrid = document.getElementById("selectedRatesGrid");
     
     if (selectedRates.length === 0) {
@@ -460,7 +402,8 @@
     selectedGrid.innerHTML = html;
 }
         
-function renderAvailableRates() {
+        // Renderizar todas las tasas disponibles para selección con nombres de países
+     function renderAvailableRates() {
     const availableRates = document.getElementById("availableRates");
     availableRates.innerHTML = "";
     
@@ -559,56 +502,28 @@ async function downloadRatesImage() {
         return;
     }
 
-    const card = document.getElementById("ratesCard");
-    const originalClasses = card.className;
-    const originalStyles = {
-        width: card.style.width,
-        height: card.style.height,
-        backgroundSize: card.style.backgroundSize,
-        backgroundRepeat: card.style.backgroundRepeat
-    };
-    
-    // Aplicar estilos especiales para descarga
-    card.classList.add("download-version");
-    card.style.width = "1080px";
-    card.style.height = "1920px";
-    card.style.backgroundSize = "cover";
-    card.style.backgroundRepeat = "no-repeat";
-    
-    // Esperar a que se apliquen los cambios
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
+    // Guardar valores actuales como referencia para el próximo cálculo
+    selectedRates.forEach(rateKey => {
+        lastGeneratedRates[rateKey] = exchangeRates[rateKey] || 0;
+    });
+    localStorage.setItem('lastRatesData', JSON.stringify(lastGeneratedRates));
+
     try {
+        const card = document.getElementById("ratesCard");
         const canvas = await html2canvas(card, {
             scale: 2,
             backgroundColor: '#0D1a30',
-            logging: true,
-            useCORS: true,
-            allowTaint: true,
-            letterRendering: true,
-            quality: 0.95,
-            windowWidth: 1080,
-            windowHeight: 1920,
-            scrollX: 0,
-            scrollY: 0
+            logging: false,
+            useCORS: true
         });
         
-        // Crear imagen para WhatsApp
         const link = document.createElement('a');
-        link.download = `tasas-whatsapp-${new Date().toISOString().split('T')[0]}.png`;
+        link.download = `tasas-weSendMoney-${new Date().toISOString().split('T')[0]}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
-        
     } catch (error) {
         console.error("Error al generar imagen:", error);
         alert("Error al generar la imagen. Intente nuevamente.");
-    } finally {
-        // Restaurar estilos originales
-        card.className = originalClasses;
-        card.style.width = originalStyles.width;
-        card.style.height = originalStyles.height;
-        card.style.backgroundSize = originalStyles.backgroundSize;
-        card.style.backgroundRepeat = originalStyles.backgroundRepeat;
     }
 }
         
