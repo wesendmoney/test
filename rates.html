@@ -178,26 +178,35 @@
             width: 150px;
             text-align: center;
         }
+.rates-card.download-version {
+    width: 1080px !important;
+    height: 1920px !important;
+    max-width: none;
+    padding: 120px 60px;
+    box-sizing: border-box;
+}
 
-        .rates-card.for-download {
-            width: 1080px !important;
-            max-width: none;
-            padding: 80px 40px;
-        }
-        
-        .for-download .rates-header img {
-            width: 140px !important;
-            height: 140px !important;
-        }
-        
-        .for-download h2 {
-            font-size: 2.5rem !important;
-        }
-        
-        .for-download .rate-row {
-            padding: 20px 8px !important;
-            font-size: 1.8rem !important;
-        }
+.download-version .rates-header img {
+    width: 180px !important;
+    height: 180px !important;
+    margin-bottom: 30px;
+}
+
+.download-version h2 {
+    font-size: 3rem !important;
+    margin: 20px 0 !important;
+}
+
+.download-version .rate-row {
+    padding: 25px 10px !important;
+    font-size: 2.2rem !important;
+    margin: 15px 0 !important;
+}
+
+.download-version .rate-footer {
+    margin-top: 60px !important;
+    font-size: 1.5rem !important;
+}
 
     </style>
 </head>
@@ -518,60 +527,56 @@ function renderAvailableRates() {
         }
         
         // Descargar imagen de las tasas
-       async function downloadRatesImage() {
-            if (selectedRates.length === 0) {
-                alert("Por favor selecciona al menos una tasa para descargar.");
-                return;
-            }
+     async function downloadRatesImage() {
+    if (selectedRates.length === 0) {
+        alert("Por favor selecciona al menos una tasa para descargar.");
+        return;
+    }
 
-            // Guardar valores actuales como referencia
-            selectedRates.forEach(rateKey => {
-                lastGeneratedRates[rateKey] = exchangeRates[rateKey] || 0;
-            });
-            localStorage.setItem('lastRatesData', JSON.stringify(lastGeneratedRates));
-
-            try {
-                const card = document.getElementById("ratesCard");
-                const originalClasses = card.className;
-                
-                // Aplicar estilos especiales para la descarga
-                card.classList.add("for-download");
-                card.style.width = "1080px";
-                card.style.height = "auto";
-                
-                // Esperar a que se apliquen los estilos
-                await new Promise(resolve => setTimeout(resolve, 100));
-                
-                const canvas = await html2canvas(card, {
-                    scale: 2, // Escala óptima para WhatsApp
-                    backgroundColor: '#0D1a30',
-                    logging: false,
-                    useCORS: true,
-                    allowTaint: true,
-                    letterRendering: true,
-                    quality: 0.92, // Balance calidad/peso
-                    windowWidth: 1080,
-                    windowHeight: card.scrollHeight,
-                    scrollX: 0,
-                    scrollY: 0
-                });
-                
-                // Restaurar estilos originales
-                card.className = originalClasses;
-                card.style.width = "";
-                card.style.height = "";
-                
-                // Descargar la imagen
-                const link = document.createElement('a');
-                link.download = `tasas-whatsapp-${new Date().toISOString().split('T')[0]}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                
-            } catch (error) {
-                console.error("Error al generar imagen:", error);
-                alert("Error al generar la imagen. Intente nuevamente.");
-            }
-        }
+    const card = document.getElementById("ratesCard");
+    const originalClasses = card.className;
+    const originalWidth = card.style.width;
+    const originalHeight = card.style.height;
+    
+    // Aplicar estilos especiales para descarga
+    card.classList.add("download-version");
+    card.style.width = "1080px";
+    card.style.height = "1920px";
+    
+    // Esperar a que se apliquen los cambios
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    try {
+        const canvas = await html2canvas(card, {
+            scale: 2,
+            backgroundColor: '#0D1a30',
+            logging: true,
+            useCORS: true,
+            allowTaint: true,
+            letterRendering: true,
+            quality: 0.95,
+            windowWidth: 1080,
+            windowHeight: 1920,
+            scrollX: 0,
+            scrollY: 0
+        });
+        
+        // Crear imagen para WhatsApp
+        const link = document.createElement('a');
+        link.download = `tasas-whatsapp-${new Date().toISOString().split('T')[0]}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+    } catch (error) {
+        console.error("Error al generar imagen:", error);
+        alert("Error al generar la imagen. Intente nuevamente.");
+    } finally {
+        // Restaurar estilos originales
+        card.className = originalClasses;
+        card.style.width = originalWidth;
+        card.style.height = originalHeight;
+    }
+}
         
         // Compartir tasas
         function shareRates() {
