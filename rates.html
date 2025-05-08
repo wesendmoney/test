@@ -178,34 +178,60 @@
             width: 150px;
             text-align: center;
         }
+
+        /* Estilos para la versión de descarga */
 .rates-card.download-version {
     width: 1080px !important;
     height: 1920px !important;
     max-width: none;
-    padding: 120px 60px;
+    padding: 150px 80px; /* Más espacio interno */
     box-sizing: border-box;
+    background-size: cover; /* Cambiado de 410px a cover */
+    background-repeat: no-repeat; /* Evita la repetición */
+}
+
+.download-version .rates-header {
+    margin-bottom: 50px !important;
 }
 
 .download-version .rates-header img {
-    width: 180px !important;
-    height: 180px !important;
-    margin-bottom: 30px;
+    width: 200px !important;
+    height: 200px !important;
+    margin-bottom: 40px;
 }
 
 .download-version h2 {
-    font-size: 3rem !important;
-    margin: 20px 0 !important;
+    font-size: 3.5rem !important;
+    margin: 30px 0 !important;
+    color: #bb8a04 !important;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Mejor contraste */
+}
+
+.download-version #ratesDate {
+    font-size: 2rem !important;
+    margin-top: 20px !important;
 }
 
 .download-version .rate-row {
-    padding: 25px 10px !important;
-    font-size: 2.2rem !important;
-    margin: 15px 0 !important;
+    padding: 30px 15px !important;
+    font-size: 2.5rem !important;
+    margin: 20px 0 !important;
+    border-bottom: 2px solid #bb8a04 !important;
+}
+
+.download-version .rate-currency {
+    font-size: 2.5rem !important;
+}
+
+.download-version .rate-value {
+    font-size: 2.8rem !important;
 }
 
 .download-version .rate-footer {
-    margin-top: 60px !important;
-    font-size: 1.5rem !important;
+    margin-top: 80px !important;
+    font-size: 1.8rem !important;
+    padding-top: 40px !important;
+    border-top: 2px solid #bb8a04 !important;
 }
 
     </style>
@@ -527,7 +553,7 @@ function renderAvailableRates() {
         }
         
         // Descargar imagen de las tasas
-     async function downloadRatesImage() {
+async function downloadRatesImage() {
     if (selectedRates.length === 0) {
         alert("Por favor selecciona al menos una tasa para descargar.");
         return;
@@ -535,16 +561,22 @@ function renderAvailableRates() {
 
     const card = document.getElementById("ratesCard");
     const originalClasses = card.className;
-    const originalWidth = card.style.width;
-    const originalHeight = card.style.height;
+    const originalStyles = {
+        width: card.style.width,
+        height: card.style.height,
+        backgroundSize: card.style.backgroundSize,
+        backgroundRepeat: card.style.backgroundRepeat
+    };
     
     // Aplicar estilos especiales para descarga
     card.classList.add("download-version");
     card.style.width = "1080px";
     card.style.height = "1920px";
+    card.style.backgroundSize = "cover";
+    card.style.backgroundRepeat = "no-repeat";
     
     // Esperar a que se apliquen los cambios
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     try {
         const canvas = await html2canvas(card, {
@@ -573,8 +605,10 @@ function renderAvailableRates() {
     } finally {
         // Restaurar estilos originales
         card.className = originalClasses;
-        card.style.width = originalWidth;
-        card.style.height = originalHeight;
+        card.style.width = originalStyles.width;
+        card.style.height = originalStyles.height;
+        card.style.backgroundSize = originalStyles.backgroundSize;
+        card.style.backgroundRepeat = originalStyles.backgroundRepeat;
     }
 }
         
