@@ -12,7 +12,7 @@
    .rates-card {
     background-color: #0D1a30;
     background-image: url('background-pattern.svg');
-    background-size: 320px; /* Tamaño fijo para el patrón */
+    background-size: 410px; /* Tamaño fijo para el patrón */
     background-position: center center; /* Centrado horizontal y vertical */
     border-radius: 10px;
     padding: 10px;
@@ -389,10 +389,11 @@
             changeText = `${isUp ? '↑' : '↓'} ${changeFormatted}%`;
         }
         
+        // Mostrar el valor completo sin redondear
         html += `
             <div class="rate-row">
                 <span class="rate-currency">${currencyToCountry[from] || from} → ${currencyToCountry[to] || to}</span>
-                <span class="rate-value">${currentRate.toFixed(2)}</span>
+                <span class="rate-value">${currentRate}</span>
                 <span class="rate-change ${change >= 0 ? '' : 'down'}">${changeText}</span>
             </div>
         `;
@@ -401,38 +402,35 @@
     selectedGrid.innerHTML = html;
 }
         
-        // Renderizar todas las tasas disponibles para selección con nombres de países
-        function renderAvailableRates() {
-            const availableRates = document.getElementById("availableRates");
-            availableRates.innerHTML = "";
-            
-            // Monedas principales
-            const mainCurrencies = ['USD', 'EUR', 'COP', 'CLP', 'PEN', 'VES', 'ECU', 'EFC'];
-            
-            // Crear todas las combinaciones posibles
-            for (const from of mainCurrencies) {
-                for (const to of mainCurrencies) {
-                    if (from !== to) {
-                        const rateKey = `${from}_${to}`;
-                        const rate = exchangeRates[rateKey] || '-';
-                        const isSelected = selectedRates.includes(rateKey);
-                        
-                        const rateElement = document.createElement('div');
-                        rateElement.className = `rate-option ${isSelected ? 'selected' : ''}`;
-                        rateElement.dataset.key = rateKey;
-                        rateElement.innerHTML = `
-                            <div style="display: flex; justify-content: space-between;">
-                                <span>${currencyToCountry[from] || from} → ${currencyToCountry[to] || to}</span>
-                                <span>${rate}</span>
-                            </div>
-                        `;
-                        
-                        rateElement.addEventListener('click', () => toggleRateSelection(rateKey));
-                        availableRates.appendChild(rateElement);
-                    }
-                }
+function renderAvailableRates() {
+    const availableRates = document.getElementById("availableRates");
+    availableRates.innerHTML = "";
+    
+    const mainCurrencies = ['USD', 'EUR', 'COP', 'CLP', 'PEN', 'VES', 'ECU', 'EFC'];
+    
+    for (const from of mainCurrencies) {
+        for (const to of mainCurrencies) {
+            if (from !== to) {
+                const rateKey = `${from}_${to}`;
+                const rate = exchangeRates[rateKey] || '-';
+                const isSelected = selectedRates.includes(rateKey);
+                
+                const rateElement = document.createElement('div');
+                rateElement.className = `rate-option ${isSelected ? 'selected' : ''}`;
+                rateElement.dataset.key = rateKey;
+                rateElement.innerHTML = `
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>${currencyToCountry[from] || from} → ${currencyToCountry[to] || to}</span>
+                        <span>${typeof rate === 'number' ? rate.toString() : rate}</span>
+                    </div>
+                `;
+                
+                rateElement.addEventListener('click', () => toggleRateSelection(rateKey));
+                availableRates.appendChild(rateElement);
             }
         }
+    }
+}
         
         // Alternar selección de una tasa
         function toggleRateSelection(rateKey) {
