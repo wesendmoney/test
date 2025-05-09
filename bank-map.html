@@ -64,6 +64,13 @@
             margin-top: 10px;
         }
 
+        .bank-account .warning {
+            color: #ff6b6b;
+            font-style: italic;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
         .copy-icon {
             margin-left: 10px;
             color: #bb8a04;
@@ -205,12 +212,12 @@
         <div class="filter-buttons">
             <button class="filter-btn active" data-filter="all">Todos</button>
             <button class="filter-btn" data-filter="CLP">Chile</button>
-            <button class="filter-btn" data-filter="ECU">Ecuador</button>
-            <button class="filter-btn" data-filter="PEN">Perú</button>
             <button class="filter-btn" data-filter="COP">Colombia</button>
-            <button class="filter-btn" data-filter="VES">Venezuela</button>
-            <button class="filter-btn" data-filter="USD">Estados Unidos</button>
+            <button class="filter-btn" data-filter="ECU">Ecuador</button>
             <button class="filter-btn" data-filter="EUR">Europa</button>
+            <button class="filter-btn" data-filter="PEN">Perú</button>
+            <button class="filter-btn" data-filter="USD">Estados Unidos</button>
+            <button class="filter-btn" data-filter="VES">Venezuela</button>
         </div>
         
         <div class="no-results">
@@ -246,24 +253,12 @@
     </div>
 
     <script>
-        // Datos del mapa bancario
+        // Datos del mapa bancario ordenados alfabéticamente por país
         const bankData = [
             {
                 country: "🇨🇱 Chile",
                 countryCode: "CLP",
                 banks: [
-                    {
-                        name: "Banco Falabella",
-                        accounts: [
-                            {
-                                titular: "Maria Fuenmayor",
-                                rut: "26.540.119-8",
-                                tipo: "Cuenta Corriente",
-                                numero: "15840991994",
-                                nota: "*Solo transferencias*"
-                            }
-                        ]
-                    },
                     {
                         name: "Banco de Chile",
                         accounts: [
@@ -272,7 +267,8 @@
                                 rut: "26.540.119-8",
                                 tipo: "Cuenta Vista",
                                 numero: "00-041-48202-87",
-                                email: "cede.95@hotmail.com"
+                                email: "cede.95@hotmail.com",
+                                nota: "*Solo transferencias*"
                             }
                         ]
                     },
@@ -289,6 +285,18 @@
                         ]
                     },
                     {
+                        name: "Banco Falabella",
+                        accounts: [
+                            {
+                                titular: "Maria Fuenmayor",
+                                rut: "26.540.119-8",
+                                tipo: "Cuenta Corriente",
+                                numero: "15840991994",
+                                nota: "*Solo transferencias*"
+                            }
+                        ]
+                    },
+                    {
                         name: "Banco Santander",
                         accounts: [
                             {
@@ -296,7 +304,8 @@
                                 rut: "26.540.119-8",
                                 tipo: "Corriente",
                                 numero: "0 000 92 03414 3",
-                                email: "Mariacedellafs@gmail.com"
+                                email: "Mariacedellafs@gmail.com",
+                                nota: "*Solo transferencias*"
                             }
                         ]
                     },
@@ -307,7 +316,33 @@
                                 titular: "Maria Fuenmayor",
                                 rut: "265401198",
                                 tipo: "Cuenta Vista",
-                                numero: "1054536349"
+                                numero: "1054536349",
+                                nota: "*Solo transferencias*"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                country: "🇨🇴 Colombia",
+                countryCode: "COP",
+                banks: [
+                    {
+                        name: "Bancolombia",
+                        accounts: [
+                            {
+                                titular: "Grisel Yovera",
+                                tipo: "Ahorro",
+                                numero: "91269765131"
+                            }
+                        ]
+                    },
+                    {
+                        name: "Nequi",
+                        accounts: [
+                            {
+                                titular: "Grisel Yovera",
+                                telefono: "3197710793"
                             }
                         ]
                     }
@@ -353,6 +388,23 @@
                 ]
             },
             {
+                country: "🇪🇺 Europa (Euro)",
+                countryCode: "EUR",
+                banks: [
+                    {
+                        name: "Revolut",
+                        accounts: [
+                            {
+                                titular: "Javier Rizza",
+                                iban: "GB78 REVO 0099 7056 9966 48",
+                                swift: "REVOGB21",
+                                direccion: "Revolut Ltd, 7 Westferry Circus, E14 4HD, London, United Kingdom"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
                 country: "🇵🇪 Perú",
                 countryCode: "PEN",
                 banks: [
@@ -379,25 +431,15 @@
                 ]
             },
             {
-                country: "🇨🇴 Colombia",
-                countryCode: "COP",
+                country: "🇺🇸 Estados Unidos",
+                countryCode: "USD",
                 banks: [
                     {
-                        name: "Bancolombia",
+                        name: "Zelle",
                         accounts: [
                             {
-                                titular: "Grisel Yovera",
-                                tipo: "Ahorro",
-                                numero: "91269765131"
-                            }
-                        ]
-                    },
-                    {
-                        name: "Nequi",
-                        accounts: [
-                            {
-                                titular: "Grisel Yovera",
-                                telefono: "3197710793"
+                                titular: "Venecia Pacheco",
+                                email: "kingriver232@gmail.com"
                             }
                         ]
                     }
@@ -436,42 +478,22 @@
                         ]
                     }
                 ]
-            },
-            {
-                country: "🇺🇸 Estados Unidos",
-                countryCode: "USD",
-                banks: [
-                    {
-                        name: "Zelle",
-                        accounts: [
-                            {
-                                titular: "Venecia Pacheco",
-                                email: "kingriver232@gmail.com"
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
-                country: "🇪🇺 Europa (Euro)",
-                countryCode: "EUR",
-                banks: [
-                    {
-                        name: "Revolut",
-                        accounts: [
-                            {
-                                titular: "Javier Rizza",
-                                iban: "GB78 REVO 0099 7056 9966 48",
-                                swift: "REVOGB21",
-                                direccion: "Revolut Ltd, 7 Westferry Circus, E14 4HD, London, United Kingdom"
-                            }
-                        ]
-                    }
-                ]
             }
         ];
 
- // Función para renderizar el mapa bancario
+        // Añadir nota de advertencia a todas las cuentas
+        bankData.forEach(country => {
+            country.banks.forEach(bank => {
+                bank.accounts.forEach(account => {
+                    if (!account.nota) {
+                        account.nota = "";
+                    }
+                    account.warning = "IMPORTANTE: No colocar como referencia 'Venezuela', 'Remesas' o palabras similares en el comprobante o su transferencia podría ser bloqueada.";
+                });
+            });
+        });
+
+        // Función para renderizar el mapa bancario
         function renderBankMap(filter = 'all', searchTerm = '') {
             const container = document.getElementById('bankMapContainer');
             container.innerHTML = '';
@@ -502,7 +524,7 @@
                             <h4>${bank.name} <i class="far fa-copy copy-icon" title="Copiar todo"></i></h4>`;
                         
                         for (const [key, value] of Object.entries(account)) {
-                            if (key === 'nota') continue;
+                            if (key === 'nota' || key === 'warning') continue;
                             bankHTML += `<p data-value="${value}"><strong>${key.charAt(0).toUpperCase() + key.slice(1)}:</strong> ${value} <i class="far fa-copy copy-icon" title="Copiar ${value}"></i></p>`;
                         }
                         
@@ -510,7 +532,7 @@
                             bankHTML += `<p class="note">${account.nota}</p>`;
                         }
                         
-                        bankHTML += `</div>`;
+                        bankHTML += `<p class="warning">${account.warning}</p></div>`;
                     });
                     
                     if (bankHasResults) {
@@ -549,6 +571,11 @@
                         const noteElement = this.parentElement.parentElement.querySelector('.note');
                         if (noteElement) {
                             textToCopy += `\n${noteElement.textContent}`;
+                        }
+                        
+                        const warningElement = this.parentElement.parentElement.querySelector('.warning');
+                        if (warningElement) {
+                            textToCopy += `\n${warningElement.textContent}`;
                         }
                     } else {
                         // Copiar solo el valor específico
@@ -632,3 +659,4 @@
     </script>
 </body>
 </html>
+
