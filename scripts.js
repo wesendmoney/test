@@ -32,6 +32,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         const privatePages = [
             'calculator.html',
             'orders.html', 
+            'rates.html',
+            'bank-map.html',
             'profile.html'
         ];
         
