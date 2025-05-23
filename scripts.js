@@ -1494,8 +1494,9 @@ async function setupProfilePage() {
 async function requestNotificationPermission() {
     try {
         // Registrar el service worker
-        const registration = await navigator.serviceWorker.register('test/firebase-messaging-sw.js');
+         const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
         console.log('Service Worker registrado');
+       
 
         // Solicitar permiso para notificaciones
         const permission = await Notification.requestPermission();
