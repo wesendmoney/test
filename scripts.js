@@ -1,7 +1,7 @@
 // ==============================================
 // CONSTANTES Y VARIABLES GLOBALES
 // ==============================================
-const apiUrl = "https://script.google.com/macros/s/AKfycbyXNgmilv6NYyaPWZt1YrI3tqWn_dReVCqqRU13RgZm7iheQS3Sg1mHCa9mQzuwQdOT-A/exec";
+const apiUrl = "https://script.google.com/macros/s/AKfycbzvSP60mYhn2-0QKXgQcfQJSECGoaxyfG7sx7Z24cwW_LrW5M5qOzLiCtrlAIsbytBx6A/exec";
 let currentUser = "";
 let userCurrency = "";
 let lastFetchedOrders = [];
