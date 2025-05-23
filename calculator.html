@@ -9,25 +9,22 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <header>
-        <div class="logo-container">
-            <img src="logo.svg" alt="Logo" width="70" height="70">
-              <h1 style="margin-left: -20px; font-size: 15px; transform: translateY(4px);">
-        <span style="color: white;">E</span><span style="color: white;">SEND</span><span style="color: white;">MONEY</span></h1>
-        </div>
-        
-        <span class="menu-icon" onclick="toggleMenu()">☰</span>
-    </header>
-
-    <div id="menu" class="menu">
-        <div class="menu-content">
-            
-            <a href="calculator.html">Cotizador</a>
-            <a href="orders.html">Órdenes</a>
-            <a href="profile.html">Perfil</a>
-            <a onclick="logout()">Cerrar Sesión</a>
-        </div>
+   <header>
+    <div class="logo-container">
+        <img src="logo.svg" alt="Logo" width="70" height="70">
+        <h1 style="margin-left: -20px; font-size: 15px; transform: translateY(4px);">
+            <span style="color: white;">E</span><span style="color: white;">SEND</span><span style="color: white;">MONEY</span>
+        </h1>
     </div>
+    <div class="header-actions">
+    <span id="notification-bell" class="notification-icon">
+        <i class="fas fa-bell"></i>
+        <span id="notification-count" class="notification-badge" style="display: none;">0</span>
+    </span>
+</div>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js"></script>
+</header>
 
     <div class="container">
         <h1>Envío de Remesas</h1>
