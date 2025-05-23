@@ -1493,38 +1493,38 @@ async function setupProfilePage() {
 
 async function requestNotificationPermission() {
     try {
-        // Registrar el service worker
-       const registration = await navigator.serviceWorker.register(
-  '/test/firebase-messaging-sw.js', // Ruta relativa desde la raíz
-  { scope: '/test/' } // Scope opcional
-);
-        console.log('Service Worker registrado');
+        // 1. Registrar manualmente el Service Worker con la ruta correcta
+        const registration = await navigator.serviceWorker.register(
+            '/test/firebase-messaging-sw.js', // Ruta exacta desde la raíz del dominio
+            { scope: '/test/' } // Scope debe coincidir con la ubicación de tu app
+        );
+        
+        console.log('Service Worker registrado en:', registration.scope);
 
-        // Solicitar permiso para notificaciones
+        // 2. Configurar Firebase para usar este registration
+        await messaging.useServiceWorker(registration);
+
+        // 3. Solicitar permiso para notificaciones
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
             console.log('Permiso de notificación concedido');
             
-            // Obtener el token FCM
+            // 4. Obtener el token FCM
             const token = await messaging.getToken({ 
                 vapidKey: 'BIjUoTPCiMDAg7ILetFmwMw-EM4ootWd0LaumD9AEhFVFJodJeWj1Z94utg1oDV7qEx_U32t7YM1nS64mUcqJMY'
             });
             
             if (token) {
-                console.log('Token FCM:', token);
+                console.log('Token FCM obtenido:', token.substring(0, 20) + '...');
                 await saveFCMToken(token);
                 return token;
-            } else {
-                console.log('No se pudo obtener el token FCM');
-                return null;
             }
-        } else {
-            console.log('Permiso de notificación denegado');
-            return null;
+            throw new Error('No se pudo obtener el token FCM');
         }
+        throw new Error('Permiso de notificación denegado');
     } catch (error) {
-        console.error('Error al solicitar permisos:', error);
-        return null;
+        console.error('Error en requestNotificationPermission:', error);
+        throw error;
     }
 }
 
