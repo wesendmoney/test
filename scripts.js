@@ -1498,7 +1498,6 @@ async function requestNotificationPermission() {
   '/test/firebase-messaging-sw.js', // Ruta relativa desde la raíz
   { scope: '/test/' } // Scope opcional
 );
-messaging.useServiceWorker(registration);
         console.log('Service Worker registrado');
 
         // Solicitar permiso para notificaciones
