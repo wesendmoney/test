@@ -1,7 +1,7 @@
 // ==============================================
 // CONSTANTES Y VARIABLES GLOBALES
 // ==============================================
-const apiUrl = "https://script.google.com/macros/s/AKfycbxAJ8ctPac4CMPHmuJw_sByrTShxM7MxMq315b6pNVavZkkY2nR85uVm2qY__HaAf5WGA/exec";
+const apiUrl = "https://script.google.com/macros/s/AKfycbzvSP60mYhn2-0QKXgQcfQJSECGoaxyfG7sx7Z24cwW_LrW5M5qOzLiCtrlAIsbytBx6A/exec";
 let currentUser = "";
 let userCurrency = "";
 let lastFetchedOrders = [];
@@ -70,6 +70,26 @@ document.addEventListener("DOMContentLoaded", async () => {
         const storedUser = localStorage.getItem("currentUser");
         const storedRole = localStorage.getItem("userRole");
 
+         // Inicializar notificaciones push si el usuario está logueado
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            try {
+                await requestNotificationPermission();
+                
+                // Escuchar mensajes en primer plano
+                messaging.onMessage((payload) => {
+                    console.log('Mensaje recibido en primer plano:', payload);
+                    
+                    // Mostrar notificación
+                    if (payload.notification) {
+                        const { title, body } = payload.notification;
+                        showCustomNotification(title, body);
+                    }
+                });
+            } catch (error) {
+                console.error('Error al inicializar notificaciones:', error);
+            }
+        }
+    
 
         if (storedUser && storedRole) {
             const user = JSON.parse(storedUser);
@@ -323,7 +343,7 @@ function setupCommonEvents() {
 // ==============================================
 // FUNCIONES DE AUTENTICACIÓN
 // ==============================================
-async function login() {
+function login() {
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
 
@@ -334,57 +354,39 @@ async function login() {
 
     showLoader();
 
-    try {
-        const response = await fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
-        
-        if (!response.ok) {
-            throw new Error("Error en la respuesta de la API");
-        }
-
-        const data = await response.json();
-        
-        if (data.success) {
-            // Guardar todos los datos relevantes en localStorage
-            localStorage.setItem("currentUser", JSON.stringify(data.user));
-            localStorage.setItem("userRole", data.role);
-            localStorage.setItem("userCurrency", data.user.country);
-            localStorage.setItem("userEmail", data.user.email);
-            localStorage.setItem("isLoggedIn", "true");
-            localStorage.setItem("lastActivity", Date.now());
-
-            currentUser = data.user.name;
-            userCurrency = data.user.country;
-            showMessage("Inicio de sesión exitoso!", false);
-
-            // Inicializar notificaciones push si el usuario está logueado
-            if ('serviceWorker' in navigator && 'PushManager' in window) {
-                try {
-                    await requestNotificationPermission();
-                    
-                    // Escuchar mensajes en primer plano
-                    messaging.onMessage((payload) => {
-                        console.log('Mensaje recibido en primer plano:', payload);
-                        
-                        if (payload.notification) {
-                            const { title, body } = payload.notification;
-                            showCustomNotification(title, body);
-                        }
-                    });
-                } catch (error) {
-                    console.error('Error al inicializar notificaciones:', error);
-                }
+    fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("Error en la respuesta de la API");
             }
-            
-            window.location.href = "calculator.html";
-        } else {
-            showMessage("Credenciales inválidas: " + data.message);
-        }
-    } catch (error) {
-        console.error("Error:", error);
-        showMessage("Ocurrió un error durante el inicio de sesión.");
-    } finally {
-        hideLoader();
-    }
+            return response.json();
+        })
+        .then((data) => {
+            if (data.success) {
+                // Guardar todos los datos relevantes en localStorage
+                localStorage.setItem("currentUser", JSON.stringify(data.user));
+                localStorage.setItem("userRole", data.role);
+                localStorage.setItem("userCurrency", data.user.country);
+                localStorage.setItem("userEmail", data.user.email); // Guardar email para futuras verificaciones
+                localStorage.setItem("isLoggedIn", "true"); // Bandera de sesión activa
+                localStorage.setItem("lastActivity", Date.now()); // Registrar última actividad
+
+                currentUser = data.user.name;
+                userCurrency = data.user.country;
+                showMessage("Inicio de sesión exitoso!", false);
+                
+                window.location.href = "calculator.html";
+            } else {
+                showMessage("Credenciales inválidas: " + data.message);
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            showMessage("Ocurrió un error durante el inicio de sesión.");
+        })
+        .finally(() => {
+            hideLoader();
+        });
 }
 
 function register() {
@@ -1499,7 +1501,9 @@ async function requestNotificationPermission() {
     try {
         // Intentar registrar desde varias ubicaciones posibles
         const swPaths = [
+            '/firebase-messaging-sw.js',
             './firebase-messaging-sw.js',
+            'firebase-messaging-sw.js'
         ];
 
         let registration;
