@@ -1492,36 +1492,73 @@ async function setupProfilePage() {
 }
 
 async function requestNotificationPermission() {
-    try {
-        // Registrar el service worker
-         const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js/');
-        console.log('Service Worker registrado');
-       
+    // Verificar si el navegador soporta service workers
+    if (!('serviceWorker' in navigator)) {
+        console.error('Este navegador no soporta service workers');
+        return null;
+    }
 
+    try {
+        // Intentar registrar desde varias ubicaciones posibles
+        const swPaths = [
+            '/firebase-messaging-sw.js',
+            './firebase-messaging-sw.js',
+            'firebase-messaging-sw.js'
+        ];
+
+        let registration;
+        let lastError;
+        
+        for (const path of swPaths) {
+            try {
+                registration = await navigator.serviceWorker.register(path);
+                console.log(`Service Worker registrado correctamente desde: ${path}`);
+                break;
+            } catch (err) {
+                lastError = err;
+                console.warn(`No se pudo registrar desde ${path}:`, err);
+            }
+        }
+
+        if (!registration) {
+            throw lastError || new Error('No se pudo registrar el Service Worker en ninguna ubicación probada');
+        }
+
+        // Esperar a que el Service Worker esté activo
+        await navigator.serviceWorker.ready;
+        
         // Solicitar permiso para notificaciones
         const permission = await Notification.requestPermission();
-        if (permission === 'granted') {
-            console.log('Permiso de notificación concedido');
-            
-            // Obtener el token FCM
-            const token = await messaging.getToken({ 
-                vapidKey: 'BIjUoTPCiMDAg7ILetFmwMw-EM4ootWd0LaumD9AEhFVFJodJeWj1Z94utg1oDV7qEx_U32t7YM1nS64mUcqJMY'
-            });
-            
-            if (token) {
-                console.log('Token FCM:', token);
-                await saveFCMToken(token);
-                return token;
-            } else {
-                console.log('No se pudo obtener el token FCM');
-                return null;
-            }
-        } else {
-            console.log('Permiso de notificación denegado');
-            return null;
+        if (permission !== 'granted') {
+            throw new Error('Permiso de notificación denegado por el usuario');
         }
+
+        console.log('Permiso de notificación concedido');
+        
+        // Obtener el token FCM
+        const token = await messaging.getToken({ 
+            vapidKey: 'BIjUoTPCiMDAg7ILetFmwMw-EM4ootWd0LaumD9AEhFVFJodJeWj1Z94utg1oDV7qEx_U32t7YM1nS64mUcqJMY',
+            serviceWorkerRegistration: registration
+        });
+        
+        if (!token) {
+            throw new Error('No se pudo obtener el token FCM');
+        }
+
+        console.log('Token FCM obtenido:', token);
+        await saveFCMToken(token);
+        return token;
+
     } catch (error) {
-        console.error('Error al solicitar permisos:', error);
+        console.error('Error en requestNotificationPermission:', error);
+        
+        // Mostrar mensaje al usuario si es relevante
+        if (error.message.includes('404')) {
+            alert('Error: No se encontró el archivo necesario para las notificaciones. Por favor, contacta al soporte.');
+        } else if (error.message.includes('denegado')) {
+            alert('Para recibir notificaciones, por favor habilita los permisos en tu navegador.');
+        }
+        
         return null;
     }
 }
