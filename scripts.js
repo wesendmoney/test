@@ -1,7 +1,7 @@
 // ==============================================
 // CONSTANTES Y VARIABLES GLOBALES
 // ==============================================
-const apiUrl = "https://script.google.com/macros/s/AKfycbwtdZPiRqcil9cMQyea4TkykFL5C1DSdulWf59htt_D-_oPVjzP0_NXlYeHqROCeZ0DWA/exec";
+const apiUrl = "https://script.google.com/macros/s/AKfycbyF9YTTi2VJiW-PmGiFaiOeWmzp3Dwm0a035lxEhKhLgm063iZanqfD__M6CpVCdemIfA/exec";
 let currentUser = "";
 let userCurrency = "";
 let lastFetchedOrders = [];
@@ -18,6 +18,21 @@ let conversionTimeout;
 let updateButtonTimeout;
 const receiptCache = {};
 let userTransactions = [];
+
+// Configuración de Firebase para notificaciones push
+const firebaseConfig = {
+    apiKey: "AIzaSyA0NDOIw9wTunNGyJTHgh8JHmMM__hUzrk",
+    authDomain: "wesm-6ce39.firebaseapp.com",
+    projectId: "wesm-6ce39",
+    storageBucket: "wesm-6ce39.firebasestorage.app",
+    messagingSenderId: "417323501500",
+    appId: "1:417323501500:web:2550c12546e7de0f4f8db9",
+    measurementId: "G-H2H6Y2WVSF"
+};
+
+// Inicializar Firebase
+const firebaseApp = firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging(firebaseApp);
 
 // ==============================================
 // FUNCIONES DE INICIO Y CARGA
@@ -54,6 +69,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (isLoggedIn && (Date.now() - lastActivity < sessionTimeout)) {
         const storedUser = localStorage.getItem("currentUser");
         const storedRole = localStorage.getItem("userRole");
+
+         // Inicializar notificaciones push si el usuario está logueado
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            try {
+                await requestNotificationPermission();
+                
+                // Escuchar mensajes en primer plano
+                messaging.onMessage((payload) => {
+                    console.log('Mensaje recibido en primer plano:', payload);
+                    
+                    // Mostrar notificación
+                    if (payload.notification) {
+                        const { title, body } = payload.notification;
+                        showCustomNotification(title, body);
+                    }
+                });
+            } catch (error) {
+                console.error('Error al inicializar notificaciones:', error);
+            }
+        }
+    
 
         if (storedUser && storedRole) {
             const user = JSON.parse(storedUser);
@@ -1453,4 +1489,128 @@ async function setupProfilePage() {
     } else {
         document.getElementById("userFunds").textContent = "Error al cargar fondos";
     }
+}
+
+async function requestNotificationPermission() {
+    try {
+        // Registrar el service worker
+        const registration = await navigator.serviceWorker.register('firebase-messaging-sw.js');
+        console.log('Service Worker registrado');
+
+        // Solicitar permiso para notificaciones
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            console.log('Permiso de notificación concedido');
+            
+            // Obtener el token FCM
+            const token = await messaging.getToken({ 
+                vapidKey: 'BIjUoTPCiMDAg7ILetFmwMw-EM4ootWd0LaumD9AEhFVFJodJeWj1Z94utg1oDV7qEx_U32t7YM1nS64mUcqJMY'
+            });
+            
+            if (token) {
+                console.log('Token FCM:', token);
+                await saveFCMToken(token);
+                return token;
+            } else {
+                console.log('No se pudo obtener el token FCM');
+                return null;
+            }
+        } else {
+            console.log('Permiso de notificación denegado');
+            return null;
+        }
+    } catch (error) {
+        console.error('Error al solicitar permisos:', error);
+        return null;
+    }
+}
+
+async function saveFCMToken(token) {
+    const storedUser = localStorage.getItem("currentUser");
+    if (!storedUser) {
+        console.error('No hay usuario logueado');
+        return false;
+    }
+
+    const user = JSON.parse(storedUser);
+    const email = user.email;
+    
+    if (!email) {
+        console.error('No se pudo obtener el email del usuario');
+        return false;
+    }
+    
+    try {
+        const url = `${apiUrl}?path=saveFCMToken&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`;
+        console.log('URL de la solicitud:', url); // Depuración
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            console.error('Error en la respuesta:', response.status, response.statusText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Respuesta del servidor:', data); // Depuración
+        
+        if (data.status === 200) {
+            console.log('Token FCM guardado correctamente');
+            return true;
+        } else {
+            console.error('Error del servidor:', data.message || 'Sin mensaje de error');
+            return false;
+        }
+    } catch (error) {
+        console.error('Error en la solicitud:', error);
+        return false;
+    }
+}
+
+function showCustomNotification(title, message) {
+    // Crear elemento de notificación
+    const notification = document.createElement('div');
+    notification.className = 'custom-notification';
+    notification.innerHTML = `
+        <div class="notification-content">
+            <h4>${title}</h4>
+            <p>${message}</p>
+        </div>
+        <button class="close-notification">&times;</button>
+    `;
+    
+    // Estilos (puedes mover esto a tu CSS)
+    notification.style.position = 'fixed';
+    notification.style.bottom = '20px';
+    notification.style.right = '20px';
+    notification.style.backgroundColor = '#333';
+    notification.style.color = 'white';
+    notification.style.padding = '15px';
+    notification.style.borderRadius = '5px';
+    notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+    notification.style.zIndex = '1000';
+    notification.style.display = 'flex';
+    notification.style.justifyContent = 'space-between';
+    notification.style.alignItems = 'center';
+    notification.style.maxWidth = '300px';
+    
+    // Botón para cerrar
+    const closeBtn = notification.querySelector('.close-notification');
+    closeBtn.style.background = 'none';
+    closeBtn.style.border = 'none';
+    closeBtn.style.color = 'white';
+    closeBtn.style.fontSize = '20px';
+    closeBtn.style.cursor = 'pointer';
+    
+    closeBtn.addEventListener('click', () => {
+        notification.style.display = 'none';
+    });
+    
+    // Auto-ocultar después de 5 segundos
+    setTimeout(() => {
+        notification.style.display = 'none';
+    }, 5000);
+    
+    // Agregar al DOM
+    document.body.appendChild(notification);
 }
