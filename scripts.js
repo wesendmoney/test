@@ -1499,9 +1499,7 @@ async function requestNotificationPermission() {
     try {
         // Intentar registrar desde varias ubicaciones posibles
         const swPaths = [
-            '/firebase-messaging-sw.js',
             './firebase-messaging-sw.js',
-            'firebase-messaging-sw.js'
         ];
 
         let registration;
