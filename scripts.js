@@ -31,10 +31,8 @@ const firebaseConfig = {
 };
 
 // Inicializar Firebase
-const app = firebase.initializeApp(firebaseConfig);
-
-// Obtener instancia de messaging CORRECTAMENTE
-const messaging = firebase.messaging();
+const firebaseApp = firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging(firebaseApp);
 
 // ==============================================
 // FUNCIONES DE INICIO Y CARGA
@@ -1495,41 +1493,35 @@ async function setupProfilePage() {
 
 async function requestNotificationPermission() {
     try {
-        // 1. Registrar el Service Worker
-        const registration = await navigator.serviceWorker.register(
-            '/test/firebase-messaging-sw.js',
-            { scope: '/test/' }
-        );
-        console.log('Service Worker registrado con éxito');
+        // Registrar el service worker
+        const registration = await navigator.serviceWorker.register('test/firebase-messaging-sw.js');
+        console.log('Service Worker registrado');
 
-        // 2. Configurar Firebase para usar este Service Worker
-        // FORMA CORRECTA para la versión compat:
-        await firebase.messaging().useServiceWorker(registration);
-
-        // 3. Solicitar permisos
+        // Solicitar permiso para notificaciones
         const permission = await Notification.requestPermission();
-        if (permission !== 'granted') {
-            throw new Error('Permiso denegado');
+        if (permission === 'granted') {
+            console.log('Permiso de notificación concedido');
+            
+            // Obtener el token FCM
+            const token = await messaging.getToken({ 
+                vapidKey: 'BIjUoTPCiMDAg7ILetFmwMw-EM4ootWd0LaumD9AEhFVFJodJeWj1Z94utg1oDV7qEx_U32t7YM1nS64mUcqJMY'
+            });
+            
+            if (token) {
+                console.log('Token FCM:', token);
+                await saveFCMToken(token);
+                return token;
+            } else {
+                console.log('No se pudo obtener el token FCM');
+                return null;
+            }
+        } else {
+            console.log('Permiso de notificación denegado');
+            return null;
         }
-        console.log('Permisos de notificación concedidos');
-
-        // 4. Obtener token FCM
-        const token = await firebase.messaging().getToken({
-            vapidKey: 'BIjUoTPCiMDAg7ILetFmwMw-EM4ootWd0LaumD9AEhFVFJodJeWj1Z94utg1oDV7qEx_U32t7YM1nS64mUcqJMY',
-            serviceWorkerRegistration: registration // Pasar el registration directamente
-        });
-
-        if (!token) {
-            throw new Error('No se pudo obtener el token');
-        }
-
-        console.log('Token FCM obtenido:', token.substring(0, 20) + '...');
-        await saveFCMToken(token);
-        return token;
-
     } catch (error) {
-        console.error('Error en requestNotificationPermission:', error);
-        throw error;
+        console.error('Error al solicitar permisos:', error);
+        return null;
     }
 }
 
