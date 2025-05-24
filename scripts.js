@@ -70,27 +70,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         const storedUser = localStorage.getItem("currentUser");
         const storedRole = localStorage.getItem("userRole");
 
-         // Inicializar notificaciones push si el usuario está logueado
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-            try {
-                await requestNotificationPermission();
-                
-                // Escuchar mensajes en primer plano
-                messaging.onMessage((payload) => {
-                    console.log('Mensaje recibido en primer plano:', payload);
-                    
-                    // Mostrar notificación
-                    if (payload.notification) {
-                        const { title, body } = payload.notification;
-                        showCustomNotification(title, body);
-                    }
-                });
-            } catch (error) {
-                console.error('Error al inicializar notificaciones:', error);
-            }
-        }
-    
-
         if (storedUser && storedRole) {
             const user = JSON.parse(storedUser);
             currentUser = user.name;
@@ -361,19 +340,22 @@ function login() {
             }
             return response.json();
         })
-        .then((data) => {
+        .then(async (data) => { // Hacer la función async
             if (data.success) {
                 // Guardar todos los datos relevantes en localStorage
                 localStorage.setItem("currentUser", JSON.stringify(data.user));
                 localStorage.setItem("userRole", data.role);
                 localStorage.setItem("userCurrency", data.user.country);
-                localStorage.setItem("userEmail", data.user.email); // Guardar email para futuras verificaciones
-                localStorage.setItem("isLoggedIn", "true"); // Bandera de sesión activa
-                localStorage.setItem("lastActivity", Date.now()); // Registrar última actividad
+                localStorage.setItem("userEmail", data.user.email);
+                localStorage.setItem("isLoggedIn", "true");
+                localStorage.setItem("lastActivity", Date.now());
 
                 currentUser = data.user.name;
                 userCurrency = data.user.country;
                 showMessage("Inicio de sesión exitoso!", false);
+                
+                // Inicializar notificaciones push después del login exitoso
+                await initializePushNotifications();
                 
                 window.location.href = "calculator.html";
             } else {
@@ -1491,6 +1473,35 @@ async function setupProfilePage() {
     }
 }
 
+async function initializePushNotifications() {
+    // Verificar si el navegador soporta notificaciones push
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        console.log('Este navegador no soporta notificaciones push');
+        return;
+    }
+
+    try {
+        // Solicitar permiso y configurar notificaciones
+        const token = await requestNotificationPermission();
+        
+        if (token) {
+            // Configurar el listener para mensajes en primer plano
+            messaging.onMessage((payload) => {
+                console.log('Mensaje recibido en primer plano:', payload);
+                
+                if (payload.notification) {
+                    const { title, body } = payload.notification;
+                    showCustomNotification(title, body);
+                }
+            });
+            
+            console.log('Notificaciones push inicializadas correctamente');
+        }
+    } catch (error) {
+        console.error('Error al inicializar notificaciones push:', error);
+    }
+}
+
 async function requestNotificationPermission() {
     // Verificar si el navegador soporta service workers
     if (!('serviceWorker' in navigator)) {
@@ -1499,29 +1510,10 @@ async function requestNotificationPermission() {
     }
 
     try {
-        // Intentar registrar desde varias ubicaciones posibles
-        const swPaths = [          
-            './firebase-messaging-sw.js',
-        ];
-
-        let registration;
-        let lastError;
+        // Registrar el service worker
+        const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+        console.log('Service Worker registrado correctamente');
         
-        for (const path of swPaths) {
-            try {
-                registration = await navigator.serviceWorker.register(path);
-                console.log(`Service Worker registrado correctamente desde: ${path}`);
-                break;
-            } catch (err) {
-                lastError = err;
-                console.warn(`No se pudo registrar desde ${path}:`, err);
-            }
-        }
-
-        if (!registration) {
-            throw lastError || new Error('No se pudo registrar el Service Worker en ninguna ubicación probada');
-        }
-
         // Esperar a que el Service Worker esté activo
         await navigator.serviceWorker.ready;
         
@@ -1530,7 +1522,7 @@ async function requestNotificationPermission() {
         if (permission !== 'granted') {
             throw new Error('Permiso de notificación denegado por el usuario');
         }
-
+        
         console.log('Permiso de notificación concedido');
         
         // Obtener el token FCM
@@ -1549,14 +1541,6 @@ async function requestNotificationPermission() {
 
     } catch (error) {
         console.error('Error en requestNotificationPermission:', error);
-        
-        // Mostrar mensaje al usuario si es relevante
-        if (error.message.includes('404')) {
-            alert('Error: No se encontró el archivo necesario para las notificaciones. Por favor, contacta al soporte.');
-        } else if (error.message.includes('denegado')) {
-            alert('Para recibir notificaciones, por favor habilita los permisos en tu navegador.');
-        }
-        
         return null;
     }
 }
