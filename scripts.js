@@ -375,23 +375,63 @@ function login() {
         });
 }
 
-// Función separada para inicializar notificaciones
+
 async function initPushNotifications() {
+    console.log('Inicializando notificaciones push...'); // Debug
+    
+    if (!('serviceWorker' in navigator)) {
+        console.warn('Este navegador no soporta service workers');
+        return;
+    }
+
+    if (!firebase.messaging.isSupported()) {
+        console.warn('Firebase Messaging no es compatible');
+        return;
+    }
+
     try {
-        await requestNotificationPermission();
-        
-        // Escuchar mensajes en primer plano
+        // 1. Registrar service worker
+        const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+        console.log('Service Worker registrado:', registration);
+
+        // 2. Solicitar permisos
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+            console.log('Permiso de notificación denegado');
+            return;
+        }
+
+        console.log('Permiso de notificación concedido');
+
+        // 3. Obtener token FCM
+        const token = await messaging.getToken({
+            vapidKey: 'BIjUoTPCiMDAg7ILetFmwMw-EM4ootWd0LaumD9AEhFVFJodJeWj1Z94utg1oDV7qEx_U32t7YM1nS64mUcqJMY',
+            serviceWorkerRegistration: registration
+        });
+
+        if (!token) {
+            console.warn('No se pudo obtener token FCM');
+            return;
+        }
+
+        console.log('Token FCM obtenido:', token);
+        await saveFCMToken(token);
+
+        // 4. Configurar listener de mensajes
         messaging.onMessage((payload) => {
-            console.log('Mensaje recibido en primer plano:', payload);
-            
+            console.log('Mensaje recibido:', payload);
             if (payload.notification) {
-                const { title, body } = payload.notification;
-                showCustomNotification(title, body);
+                showCustomNotification(
+                    payload.notification.title, 
+                    payload.notification.body
+                );
             }
         });
+
     } catch (error) {
-        console.error('Error al inicializar notificaciones:', error);
-        // Opcional: mostrar mensaje al usuario
+        console.error('Error en initPushNotifications:', error);
+        // Opcional: Mostrar mensaje al usuario
+        showCustomNotification('Error', 'No se pudieron configurar las notificaciones');
     }
 }
 
