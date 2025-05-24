@@ -323,51 +323,6 @@ function setupCommonEvents() {
 // ==============================================
 // FUNCIONES DE AUTENTICACIÓN
 // ==============================================
-function login() {
-    const email = document.getElementById("loginEmail").value;
-    const password = document.getElementById("loginPassword").value;
-
-    if (!email || !password) {
-        showMessage("Por favor, completa todos los campos.");
-        return;
-    }
-
-    showLoader();
-
-    fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`)
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error("Error en la respuesta de la API");
-            }
-            return response.json();
-        })
-        .then((data) => {
-            if (data.success) {
-                // Guardar todos los datos relevantes en localStorage
-                localStorage.setItem("currentUser", JSON.stringify(data.user));
-                localStorage.setItem("userRole", data.role);
-                localStorage.setItem("userCurrency", data.user.country);
-                localStorage.setItem("userEmail", data.user.email); // Guardar email para futuras verificaciones
-                localStorage.setItem("isLoggedIn", "true"); // Bandera de sesión activa
-                localStorage.setItem("lastActivity", Date.now()); // Registrar última actividad
-
-                currentUser = data.user.name;
-                userCurrency = data.user.country;
-                showMessage("Inicio de sesión exitoso!", false);
-                
-                window.location.href = "calculator.html";
-            } else {
-                showMessage("Credenciales inválidas: " + data.message);
-            }
-        })
-        .catch((error) => {
-            console.error("Error:", error);
-            showMessage("Ocurrió un error durante el inicio de sesión.");
-        })
-        .finally(() => {
-            hideLoader();
-        });
-}
 
 function register() {
     const username = document.getElementById("username").value;
