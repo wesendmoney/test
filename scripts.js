@@ -323,7 +323,7 @@ function setupCommonEvents() {
 // ==============================================
 // FUNCIONES DE AUTENTICACIÓN
 // ==============================================
-async function login() {
+function login() {
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
 
@@ -334,48 +334,40 @@ async function login() {
 
     showLoader();
 
-    try {
-        const response = await fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
-        
-        if (!response.ok) {
-            throw new Error("Error en la respuesta de la API");
-        }
-
-        const data = await response.json();
-
-        if (data.success) {
-            // Guardar todos los datos relevantes en localStorage
-            localStorage.setItem("currentUser", JSON.stringify(data.user));
-            localStorage.setItem("userRole", data.role);
-            localStorage.setItem("userCurrency", data.user.country);
-            localStorage.setItem("userEmail", data.user.email);
-            localStorage.setItem("isLoggedIn", "true");
-            localStorage.setItem("lastActivity", Date.now());
-
-            currentUser = data.user.name;
-            userCurrency = data.user.country;
-            showMessage("Inicio de sesión exitoso!", false);
-            
-            // Inicializar notificaciones push
-            if ('serviceWorker' in navigator && 'PushManager' in window) {
-                try {
-                    await initializePushNotifications(data.user);
-                } catch (error) {
-                    console.error("Error inicializando notificaciones:", error);
-                    // Puedes decidir si quieres continuar aunque falle la inicialización de notificaciones
-                }
+    fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("Error en la respuesta de la API");
             }
-            
-            window.location.href = "calculator.html";
-        } else {
-            showMessage("Credenciales inválidas: " + data.message);
-        }
-    } catch (error) {
-        console.error("Error:", error);
-        showMessage("Ocurrió un error durante el inicio de sesión.");
-    } finally {
-        hideLoader();
-    }
+            return response.json();
+        })
+        .then(async (data) => { // <-- Añade async aquí
+            if (data.success) {
+                // Guardar datos...
+                currentUser = data.user.name;
+                userCurrency = data.user.country;
+                showMessage("Inicio de sesión exitoso!", false);
+                
+                if ('serviceWorker' in navigator && 'PushManager' in window) {
+                    try {
+                        await initializePushNotifications(data.user);
+                    } catch (error) {
+                        console.error("Error inicializando notificaciones:", error);
+                    }
+                }
+                
+                window.location.href = "calculator.html";
+            } else {
+                showMessage("Credenciales inválidas: " + data.message);
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            showMessage("Ocurrió un error durante el inicio de sesión.");
+        })
+        .finally(() => {
+            hideLoader();
+        });
 }
 
 function register() {
