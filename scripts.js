@@ -1635,7 +1635,7 @@ function showCustomNotification(title, message) {
 }
 
 async function initializePushNotifications(user) {
-    if (!('serviceWorker' in navigator) return;
+   if (!('serviceWorker' in navigator)) return; 
     
     try {
         // 1. Registrar Service Worker
