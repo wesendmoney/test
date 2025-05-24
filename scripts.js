@@ -322,7 +322,7 @@ function setupCommonEvents() {
 // ==============================================
 // FUNCIONES DE AUTENTICACIÓN
 // ==============================================
-function login() {
+async function login() {
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
 
@@ -333,105 +333,71 @@ function login() {
 
     showLoader();
 
-    fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`)
-        .then((response) => {
-            if (!response.ok) throw new Error("Error en la respuesta de la API");
-            return response.json();
-        })
-        .then(async (data) => {
-            if (data.success) {
-                // Guardar datos de usuario
-                localStorage.setItem("currentUser", JSON.stringify(data.user));
-                localStorage.setItem("userRole", data.role);
-                localStorage.setItem("userCurrency", data.user.country);
-                localStorage.setItem("userEmail", data.user.email);
-                localStorage.setItem("isLoggedIn", "true");
-                localStorage.setItem("lastActivity", Date.now());
+    try {
+        const response = await fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            // Guardar datos de usuario
+            localStorage.setItem("currentUser", JSON.stringify(data.user));
+            localStorage.setItem("userRole", data.role);
+            localStorage.setItem("userCurrency", data.user.country);
+            localStorage.setItem("userEmail", data.user.email);
+            localStorage.setItem("isLoggedIn", "true");
+            localStorage.setItem("lastActivity", Date.now());
 
-                currentUser = data.user.name;
-                userCurrency = data.user.country;
-                showMessage("Inicio de sesión exitoso!", false);
-
-                // Redirigir inmediatamente
-                window.location.href = "calculator.html";
-                
-                // Inicializar notificaciones después de redirección
-                // Usamos un pequeño delay para asegurar que la nueva página cargó
-                setTimeout(() => {
-                    initPushNotifications().catch(error => {
-                        console.error('Error en notificaciones:', error);
-                    });
-                }, 6000); // Reducido a 3 segundos
+            currentUser = data.user.name;
+            userCurrency = data.user.country;
+            
+            // Inicializar notificaciones push ANTES de redirigir
+            if ('serviceWorker' in navigator && 'PushManager' in window) {
+                try {
+                    await initializePushNotifications();
+                    showMessage("Inicio de sesión exitoso!", false);
+                    
+                    // Pequeño retraso para asegurar que el token se registre
+                    setTimeout(() => {
+                        window.location.href = "calculator.html";
+                    }, 500);
+                    
+                } catch (error) {
+                    console.error('Error en notificaciones:', error);
+                    // Redirigir incluso si fallan las notificaciones
+                    window.location.href = "calculator.html";
+                }
             } else {
-                showMessage("Credenciales inválidas: " + data.message);
+                window.location.href = "calculator.html";
             }
-        })
-        .catch((error) => {
-            console.error("Error:", error);
-            showMessage("Ocurrió un error durante el inicio de sesión.");
-        })
-        .finally(() => {
-            hideLoader();
-        });
+        } else {
+            showMessage("Credenciales inválidas: " + data.message);
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        showMessage("Ocurrió un error durante el inicio de sesión.");
+    } finally {
+        hideLoader();
+    }
 }
 
-
-async function initPushNotifications() {
-    console.log('Inicializando notificaciones push...'); // Debug
-    
-    if (!('serviceWorker' in navigator)) {
-        console.warn('Este navegador no soporta service workers');
-        return;
-    }
-
-    if (!firebase.messaging.isSupported()) {
-        console.warn('Firebase Messaging no es compatible');
-        return;
-    }
-
+// Función separada para inicializar notificaciones
+async function initializePushNotifications() {
     try {
-        // 1. Registrar service worker
-        const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
-        console.log('Service Worker registrado:', registration);
-
-        // 2. Solicitar permisos
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') {
-            console.log('Permiso de notificación denegado');
-            return;
+        const token = await requestNotificationPermission();
+        if (token) {
+            await saveFCMToken(token);
+            
+            // Configurar listener de mensajes en primer plano
+            messaging.onMessage((payload) => {
+                console.log('Mensaje recibido en primer plano:', payload);
+                if (payload.notification) {
+                    const { title, body } = payload.notification;
+                    showCustomNotification(title, body);
+                }
+            });
         }
-
-        console.log('Permiso de notificación concedido');
-
-        // 3. Obtener token FCM
-        const token = await messaging.getToken({
-            vapidKey: 'BIjUoTPCiMDAg7ILetFmwMw-EM4ootWd0LaumD9AEhFVFJodJeWj1Z94utg1oDV7qEx_U32t7YM1nS64mUcqJMY',
-            serviceWorkerRegistration: registration
-        });
-
-        if (!token) {
-            console.warn('No se pudo obtener token FCM');
-            return;
-        }
-
-        console.log('Token FCM obtenido:', token);
-        await saveFCMToken(token);
-
-        // 4. Configurar listener de mensajes
-        messaging.onMessage((payload) => {
-            console.log('Mensaje recibido:', payload);
-            if (payload.notification) {
-                showCustomNotification(
-                    payload.notification.title, 
-                    payload.notification.body
-                );
-            }
-        });
-
     } catch (error) {
-        console.error('Error en initPushNotifications:', error);
-        // Opcional: Mostrar mensaje al usuario
-        showCustomNotification('Error', 'No se pudieron configurar las notificaciones');
+        console.error('Error inicializando notificaciones:', error);
+        throw error;
     }
 }
 
