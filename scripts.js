@@ -334,39 +334,48 @@ async function login() {
 
     showLoader();
 
-    fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`)
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error("Error en la respuesta de la API");
-            }
-            return response.json();
-        })
-        .then((data) => {
-            if (data.success) {
-                // Guardar todos los datos relevantes en localStorage
-                localStorage.setItem("currentUser", JSON.stringify(data.user));
-                localStorage.setItem("userRole", data.role);
-                localStorage.setItem("userCurrency", data.user.country);
-                localStorage.setItem("userEmail", data.user.email); // Guardar email para futuras verificaciones
-                localStorage.setItem("isLoggedIn", "true"); // Bandera de sesión activa
-                localStorage.setItem("lastActivity", Date.now()); // Registrar última actividad
+    try {
+        const response = await fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
+        
+        if (!response.ok) {
+            throw new Error("Error en la respuesta de la API");
+        }
 
-                currentUser = data.user.name;
-                userCurrency = data.user.country;
-                showMessage("Inicio de sesión exitoso!", false);
-                await initializePushNotifications(data.user);
-                window.location.href = "calculator.html";
-            } else {
-                showMessage("Credenciales inválidas: " + data.message);
+        const data = await response.json();
+
+        if (data.success) {
+            // Guardar todos los datos relevantes en localStorage
+            localStorage.setItem("currentUser", JSON.stringify(data.user));
+            localStorage.setItem("userRole", data.role);
+            localStorage.setItem("userCurrency", data.user.country);
+            localStorage.setItem("userEmail", data.user.email);
+            localStorage.setItem("isLoggedIn", "true");
+            localStorage.setItem("lastActivity", Date.now());
+
+            currentUser = data.user.name;
+            userCurrency = data.user.country;
+            showMessage("Inicio de sesión exitoso!", false);
+            
+            // Inicializar notificaciones push
+            if ('serviceWorker' in navigator && 'PushManager' in window) {
+                try {
+                    await initializePushNotifications(data.user);
+                } catch (error) {
+                    console.error("Error inicializando notificaciones:", error);
+                    // Puedes decidir si quieres continuar aunque falle la inicialización de notificaciones
+                }
             }
-        })
-        .catch((error) => {
-            console.error("Error:", error);
-            showMessage("Ocurrió un error durante el inicio de sesión.");
-        })
-        .finally(() => {
-            hideLoader();
-        });
+            
+            window.location.href = "calculator.html";
+        } else {
+            showMessage("Credenciales inválidas: " + data.message);
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        showMessage("Ocurrió un error durante el inicio de sesión.");
+    } finally {
+        hideLoader();
+    }
 }
 
 function register() {
