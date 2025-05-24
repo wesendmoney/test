@@ -1659,22 +1659,4 @@ function showCustomNotification(title, message) {
     
     // Agregar al DOM
     document.body.appendChild(notification);
-} como evito que se llame tanto a las funciones que manejan las notificaciones, es necesario hacerlo desde el dom, puedo quitar   // Inicializar notificaciones push si el usuario está logueado
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-            try {
-                await requestNotificationPermission();
-                
-                // Escuchar mensajes en primer plano
-                messaging.onMessage((payload) => {
-                    console.log('Mensaje recibido en primer plano:', payload);
-                    
-                    // Mostrar notificación
-                    if (payload.notification) {
-                        const { title, body } = payload.notification;
-                        showCustomNotification(title, body);
-                    }
-                });
-            } catch (error) {
-                console.error('Error al inicializar notificaciones:', error);
-            }
-        } del dom y colocarla en el login pero que se ejecute 5 segundos depues 
+} 
