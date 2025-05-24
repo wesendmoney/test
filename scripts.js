@@ -364,7 +364,62 @@ async function login() {
         console.error("Error:", error);
         showMessage("Ocurrió un error durante el inicio de sesión.");
     } finally {
+        hideLoader();async function login() {
+    const email = document.getElementById("loginEmail").value;
+    const password = document.getElementById("loginPassword").value;
+
+    if (!email || !password) {
+        showMessage("Por favor, completa todos los campos.");
+        return;
+    }
+
+    showLoader();
+
+    try {
+        const response = await fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            // Guardar datos de usuario
+            localStorage.setItem("currentUser", JSON.stringify(data.user));
+            localStorage.setItem("userRole", data.role);
+            localStorage.setItem("userCurrency", data.user.country);
+            localStorage.setItem("userEmail", data.user.email);
+            localStorage.setItem("isLoggedIn", "true");
+            localStorage.setItem("lastActivity", Date.now());
+
+            currentUser = data.user.name;
+            userCurrency = data.user.country;
+            
+            // Mostrar diálogo de notificaciones después de un breve retraso
+            setTimeout(async () => {
+                try {
+                    const enableNotifications = confirm("¿Deseas habilitar notificaciones push para recibir actualizaciones?");
+                    if (enableNotifications) {
+                        await initializePushNotifications();
+                        // Verificar si el token se guardó
+                        const token = await messaging.getToken();
+                        if (!token) {
+                            console.error('No se pudo obtener el token después de inicializar');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error en el flujo de notificaciones:', error);
+                }
+            }, 500);
+            
+            showMessage("Inicio de sesión exitoso!", false);
+            window.location.href = "calculator.html";
+        } else {
+            showMessage("Credenciales inválidas: " + data.message);
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        showMessage("Ocurrió un error durante el inicio de sesión.");
+    } finally {
         hideLoader();
+    }
+}
     }
 }
 
