@@ -335,14 +335,12 @@ function login() {
 
     fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`)
         .then((response) => {
-            if (!response.ok) {
-                throw new Error("Error en la respuesta de la API");
-            }
+            if (!response.ok) throw new Error("Error en la respuesta de la API");
             return response.json();
         })
-        .then(async (data) => { // Hacer la función async
+        .then(async (data) => {
             if (data.success) {
-                // Guardar todos los datos relevantes en localStorage
+                // Guardar datos de usuario
                 localStorage.setItem("currentUser", JSON.stringify(data.user));
                 localStorage.setItem("userRole", data.role);
                 localStorage.setItem("userCurrency", data.user.country);
@@ -353,19 +351,17 @@ function login() {
                 currentUser = data.user.name;
                 userCurrency = data.user.country;
                 showMessage("Inicio de sesión exitoso!", false);
-                
-                // Inicializar notificaciones después de 5 segundos
-                setTimeout(async () => {
-                    if ('serviceWorker' in navigator && 'PushManager' in window) {
-                        try {
-                            await initPushNotifications();
-                        } catch (error) {
-                            console.error('Error al inicializar notificaciones:', error);
-                        }
-                    }
-                }, 5000);
-                
+
+                // Redirigir inmediatamente
                 window.location.href = "calculator.html";
+                
+                // Inicializar notificaciones después de redirección
+                // Usamos un pequeño delay para asegurar que la nueva página cargó
+                setTimeout(() => {
+                    initPushNotifications().catch(error => {
+                        console.error('Error en notificaciones:', error);
+                    });
+                }, 6000); // Reducido a 3 segundos
             } else {
                 showMessage("Credenciales inválidas: " + data.message);
             }
