@@ -1474,31 +1474,34 @@ async function setupProfilePage() {
 }
 
 async function initializePushNotifications() {
-    // Verificar si el navegador soporta notificaciones push
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        console.log('Este navegador no soporta notificaciones push');
+        console.log('Navegador no compatible con notificaciones');
         return;
     }
 
     try {
-        // Solicitar permiso y configurar notificaciones
         const token = await requestNotificationPermission();
-        
-        if (token) {
-            // Configurar el listener para mensajes en primer plano
-            messaging.onMessage((payload) => {
-                console.log('Mensaje recibido en primer plano:', payload);
-                
-                if (payload.notification) {
-                    const { title, body } = payload.notification;
-                    showCustomNotification(title, body);
-                }
-            });
-            
-            console.log('Notificaciones push inicializadas correctamente');
+        if (!token) {
+            console.log('No se obtuvo token FCM');
+            return;
         }
+
+        // Verificar explícitamente que el token se guardó
+        const isTokenSaved = await saveFCMToken(token);
+        console.log('Token guardado:', isTokenSaved);
+
+        // Configurar listener de mensajes
+        messaging.onMessage((payload) => {
+            console.log('Mensaje en primer plano:', payload);
+            if (payload.notification) {
+                showCustomNotification(payload.notification.title, payload.notification.body);
+            }
+        });
+
+        return true;
     } catch (error) {
-        console.error('Error al inicializar notificaciones push:', error);
+        console.error('Error inicializando notificaciones:', error);
+        return false;
     }
 }
 
