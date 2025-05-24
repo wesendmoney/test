@@ -18,6 +18,7 @@ let conversionTimeout;
 let updateButtonTimeout;
 const receiptCache = {};
 let userTransactions = [];
+const activeNotifications = new Set();
 
 // Configuración de Firebase para notificaciones push
 const firebaseConfig = {
@@ -69,27 +70,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (isLoggedIn && (Date.now() - lastActivity < sessionTimeout)) {
         const storedUser = localStorage.getItem("currentUser");
         const storedRole = localStorage.getItem("userRole");
-
-         // Inicializar notificaciones push si el usuario está logueado
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-            try {
-                await requestNotificationPermission();
-                
-                // Escuchar mensajes en primer plano
-                messaging.onMessage((payload) => {
-                    console.log('Mensaje recibido en primer plano:', payload);
-                    
-                    // Mostrar notificación
-                    if (payload.notification) {
-                        const { title, body } = payload.notification;
-                        showCustomNotification(title, body);
-                    }
-                });
-            } catch (error) {
-                console.error('Error al inicializar notificaciones:', error);
-            }
-        }
-    
 
         if (storedUser && storedRole) {
             const user = JSON.parse(storedUser);
@@ -374,7 +354,7 @@ function login() {
                 currentUser = data.user.name;
                 userCurrency = data.user.country;
                 showMessage("Inicio de sesión exitoso!", false);
-                
+                await initializePushNotifications(data.user);
                 window.location.href = "calculator.html";
             } else {
                 showMessage("Credenciales inválidas: " + data.message);
@@ -1603,8 +1583,13 @@ async function saveFCMToken(token) {
     }
 }
 
+
+
 function showCustomNotification(title, message) {
-    // Crear elemento de notificación
+    // Evitar duplicados
+    const notificationId = `${title}-${message}`;
+    if (activeNotifications.has(notificationId)) return;
+    
     const notification = document.createElement('div');
     notification.className = 'custom-notification';
     notification.innerHTML = `
@@ -1615,38 +1600,86 @@ function showCustomNotification(title, message) {
         <button class="close-notification">&times;</button>
     `;
     
-    // Estilos (puedes mover esto a tu CSS)
-    notification.style.position = 'fixed';
-    notification.style.bottom = '20px';
-    notification.style.right = '20px';
-    notification.style.backgroundColor = '#333';
-    notification.style.color = 'white';
-    notification.style.padding = '15px';
-    notification.style.borderRadius = '5px';
-    notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
-    notification.style.zIndex = '1000';
-    notification.style.display = 'flex';
-    notification.style.justifyContent = 'space-between';
-    notification.style.alignItems = 'center';
-    notification.style.maxWidth = '300px';
-    
-    // Botón para cerrar
-    const closeBtn = notification.querySelector('.close-notification');
-    closeBtn.style.background = 'none';
-    closeBtn.style.border = 'none';
-    closeBtn.style.color = 'white';
-    closeBtn.style.fontSize = '20px';
-    closeBtn.style.cursor = 'pointer';
-    
-    closeBtn.addEventListener('click', () => {
-        notification.style.display = 'none';
+    // Estilos (mejor mover a CSS)
+    Object.assign(notification.style, {
+        position: 'fixed',
+        bottom: '20px',
+        right: '20px',
+        backgroundColor: '#333',
+        color: 'white',
+        padding: '15px',
+        borderRadius: '5px',
+        boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+        zIndex: '1000',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        maxWidth: '300px'
     });
     
-    // Auto-ocultar después de 5 segundos
+    const closeBtn = notification.querySelector('.close-notification');
+    closeBtn.addEventListener('click', () => {
+        notification.remove();
+        activeNotifications.delete(notificationId);
+    });
+    
+    // Auto-remover después de 5 segundos
     setTimeout(() => {
-        notification.style.display = 'none';
+        notification.remove();
+        activeNotifications.delete(notificationId);
     }, 5000);
     
-    // Agregar al DOM
     document.body.appendChild(notification);
+    activeNotifications.add(notificationId);
+}
+
+async function initializePushNotifications(user) {
+    if (!('serviceWorker' in navigator) return;
+    
+    try {
+        // 1. Registrar Service Worker
+        const registration = await registerServiceWorker();
+        
+        // 2. Solicitar permisos
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') return;
+        
+        // 3. Obtener y guardar token FCM
+        const token = await messaging.getToken({
+            vapidKey: 'BIjUoTPCiMDAg7ILetFmwMw-EM4ootWd0LaumD9AEhFVFJodJeWj1Z94utg1oDV7qEx_U32t7YM1nS64mUcqJMY',
+            serviceWorkerRegistration: registration
+        });
+        
+        if (token) {
+            await saveFCMToken(token, user.email);
+        }
+        
+        // 4. Configurar listener para mensajes en primer plano
+        messaging.onMessage((payload) => {
+            console.log('Mensaje recibido:', payload);
+            if (payload.notification) {
+                showCustomNotification(payload.notification.title, payload.notification.body);
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error inicializando notificaciones:', error);
+    }
+}
+
+async function registerServiceWorker() {
+    const swPaths = [
+        './firebase-messaging-sw.js',
+        '/firebase-messaging-sw.js',
+        'firebase-messaging-sw.js'
+    ];
+    
+    for (const path of swPaths) {
+        try {
+            return await navigator.serviceWorker.register(path);
+        } catch (err) {
+            console.warn(`Falló registro desde ${path}:`, err);
+        }
+    }
+    throw new Error('No se pudo registrar el Service Worker');
 }
