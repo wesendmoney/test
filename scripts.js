@@ -1635,7 +1635,7 @@ function showCustomNotification(title, message) {
 }
 
 async function initializePushNotifications(user) {
-   if (!('serviceWorker' in navigator)) return; 
+    if (!('serviceWorker' in navigator)) return;
     
     try {
         // 1. Registrar Service Worker
@@ -1666,6 +1666,23 @@ async function initializePushNotifications(user) {
     } catch (error) {
         console.error('Error inicializando notificaciones:', error);
     }
+}
+
+async function registerServiceWorker() {
+    const swPaths = [
+        './firebase-messaging-sw.js',
+        '/firebase-messaging-sw.js',
+        'firebase-messaging-sw.js'
+    ];
+    
+    for (const path of swPaths) {
+        try {
+            return await navigator.serviceWorker.register(path);
+        } catch (err) {
+            console.warn(`Falló registro desde ${path}:`, err);
+        }
+    }
+    throw new Error('No se pudo registrar el Service Worker');
 }
 
 async function registerServiceWorker() {
