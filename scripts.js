@@ -337,10 +337,6 @@ async function login() {
         const response = await fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
         const data = await response.json();
         
-        if (!response.ok) {
-            throw new Error(data.message || "Error en la respuesta de la API");
-        }
-
         if (data.success) {
             // Guardar datos de usuario
             localStorage.setItem("currentUser", JSON.stringify(data.user));
@@ -353,8 +349,11 @@ async function login() {
             currentUser = data.user.name;
             userCurrency = data.user.country;
             
-            // Mostrar diálogo de notificaciones después de login exitoso
-            await showNotificationPermissionDialog();
+            // Preguntar por notificaciones después de login exitoso
+            const enableNotifications = confirm("¿Deseas habilitar notificaciones push para recibir actualizaciones?");
+            if (enableNotifications) {
+                await initializePushNotifications();
+            }
             
             showMessage("Inicio de sesión exitoso!", false);
             window.location.href = "calculator.html";
@@ -1471,74 +1470,33 @@ async function setupProfilePage() {
     }
 }
 
-async function showNotificationPermissionDialog() {
-    // Solo preguntar si el navegador soporta notificaciones
-    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
-        console.log('Este navegador no soporta notificaciones push');
-        return;
-    }
-
-    // Verificar si ya tenemos permiso
-    if (Notification.permission === 'granted') {
-        await initializePushNotifications();
-        return;
-    }
-
-    // Mostrar diálogo personalizado
-    const dialog = document.createElement('div');
-    dialog.className = 'notification-permission-dialog';
-    dialog.innerHTML = `
-        <div class="dialog-content">
-            <h3>¿Deseas recibir notificaciones?</h3>
-            <p>Recibirás alertas sobre el estado de tus transacciones y otras actividades importantes.</p>
-            <div class="dialog-buttons">
-                <button id="acceptNotifications">Sí, activar</button>
-                <button id="declineNotifications">No, gracias</button>
-            </div>
-        </div>
-    `;
-    
-    // Estilos (mejor mover esto a tu CSS)
-    dialog.style.position = 'fixed';
-    dialog.style.top = '0';
-    dialog.style.left = '0';
-    dialog.style.width = '100%';
-    dialog.style.height = '100%';
-    dialog.style.backgroundColor = 'rgba(0,0,0,0.7)';
-    dialog.style.display = 'flex';
-    dialog.style.justifyContent = 'center';
-    dialog.style.alignItems = 'center';
-    dialog.style.zIndex = '10000';
-    
-    const content = dialog.querySelector('.dialog-content');
-    content.style.backgroundColor = '#222';
-    content.style.padding = '20px';
-    content.style.borderRadius = '8px';
-    content.style.maxWidth = '400px';
-    content.style.textAlign = 'center';
-    
-    document.body.appendChild(dialog);
-    
-    // Manejar botones
-    document.getElementById('acceptNotifications').addEventListener('click', async () => {
-        await initializePushNotifications();
-        dialog.remove();
-    });
-    
-    document.getElementById('declineNotifications').addEventListener('click', () => {
-        dialog.remove();
-    });
-}
-
 async function initializePushNotifications() {
+    if (!('serviceWorker' in navigator && 'PushManager' in window)) {
+        console.warn('Este navegador no soporta notificaciones push');
+        return;
+    }
+
     try {
-        const token = await requestNotificationPermission();
+        const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+        console.log('Service Worker registrado');
+
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+            console.log('Permiso de notificación denegado');
+            return;
+        }
+
+        const token = await messaging.getToken({
+            vapidKey: 'BIjUoTPCiMDAg7ILetFmwMw-EM4ootWd0LaumD9AEhFVFJodJeWj1Z94utg1oDV7qEx_U32t7YM1nS64mUcqJMY',
+            serviceWorkerRegistration: registration
+        });
+
         if (token) {
-            console.log('Notificaciones push configuradas correctamente');
+            await saveFCMToken(token); // Esta función ya usa GET
+            console.log('Token FCM guardado:', token);
             
-            // Configurar el listener para mensajes en primer plano
             messaging.onMessage((payload) => {
-                console.log('Mensaje recibido en primer plano:', payload);
+                console.log('Mensaje recibido:', payload);
                 if (payload.notification) {
                     const { title, body } = payload.notification;
                     showCustomNotification(title, body);
@@ -1546,7 +1504,10 @@ async function initializePushNotifications() {
             });
         }
     } catch (error) {
-        console.error('Error al inicializar notificaciones:', error);
+        console.error('Error inicializando notificaciones:', error);
+        if (error.message.includes('denegado')) {
+            showMessage("Para recibir notificaciones, por favor habilita los permisos en tu navegario.", true);
+        }
     }
 }
 
@@ -1621,43 +1582,23 @@ async function requestNotificationPermission() {
 }
 
 async function saveFCMToken(token) {
-    const storedUser = localStorage.getItem("currentUser");
-    if (!storedUser) {
-        console.error('No hay usuario logueado');
-        return false;
-    }
-
-    const user = JSON.parse(storedUser);
-    const email = user.email;
-    
-    if (!email) {
-        console.error('No se pudo obtener el email del usuario');
-        return false;
-    }
-    
     try {
-        const url = `${apiUrl}?path=saveFCMToken&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`;
-        console.log('URL de la solicitud:', url); // Depuración
+        const storedUser = localStorage.getItem("currentUser");
+        if (!storedUser) throw new Error('Usuario no autenticado');
         
-        const response = await fetch(url);
+        const user = JSON.parse(storedUser);
+        if (!user.email) throw new Error('Email de usuario no disponible');
+
+        // Usando GET con parámetros en la URL
+        const url = `${apiUrl}?path=saveFCMToken&email=${encodeURIComponent(user.email)}&token=${encodeURIComponent(token)}`;
         
-        if (!response.ok) {
-            console.error('Error en la respuesta:', response.status, response.statusText);
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
+        const response = await fetch(url); // GET es el método por defecto
         const data = await response.json();
-        console.log('Respuesta del servidor:', data); // Depuración
         
-        if (data.status === 200) {
-            console.log('Token FCM guardado correctamente');
-            return true;
-        } else {
-            console.error('Error del servidor:', data.message || 'Sin mensaje de error');
-            return false;
-        }
+        return data.status === 200;
+        
     } catch (error) {
-        console.error('Error en la solicitud:', error);
+        console.error('Error guardando token:', error);
         return false;
     }
 }
@@ -1708,4 +1649,4 @@ function showCustomNotification(title, message) {
     
     // Agregar al DOM
     document.body.appendChild(notification);
-} 
+}
