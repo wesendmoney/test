@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Si hay sesión activa y no ha expirado
     if (isLoggedIn && (Date.now() - lastActivity < sessionTimeout)) {
         const storedUser = localStorage.getItem("currentUser");
-        const storedRole = localStorage.getItem("userRole");    
+        const storedRole = localStorage.getItem("userRole");
 
         if (storedUser && storedRole) {
             const user = JSON.parse(storedUser);
@@ -322,7 +322,7 @@ function setupCommonEvents() {
 // ==============================================
 // FUNCIONES DE AUTENTICACIÓN
 // ==============================================
-async function login() {
+function login() {
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
 
@@ -333,37 +333,69 @@ async function login() {
 
     showLoader();
 
-    try {
-        const response = await fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
-        if (!response.ok) throw new Error("Error en la respuesta de la API");
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            // Guardar datos de usuario
-            localStorage.setItem("currentUser", JSON.stringify(data.user));
-            localStorage.setItem("userRole", data.role);
-            localStorage.setItem("userCurrency", data.user.country);
-            localStorage.setItem("userEmail", data.user.email);
-            localStorage.setItem("isLoggedIn", "true");
-            localStorage.setItem("lastActivity", Date.now());
+    fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("Error en la respuesta de la API");
+            }
+            return response.json();
+        })
+        .then(async (data) => { // Hacer la función async
+            if (data.success) {
+                // Guardar todos los datos relevantes en localStorage
+                localStorage.setItem("currentUser", JSON.stringify(data.user));
+                localStorage.setItem("userRole", data.role);
+                localStorage.setItem("userCurrency", data.user.country);
+                localStorage.setItem("userEmail", data.user.email);
+                localStorage.setItem("isLoggedIn", "true");
+                localStorage.setItem("lastActivity", Date.now());
 
-            currentUser = data.user.name;
-            userCurrency = data.user.country;
+                currentUser = data.user.name;
+                userCurrency = data.user.country;
+                showMessage("Inicio de sesión exitoso!", false);
+                
+                // Inicializar notificaciones después de 5 segundos
+                setTimeout(async () => {
+                    if ('serviceWorker' in navigator && 'PushManager' in window) {
+                        try {
+                            await initPushNotifications();
+                        } catch (error) {
+                            console.error('Error al inicializar notificaciones:', error);
+                        }
+                    }
+                }, 5000);
+                
+                window.location.href = "calculator.html";
+            } else {
+                showMessage("Credenciales inválidas: " + data.message);
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            showMessage("Ocurrió un error durante el inicio de sesión.");
+        })
+        .finally(() => {
+            hideLoader();
+        });
+}
+
+// Función separada para inicializar notificaciones
+async function initPushNotifications() {
+    try {
+        await requestNotificationPermission();
+        
+        // Escuchar mensajes en primer plano
+        messaging.onMessage((payload) => {
+            console.log('Mensaje recibido en primer plano:', payload);
             
-            // Inicializar notificaciones después del login exitoso
-            await initializePushNotifications(data.user.email);
-            
-            showMessage("Inicio de sesión exitoso!", false);
-            window.location.href = "calculator.html";
-        } else {
-            showMessage("Credenciales inválidas: " + data.message);
-        }
+            if (payload.notification) {
+                const { title, body } = payload.notification;
+                showCustomNotification(title, body);
+            }
+        });
     } catch (error) {
-        console.error("Error:", error);
-        showMessage("Ocurrió un error durante el inicio de sesión.");
-    } finally {
-        hideLoader();
+        console.error('Error al inicializar notificaciones:', error);
+        // Opcional: mostrar mensaje al usuario
     }
 }
 
@@ -1469,104 +1501,119 @@ async function setupProfilePage() {
     }
 }
 
-async function initializePushNotifications(userEmail) {
-    if (!('serviceWorker' in navigator && 'PushManager' in window)) {
-        console.log('Este navegador no soporta notificaciones push');
-        return;
+async function requestNotificationPermission() {
+    // Verificar si el navegador soporta service workers
+    if (!('serviceWorker' in navigator)) {
+        console.error('Este navegador no soporta service workers');
+        return null;
     }
 
     try {
-        // 1. Registrar Service Worker
-        const registration = await registerServiceWorker();
-        
-        // 2. Solicitar permisos y obtener token
-        const token = await requestNotificationPermission(registration);
-        if (!token) return;
-        
-        // 3. Guardar token en el servidor
-        await saveFCMTokenToServer(userEmail, token);
-        
-        // 4. Configurar listener para mensajes en primer plano
-        setupForegroundMessageHandler();
-        
-        console.log('Notificaciones push inicializadas correctamente');
-    } catch (error) {
-        console.error('Error inicializando notificaciones:', error);
-        // No mostrar alertas aquí para no interrumpir el flujo de login
-    }
-}
+        // Intentar registrar desde varias ubicaciones posibles
+        const swPaths = [          
+            './firebase-messaging-sw.js',
+        ];
 
-async function registerServiceWorker() {
-    const swPaths = [
-        './firebase-messaging-sw.js',
-        '/firebase-messaging-sw.js',
-        'firebase-messaging-sw.js'
-    ];
-
-    let lastError;
-    
-    for (const path of swPaths) {
-        try {
-            const registration = await navigator.serviceWorker.register(path);
-            await navigator.serviceWorker.ready;
-            return registration;
-        } catch (err) {
-            lastError = err;
-            console.warn(`No se pudo registrar SW desde ${path}:`, err);
+        let registration;
+        let lastError;
+        
+        for (const path of swPaths) {
+            try {
+                registration = await navigator.serviceWorker.register(path);
+                console.log(`Service Worker registrado correctamente desde: ${path}`);
+                break;
+            } catch (err) {
+                lastError = err;
+                console.warn(`No se pudo registrar desde ${path}:`, err);
+            }
         }
-    }
-    
-    throw lastError || new Error('No se pudo registrar el Service Worker');
-}
 
-async function requestNotificationPermission(registration) {
-    try {
+        if (!registration) {
+            throw lastError || new Error('No se pudo registrar el Service Worker en ninguna ubicación probada');
+        }
+
+        // Esperar a que el Service Worker esté activo
+        await navigator.serviceWorker.ready;
+        
+        // Solicitar permiso para notificaciones
         const permission = await Notification.requestPermission();
         if (permission !== 'granted') {
-            return null;
+            throw new Error('Permiso de notificación denegado por el usuario');
         }
+
+        console.log('Permiso de notificación concedido');
         
+        // Obtener el token FCM
         const token = await messaging.getToken({ 
             vapidKey: 'BIjUoTPCiMDAg7ILetFmwMw-EM4ootWd0LaumD9AEhFVFJodJeWj1Z94utg1oDV7qEx_U32t7YM1nS64mUcqJMY',
             serviceWorkerRegistration: registration
         });
         
-        return token || null;
+        if (!token) {
+            throw new Error('No se pudo obtener el token FCM');
+        }
+
+        console.log('Token FCM obtenido:', token);
+        await saveFCMToken(token);
+        return token;
+
     } catch (error) {
-        console.error('Error obteniendo permiso o token:', error);
+        console.error('Error en requestNotificationPermission:', error);
+        
+        // Mostrar mensaje al usuario si es relevante
+        if (error.message.includes('404')) {
+            alert('Error: No se encontró el archivo necesario para las notificaciones. Por favor, contacta al soporte.');
+        } else if (error.message.includes('denegado')) {
+            alert('Para recibir notificaciones, por favor habilita los permisos en tu navegador.');
+        }
+        
         return null;
     }
 }
 
-async function saveFCMTokenToServer(email, token) {
+async function saveFCMToken(token) {
+    const storedUser = localStorage.getItem("currentUser");
+    if (!storedUser) {
+        console.error('No hay usuario logueado');
+        return false;
+    }
+
+    const user = JSON.parse(storedUser);
+    const email = user.email;
+    
+    if (!email) {
+        console.error('No se pudo obtener el email del usuario');
+        return false;
+    }
+    
     try {
-        const response = await fetch(
-            `${apiUrl}?path=saveFCMToken&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`
-        );
+        const url = `${apiUrl}?path=saveFCMToken&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`;
+        console.log('URL de la solicitud:', url); // Depuración
         
-        if (!response.ok) throw new Error('Error en la respuesta del servidor');
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            console.error('Error en la respuesta:', response.status, response.statusText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         
         const data = await response.json();
-        return data.status === 200;
+        console.log('Respuesta del servidor:', data); // Depuración
+        
+        if (data.status === 200) {
+            console.log('Token FCM guardado correctamente');
+            return true;
+        } else {
+            console.error('Error del servidor:', data.message || 'Sin mensaje de error');
+            return false;
+        }
     } catch (error) {
-        console.error('Error guardando token:', error);
+        console.error('Error en la solicitud:', error);
         return false;
     }
 }
 
-function setupForegroundMessageHandler() {
-    messaging.onMessage((payload) => {
-        console.log('Mensaje recibido en primer plano:', payload);
-        if (payload.notification) {
-            const { title, body } = payload.notification;
-            showCustomNotification(title, body);
-        }
-    });
-}
-
 function showCustomNotification(title, message) {
-    if (!title || !message) return;
-    
     // Crear elemento de notificación
     const notification = document.createElement('div');
     notification.className = 'custom-notification';
@@ -1578,7 +1625,7 @@ function showCustomNotification(title, message) {
         <button class="close-notification">&times;</button>
     `;
     
-    // Estilos (mejor mover esto a CSS)
+    // Estilos (puedes mover esto a tu CSS)
     notification.style.position = 'fixed';
     notification.style.bottom = '20px';
     notification.style.right = '20px';
@@ -1595,15 +1642,39 @@ function showCustomNotification(title, message) {
     
     // Botón para cerrar
     const closeBtn = notification.querySelector('.close-notification');
+    closeBtn.style.background = 'none';
+    closeBtn.style.border = 'none';
+    closeBtn.style.color = 'white';
+    closeBtn.style.fontSize = '20px';
+    closeBtn.style.cursor = 'pointer';
+    
     closeBtn.addEventListener('click', () => {
-        notification.remove();
+        notification.style.display = 'none';
     });
     
     // Auto-ocultar después de 5 segundos
     setTimeout(() => {
-        notification.remove();
+        notification.style.display = 'none';
     }, 5000);
     
     // Agregar al DOM
     document.body.appendChild(notification);
-}
+} como evito que se llame tanto a las funciones que manejan las notificaciones, es necesario hacerlo desde el dom, puedo quitar   // Inicializar notificaciones push si el usuario está logueado
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            try {
+                await requestNotificationPermission();
+                
+                // Escuchar mensajes en primer plano
+                messaging.onMessage((payload) => {
+                    console.log('Mensaje recibido en primer plano:', payload);
+                    
+                    // Mostrar notificación
+                    if (payload.notification) {
+                        const { title, body } = payload.notification;
+                        showCustomNotification(title, body);
+                    }
+                });
+            } catch (error) {
+                console.error('Error al inicializar notificaciones:', error);
+            }
+        } del dom y colocarla en el login pero que se ejecute 5 segundos depues 
