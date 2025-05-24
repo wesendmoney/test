@@ -70,6 +70,26 @@ document.addEventListener("DOMContentLoaded", async () => {
         const storedUser = localStorage.getItem("currentUser");
         const storedRole = localStorage.getItem("userRole");
 
+         // Inicializar notificaciones push si el usuario está logueado
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            try {
+                await requestNotificationPermission();
+                
+                // Escuchar mensajes en primer plano
+                messaging.onMessage((payload) => {
+                    console.log('Mensaje recibido en primer plano:', payload);
+                    
+                    // Mostrar notificación
+                    if (payload.notification) {
+                        const { title, body } = payload.notification;
+                        showCustomNotification(title, body);
+                    }
+                });
+            } catch (error) {
+                console.error('Error al inicializar notificaciones:', error);
+            }
+        }
+    
 
         if (storedUser && storedRole) {
             const user = JSON.parse(storedUser);
@@ -323,6 +343,51 @@ function setupCommonEvents() {
 // ==============================================
 // FUNCIONES DE AUTENTICACIÓN
 // ==============================================
+function login() {
+    const email = document.getElementById("loginEmail").value;
+    const password = document.getElementById("loginPassword").value;
+
+    if (!email || !password) {
+        showMessage("Por favor, completa todos los campos.");
+        return;
+    }
+
+    showLoader();
+
+    fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("Error en la respuesta de la API");
+            }
+            return response.json();
+        })
+        .then((data) => {
+            if (data.success) {
+                // Guardar todos los datos relevantes en localStorage
+                localStorage.setItem("currentUser", JSON.stringify(data.user));
+                localStorage.setItem("userRole", data.role);
+                localStorage.setItem("userCurrency", data.user.country);
+                localStorage.setItem("userEmail", data.user.email); // Guardar email para futuras verificaciones
+                localStorage.setItem("isLoggedIn", "true"); // Bandera de sesión activa
+                localStorage.setItem("lastActivity", Date.now()); // Registrar última actividad
+
+                currentUser = data.user.name;
+                userCurrency = data.user.country;
+                showMessage("Inicio de sesión exitoso!", false);
+                
+                window.location.href = "calculator.html";
+            } else {
+                showMessage("Credenciales inválidas: " + data.message);
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            showMessage("Ocurrió un error durante el inicio de sesión.");
+        })
+        .finally(() => {
+            hideLoader();
+        });
+}
 
 function register() {
     const username = document.getElementById("username").value;
@@ -1426,11 +1491,8 @@ async function setupProfilePage() {
     }
 }
 
-// ==============================================
-// FUNCIONES DE NOTIFICACIONES PUSH
-// ==============================================
-
 async function requestNotificationPermission() {
+    // Verificar si el navegador soporta service workers
     if (!('serviceWorker' in navigator)) {
         console.error('Este navegador no soporta service workers');
         return null;
@@ -1440,8 +1502,6 @@ async function requestNotificationPermission() {
         // Intentar registrar desde varias ubicaciones posibles
         const swPaths = [          
             './firebase-messaging-sw.js',
-            '/firebase-messaging-sw.js',
-            '../firebase-messaging-sw.js'
         ];
 
         let registration;
@@ -1450,7 +1510,7 @@ async function requestNotificationPermission() {
         for (const path of swPaths) {
             try {
                 registration = await navigator.serviceWorker.register(path);
-                console.log(`Service Worker registrado desde: ${path}`);
+                console.log(`Service Worker registrado correctamente desde: ${path}`);
                 break;
             } catch (err) {
                 lastError = err;
@@ -1459,16 +1519,21 @@ async function requestNotificationPermission() {
         }
 
         if (!registration) {
-            throw lastError || new Error('No se pudo registrar el Service Worker');
+            throw lastError || new Error('No se pudo registrar el Service Worker en ninguna ubicación probada');
         }
 
+        // Esperar a que el Service Worker esté activo
         await navigator.serviceWorker.ready;
         
+        // Solicitar permiso para notificaciones
         const permission = await Notification.requestPermission();
         if (permission !== 'granted') {
-            throw new Error('Permiso denegado');
+            throw new Error('Permiso de notificación denegado por el usuario');
         }
+
+        console.log('Permiso de notificación concedido');
         
+        // Obtener el token FCM
         const token = await messaging.getToken({ 
             vapidKey: 'BIjUoTPCiMDAg7ILetFmwMw-EM4ootWd0LaumD9AEhFVFJodJeWj1Z94utg1oDV7qEx_U32t7YM1nS64mUcqJMY',
             serviceWorkerRegistration: registration
@@ -1478,47 +1543,68 @@ async function requestNotificationPermission() {
             throw new Error('No se pudo obtener el token FCM');
         }
 
+        console.log('Token FCM obtenido:', token);
+        await saveFCMToken(token);
         return token;
 
     } catch (error) {
         console.error('Error en requestNotificationPermission:', error);
+        
+        // Mostrar mensaje al usuario si es relevante
+        if (error.message.includes('404')) {
+            alert('Error: No se encontró el archivo necesario para las notificaciones. Por favor, contacta al soporte.');
+        } else if (error.message.includes('denegado')) {
+            alert('Para recibir notificaciones, por favor habilita los permisos en tu navegador.');
+        }
+        
         return null;
     }
 }
 
 async function saveFCMToken(token) {
     const storedUser = localStorage.getItem("currentUser");
-    if (!storedUser) return false;
+    if (!storedUser) {
+        console.error('No hay usuario logueado');
+        return false;
+    }
 
     const user = JSON.parse(storedUser);
     const email = user.email;
     
-    if (!email) return false;
+    if (!email) {
+        console.error('No se pudo obtener el email del usuario');
+        return false;
+    }
     
     try {
-        const response = await fetch(
-            `${apiUrl}?path=saveFCMToken&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`
-        );
+        const url = `${apiUrl}?path=saveFCMToken&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`;
+        console.log('URL de la solicitud:', url); // Depuración
+        
+        const response = await fetch(url);
         
         if (!response.ok) {
+            console.error('Error en la respuesta:', response.status, response.statusText);
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
-        return data.status === 200;
+        console.log('Respuesta del servidor:', data); // Depuración
+        
+        if (data.status === 200) {
+            console.log('Token FCM guardado correctamente');
+            return true;
+        } else {
+            console.error('Error del servidor:', data.message || 'Sin mensaje de error');
+            return false;
+        }
     } catch (error) {
-        console.error('Error al guardar token:', error);
+        console.error('Error en la solicitud:', error);
         return false;
     }
 }
 
 function showCustomNotification(title, message) {
-    // Verificar si ya existe una notificación visible
-    const existingNotification = document.querySelector('.custom-notification');
-    if (existingNotification) {
-        existingNotification.remove();
-    }
-
+    // Crear elemento de notificación
     const notification = document.createElement('div');
     notification.className = 'custom-notification';
     notification.innerHTML = `
@@ -1529,34 +1615,38 @@ function showCustomNotification(title, message) {
         <button class="close-notification">&times;</button>
     `;
     
-    // Estilos (mejor mover a CSS)
-    Object.assign(notification.style, {
-        position: 'fixed',
-        bottom: '20px',
-        right: '20px',
-        backgroundColor: '#333',
-        color: 'white',
-        padding: '15px',
-        borderRadius: '5px',
-        boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-        zIndex: '1000',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        maxWidth: '300px',
-        animation: 'fadeIn 0.3s ease-out'
-    });
+    // Estilos (puedes mover esto a tu CSS)
+    notification.style.position = 'fixed';
+    notification.style.bottom = '20px';
+    notification.style.right = '20px';
+    notification.style.backgroundColor = '#333';
+    notification.style.color = 'white';
+    notification.style.padding = '15px';
+    notification.style.borderRadius = '5px';
+    notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+    notification.style.zIndex = '1000';
+    notification.style.display = 'flex';
+    notification.style.justifyContent = 'space-between';
+    notification.style.alignItems = 'center';
+    notification.style.maxWidth = '300px';
     
+    // Botón para cerrar
     const closeBtn = notification.querySelector('.close-notification');
+    closeBtn.style.background = 'none';
+    closeBtn.style.border = 'none';
+    closeBtn.style.color = 'white';
+    closeBtn.style.fontSize = '20px';
+    closeBtn.style.cursor = 'pointer';
+    
     closeBtn.addEventListener('click', () => {
-        notification.style.animation = 'fadeOut 0.3s ease-out';
-        setTimeout(() => notification.remove(), 300);
+        notification.style.display = 'none';
     });
     
+    // Auto-ocultar después de 5 segundos
     setTimeout(() => {
-        notification.style.animation = 'fadeOut 0.3s ease-out';
-        setTimeout(() => notification.remove(), 300);
+        notification.style.display = 'none';
     }, 5000);
     
+    // Agregar al DOM
     document.body.appendChild(notification);
 }
