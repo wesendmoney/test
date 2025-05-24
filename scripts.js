@@ -322,7 +322,7 @@ function setupCommonEvents() {
 // ==============================================
 // FUNCIONES DE AUTENTICACIÓN
 // ==============================================
-function login() {
+async function login() {
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
 
@@ -333,42 +333,40 @@ function login() {
 
     showLoader();
 
-    fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`)
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error("Error en la respuesta de la API");
-            }
-            return response.json();
-        })
-        .then(async (data) => { // Hacer la función async
-            if (data.success) {
-                // Guardar todos los datos relevantes en localStorage
-                localStorage.setItem("currentUser", JSON.stringify(data.user));
-                localStorage.setItem("userRole", data.role);
-                localStorage.setItem("userCurrency", data.user.country);
-                localStorage.setItem("userEmail", data.user.email);
-                localStorage.setItem("isLoggedIn", "true");
-                localStorage.setItem("lastActivity", Date.now());
+    try {
+        const response = await fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.message || "Error en la respuesta de la API");
+        }
 
-                currentUser = data.user.name;
-                userCurrency = data.user.country;
-                showMessage("Inicio de sesión exitoso!", false);
-                
-                // Inicializar notificaciones push después del login exitoso
-                await initializePushNotifications();
-                
-                window.location.href = "calculator.html";
-            } else {
-                showMessage("Credenciales inválidas: " + data.message);
-            }
-        })
-        .catch((error) => {
-            console.error("Error:", error);
-            showMessage("Ocurrió un error durante el inicio de sesión.");
-        })
-        .finally(() => {
-            hideLoader();
-        });
+        if (data.success) {
+            // Guardar datos de usuario
+            localStorage.setItem("currentUser", JSON.stringify(data.user));
+            localStorage.setItem("userRole", data.role);
+            localStorage.setItem("userCurrency", data.user.country);
+            localStorage.setItem("userEmail", data.user.email);
+            localStorage.setItem("isLoggedIn", "true");
+            localStorage.setItem("lastActivity", Date.now());
+
+            currentUser = data.user.name;
+            userCurrency = data.user.country;
+            
+            // Mostrar diálogo de notificaciones después de login exitoso
+            await showNotificationPermissionDialog();
+            
+            showMessage("Inicio de sesión exitoso!", false);
+            window.location.href = "calculator.html";
+        } else {
+            showMessage("Credenciales inválidas: " + data.message);
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        showMessage("Ocurrió un error durante el inicio de sesión.");
+    } finally {
+        hideLoader();
+    }
 }
 
 function register() {
@@ -1473,35 +1471,82 @@ async function setupProfilePage() {
     }
 }
 
-async function initializePushNotifications() {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        console.log('Navegador no compatible con notificaciones');
+async function showNotificationPermissionDialog() {
+    // Solo preguntar si el navegador soporta notificaciones
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+        console.log('Este navegador no soporta notificaciones push');
         return;
     }
 
+    // Verificar si ya tenemos permiso
+    if (Notification.permission === 'granted') {
+        await initializePushNotifications();
+        return;
+    }
+
+    // Mostrar diálogo personalizado
+    const dialog = document.createElement('div');
+    dialog.className = 'notification-permission-dialog';
+    dialog.innerHTML = `
+        <div class="dialog-content">
+            <h3>¿Deseas recibir notificaciones?</h3>
+            <p>Recibirás alertas sobre el estado de tus transacciones y otras actividades importantes.</p>
+            <div class="dialog-buttons">
+                <button id="acceptNotifications">Sí, activar</button>
+                <button id="declineNotifications">No, gracias</button>
+            </div>
+        </div>
+    `;
+    
+    // Estilos (mejor mover esto a tu CSS)
+    dialog.style.position = 'fixed';
+    dialog.style.top = '0';
+    dialog.style.left = '0';
+    dialog.style.width = '100%';
+    dialog.style.height = '100%';
+    dialog.style.backgroundColor = 'rgba(0,0,0,0.7)';
+    dialog.style.display = 'flex';
+    dialog.style.justifyContent = 'center';
+    dialog.style.alignItems = 'center';
+    dialog.style.zIndex = '10000';
+    
+    const content = dialog.querySelector('.dialog-content');
+    content.style.backgroundColor = '#222';
+    content.style.padding = '20px';
+    content.style.borderRadius = '8px';
+    content.style.maxWidth = '400px';
+    content.style.textAlign = 'center';
+    
+    document.body.appendChild(dialog);
+    
+    // Manejar botones
+    document.getElementById('acceptNotifications').addEventListener('click', async () => {
+        await initializePushNotifications();
+        dialog.remove();
+    });
+    
+    document.getElementById('declineNotifications').addEventListener('click', () => {
+        dialog.remove();
+    });
+}
+
+async function initializePushNotifications() {
     try {
         const token = await requestNotificationPermission();
-        if (!token) {
-            console.log('No se obtuvo token FCM');
-            return;
+        if (token) {
+            console.log('Notificaciones push configuradas correctamente');
+            
+            // Configurar el listener para mensajes en primer plano
+            messaging.onMessage((payload) => {
+                console.log('Mensaje recibido en primer plano:', payload);
+                if (payload.notification) {
+                    const { title, body } = payload.notification;
+                    showCustomNotification(title, body);
+                }
+            });
         }
-
-        // Verificar explícitamente que el token se guardó
-        const isTokenSaved = await saveFCMToken(token);
-        console.log('Token guardado:', isTokenSaved);
-
-        // Configurar listener de mensajes
-        messaging.onMessage((payload) => {
-            console.log('Mensaje en primer plano:', payload);
-            if (payload.notification) {
-                showCustomNotification(payload.notification.title, payload.notification.body);
-            }
-        });
-
-        return true;
     } catch (error) {
-        console.error('Error inicializando notificaciones:', error);
-        return false;
+        console.error('Error al inicializar notificaciones:', error);
     }
 }
 
@@ -1513,10 +1558,29 @@ async function requestNotificationPermission() {
     }
 
     try {
-        // Registrar el service worker
-        const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
-        console.log('Service Worker registrado correctamente');
+        // Intentar registrar desde varias ubicaciones posibles
+        const swPaths = [          
+            './firebase-messaging-sw.js',
+        ];
+
+        let registration;
+        let lastError;
         
+        for (const path of swPaths) {
+            try {
+                registration = await navigator.serviceWorker.register(path);
+                console.log(`Service Worker registrado correctamente desde: ${path}`);
+                break;
+            } catch (err) {
+                lastError = err;
+                console.warn(`No se pudo registrar desde ${path}:`, err);
+            }
+        }
+
+        if (!registration) {
+            throw lastError || new Error('No se pudo registrar el Service Worker en ninguna ubicación probada');
+        }
+
         // Esperar a que el Service Worker esté activo
         await navigator.serviceWorker.ready;
         
@@ -1525,7 +1589,7 @@ async function requestNotificationPermission() {
         if (permission !== 'granted') {
             throw new Error('Permiso de notificación denegado por el usuario');
         }
-        
+
         console.log('Permiso de notificación concedido');
         
         // Obtener el token FCM
@@ -1544,6 +1608,14 @@ async function requestNotificationPermission() {
 
     } catch (error) {
         console.error('Error en requestNotificationPermission:', error);
+        
+        // Mostrar mensaje al usuario si es relevante
+        if (error.message.includes('404')) {
+            alert('Error: No se encontró el archivo necesario para las notificaciones. Por favor, contacta al soporte.');
+        } else if (error.message.includes('denegado')) {
+            alert('Para recibir notificaciones, por favor habilita los permisos en tu navegador.');
+        }
+        
         return null;
     }
 }
@@ -1636,4 +1708,4 @@ function showCustomNotification(title, message) {
     
     // Agregar al DOM
     document.body.appendChild(notification);
-}
+} 
