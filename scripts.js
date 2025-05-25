@@ -18,6 +18,7 @@ let conversionTimeout;
 let updateButtonTimeout;
 const receiptCache = {};
 let userTransactions = [];
+let notificationsInitialized = false;
 
 // Configuración de Firebase para notificaciones push
 const firebaseConfig = {
@@ -69,6 +70,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (isLoggedIn && (Date.now() - lastActivity < sessionTimeout)) {
         const storedUser = localStorage.getItem("currentUser");
         const storedRole = localStorage.getItem("userRole");
+
+    
 
         if (storedUser && storedRole) {
             const user = JSON.parse(storedUser);
@@ -322,7 +325,7 @@ function setupCommonEvents() {
 // ==============================================
 // FUNCIONES DE AUTENTICACIÓN
 // ==============================================
-async function login() {
+function login() {
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
 
@@ -333,72 +336,40 @@ async function login() {
 
     showLoader();
 
-    try {
-        const response = await fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
-        const data = await response.json();
-        
-        if (data.success) {
-            // Guardar datos de usuario
-            localStorage.setItem("currentUser", JSON.stringify(data.user));
-            localStorage.setItem("userRole", data.role);
-            localStorage.setItem("userCurrency", data.user.country);
-            localStorage.setItem("userEmail", data.user.email);
-            localStorage.setItem("isLoggedIn", "true");
-            localStorage.setItem("lastActivity", Date.now());
-
-            currentUser = data.user.name;
-            userCurrency = data.user.country;
-            
-            // Inicializar notificaciones push ANTES de redirigir
-            if ('serviceWorker' in navigator && 'PushManager' in window) {
-                try {
-                    await initializePushNotifications();
-                    showMessage("Inicio de sesión exitoso!", false);
-                    
-                    // Pequeño retraso para asegurar que el token se registre
-                    setTimeout(() => {
-                        window.location.href = "calculator.html";
-                    }, 500);
-                    
-                } catch (error) {
-                    console.error('Error en notificaciones:', error);
-                    // Redirigir incluso si fallan las notificaciones
-                    window.location.href = "calculator.html";
-                }
-            } else {
-                window.location.href = "calculator.html";
+    fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("Error en la respuesta de la API");
             }
-        } else {
-            showMessage("Credenciales inválidas: " + data.message);
-        }
-    } catch (error) {
-        console.error("Error:", error);
-        showMessage("Ocurrió un error durante el inicio de sesión.");
-    } finally {
-        hideLoader();
-    }
-}
+            return response.json();
+        })
+        .then((data) => {
+            if (data.success) {
+                // Guardar todos los datos relevantes en localStorage
+                localStorage.setItem("currentUser", JSON.stringify(data.user));
+                localStorage.setItem("userRole", data.role);
+                localStorage.setItem("userCurrency", data.user.country);
+                localStorage.setItem("userEmail", data.user.email); // Guardar email para futuras verificaciones
+                localStorage.setItem("isLoggedIn", "true"); // Bandera de sesión activa
+                localStorage.setItem("lastActivity", Date.now()); // Registrar última actividad
 
-// Función separada para inicializar notificaciones
-async function initializePushNotifications() {
-    try {
-        const token = await requestNotificationPermission();
-        if (token) {
-            await saveFCMToken(token);
-            
-            // Configurar listener de mensajes en primer plano
-            messaging.onMessage((payload) => {
-                console.log('Mensaje recibido en primer plano:', payload);
-                if (payload.notification) {
-                    const { title, body } = payload.notification;
-                    showCustomNotification(title, body);
-                }
-            });
-        }
-    } catch (error) {
-        console.error('Error inicializando notificaciones:', error);
-        throw error;
-    }
+                currentUser = data.user.name;
+                userCurrency = data.user.country;
+                showMessage("Inicio de sesión exitoso!", false);
+                
+                window.location.href = "calculator.html";
+                initializePushNotifications();
+            } else {
+                showMessage("Credenciales inválidas: " + data.message);
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            showMessage("Ocurrió un error durante el inicio de sesión.");
+        })
+        .finally(() => {
+            hideLoader();
+        });
 }
 
 function register() {
@@ -1503,6 +1474,35 @@ async function setupProfilePage() {
     }
 }
 
+// ==============================================
+// FUNCIONES DE NOTIFICACIONES PUSH
+// ==============================================
+
+async function initializePushNotifications() {
+    if (notificationsInitialized) return;
+    
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+        try {
+            await requestNotificationPermission();
+            
+            // Escuchar mensajes en primer plano
+            messaging.onMessage((payload) => {
+                console.log('Mensaje recibido en primer plano:', payload);
+                
+                if (payload.notification) {
+                    const { title, body } = payload.notification;
+                    showCustomNotification(title, body);
+                }
+            });
+            
+            notificationsInitialized = true;
+        } catch (error) {
+            console.error('Error al inicializar notificaciones:', error);
+        }
+    }
+}
+
+
 async function requestNotificationPermission() {
     // Verificar si el navegador soporta service workers
     if (!('serviceWorker' in navigator)) {
@@ -1661,4 +1661,4 @@ function showCustomNotification(title, message) {
     
     // Agregar al DOM
     document.body.appendChild(notification);
-} 
+}
