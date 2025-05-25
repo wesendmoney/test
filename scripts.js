@@ -1654,8 +1654,22 @@ function showCustomNotification(title, message) {
     // Auto-ocultar después de 5 segundos
     setTimeout(() => {
         notification.style.display = 'none';
-    }, 5000);
+    }, 50000);
     
     // Agregar al DOM
     document.body.appendChild(notification);
 } 
+
+async function setupPushNotifications(email) {
+    const permission = Notification.permission;
+    if (permission === 'granted') {
+        // Configurar notificaciones sin pedir permiso de nuevo
+        await initFirebaseMessaging(email);
+    } else if (permission !== 'denied') {
+        // Pedir permiso solo si no está denegado
+        const newPermission = await Notification.requestPermission();
+        if (newPermission === 'granted') {
+            await initFirebaseMessaging(email);
+        }
+    }
+}
