@@ -1544,7 +1544,7 @@ async function requestNotificationPermission() {
 // Función optimizada para manejar notificaciones push
 async function initializePushNotifications(userEmail) {
     // Solo proceder si el navegador soporta service workers y notificaciones
-    if (!('serviceWorker' in navigator) {
+    if (!('serviceWorker' in navigator)) {
         console.warn('Service Workers no soportados');
         return;
     }
