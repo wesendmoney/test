@@ -70,6 +70,26 @@ document.addEventListener("DOMContentLoaded", async () => {
         const storedUser = localStorage.getItem("currentUser");
         const storedRole = localStorage.getItem("userRole");
 
+         // Inicializar notificaciones push si el usuario está logueado
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            try {
+                await requestNotificationPermission();
+                
+                // Escuchar mensajes en primer plano
+                messaging.onMessage((payload) => {
+                    console.log('Mensaje recibido en primer plano:', payload);
+                    
+                    // Mostrar notificación
+                    if (payload.notification) {
+                        const { title, body } = payload.notification;
+                        showCustomNotification(title, body);
+                    }
+                });
+            } catch (error) {
+                console.error('Error al inicializar notificaciones:', error);
+            }
+        }
+    
 
         if (storedUser && storedRole) {
             const user = JSON.parse(storedUser);
@@ -323,7 +343,7 @@ function setupCommonEvents() {
 // ==============================================
 // FUNCIONES DE AUTENTICACIÓN
 // ==============================================
-async function login() {
+function login() {
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
 
@@ -334,68 +354,39 @@ async function login() {
 
     showLoader();
 
-    try {
-        const response = await fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
-        const data = await response.json();
-        
-        if (data.success) {
-            // Guardar datos de usuario
-            localStorage.setItem("currentUser", JSON.stringify(data.user));
-            localStorage.setItem("userRole", data.role);
-            localStorage.setItem("isLoggedIn", "true");
-            currentUser = data.user.name;
-
-            // Solicitar permiso para notificaciones solo después del login exitoso
-            if ('serviceWorker' in navigator && 'PushManager' in window) {
-                try {
-                    const permission = await Notification.requestPermission();
-                    if (permission === 'granted') {
-                        await setupPushNotifications(data.user.email);
-                    }
-                } catch (error) {
-                    console.error('Error al configurar notificaciones:', error);
-                }
+    fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("Error en la respuesta de la API");
             }
+            return response.json();
+        })
+        .then((data) => {
+            if (data.success) {
+                // Guardar todos los datos relevantes en localStorage
+                localStorage.setItem("currentUser", JSON.stringify(data.user));
+                localStorage.setItem("userRole", data.role);
+                localStorage.setItem("userCurrency", data.user.country);
+                localStorage.setItem("userEmail", data.user.email); // Guardar email para futuras verificaciones
+                localStorage.setItem("isLoggedIn", "true"); // Bandera de sesión activa
+                localStorage.setItem("lastActivity", Date.now()); // Registrar última actividad
 
-            showMessage("Inicio de sesión exitoso!", false);
-            window.location.href = "calculator.html";
-        } else {
-            showMessage("Credenciales inválidas: " + data.message);
-        }
-    } catch (error) {
-        console.error("Error:", error);
-        showMessage("Ocurrió un error durante el inicio de sesión.");
-    } finally {
-        hideLoader();
-    }
-}
-
-async function setupPushNotifications(email) {
-    try {
-        // Registrar el Service Worker
-        const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
-        console.log("Service Worker registrado");
-
-        // Obtener el token FCM
-        const token = await messaging.getToken({
-            vapidKey: 'BIjUoTPCiMDAg7ILetFmwMw-EM4ootWd0LaumD9AEhFVFJodJeWj1Z94utg1oDV7qEx_U32t7YM1nS64mUcqJMY',
-            serviceWorkerRegistration: registration
-        });
-
-        // Guardar el token en el servidor
-        await saveFCMToken(token, email);
-
-        // Escuchar mensajes en primer plano
-        messaging.onMessage((payload) => {
-            console.log('Mensaje recibido:', payload);
-            if (payload.notification) {
-                showCustomNotification(payload.notification.title, payload.notification.body);
+                currentUser = data.user.name;
+                userCurrency = data.user.country;
+                showMessage("Inicio de sesión exitoso!", false);
+                
+                window.location.href = "calculator.html";
+            } else {
+                showMessage("Credenciales inválidas: " + data.message);
             }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            showMessage("Ocurrió un error durante el inicio de sesión.");
+        })
+        .finally(() => {
+            hideLoader();
         });
-
-    } catch (error) {
-        console.error("Error en setupPushNotifications:", error);
-    }
 }
 
 function register() {
@@ -1654,22 +1645,8 @@ function showCustomNotification(title, message) {
     // Auto-ocultar después de 5 segundos
     setTimeout(() => {
         notification.style.display = 'none';
-    }, 50000);
+    }, 5000);
     
     // Agregar al DOM
     document.body.appendChild(notification);
 } 
-
-async function setupPushNotifications(email) {
-    const permission = Notification.permission;
-    if (permission === 'granted') {
-        // Configurar notificaciones sin pedir permiso de nuevo
-        await initFirebaseMessaging(email);
-    } else if (permission !== 'denied') {
-        // Pedir permiso solo si no está denegado
-        const newPermission = await Notification.requestPermission();
-        if (newPermission === 'granted') {
-            await initFirebaseMessaging(email);
-        }
-    }
-}
