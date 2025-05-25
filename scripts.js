@@ -19,18 +19,20 @@ let updateButtonTimeout;
 const receiptCache = {};
 let userTransactions = [];
 
-// Configuración de Firebase (global)
+// Configuración de Firebase para notificaciones push
 const firebaseConfig = {
-  apiKey: "AIzaSyA0NDOIw9wTunNGyJTHgh8JHmMM__hUzrk",
-  authDomain: "wesm-6ce39.firebaseapp.com",
-  projectId: "wesm-6ce39",
-  storageBucket: "wesm-6ce39.appspot.com",
-  messagingSenderId: "417323501500",
-  appId: "1:417323501500:web:2550c12546e7de0f4f8db9"
+    apiKey: "AIzaSyA0NDOIw9wTunNGyJTHgh8JHmMM__hUzrk",
+    authDomain: "wesm-6ce39.firebaseapp.com",
+    projectId: "wesm-6ce39",
+    storageBucket: "wesm-6ce39.firebasestorage.app",
+    messagingSenderId: "417323501500",
+    appId: "1:417323501500:web:2550c12546e7de0f4f8db9",
+    measurementId: "G-H2H6Y2WVSF"
 };
 
-// Inicializar Firebase (sin messaging todavía)
+// Inicializar Firebase
 const firebaseApp = firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging(firebaseApp);
 
 // ==============================================
 // FUNCIONES DE INICIO Y CARGA
@@ -67,6 +69,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (isLoggedIn && (Date.now() - lastActivity < sessionTimeout)) {
         const storedUser = localStorage.getItem("currentUser");
         const storedRole = localStorage.getItem("userRole");
+
+         // Inicializar notificaciones push si el usuario está logueado
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            try {
+                await requestNotificationPermission();
+                
+                // Escuchar mensajes en primer plano
+                messaging.onMessage((payload) => {
+                    console.log('Mensaje recibido en primer plano:', payload);
+                    
+                    // Mostrar notificación
+                    if (payload.notification) {
+                        const { title, body } = payload.notification;
+                        showCustomNotification(title, body);
+                    }
+                });
+            } catch (error) {
+                console.error('Error al inicializar notificaciones:', error);
+            }
+        }
+    
 
         if (storedUser && storedRole) {
             const user = JSON.parse(storedUser);
@@ -320,40 +343,50 @@ function setupCommonEvents() {
 // ==============================================
 // FUNCIONES DE AUTENTICACIÓN
 // ==============================================
-// Función de login
-async function login() {
-  const email = document.getElementById("loginEmail").value;
-  const password = document.getElementById("loginPassword").value;
+function login() {
+    const email = document.getElementById("loginEmail").value;
+    const password = document.getElementById("loginPassword").value;
 
-  if (!email || !password) {
-    showMessage("Por favor, completa todos los campos.");
-    return;
-  }
-
-  showLoader();
-
-  try {
-    const response = await fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
-    const data = await response.json();
-
-    if (data.success) {
-      localStorage.setItem("currentUser", JSON.stringify(data.user));
-      localStorage.setItem("isLoggedIn", "true");
-
-      // Inicializar notificaciones SOLO después del login
-      await setupPushNotifications(data.user.email);
-
-      showMessage("Inicio de sesión exitoso!", false);
-      window.location.href = "calculator.html";
-    } else {
-      showMessage("Credenciales inválidas: " + data.message);
+    if (!email || !password) {
+        showMessage("Por favor, completa todos los campos.");
+        return;
     }
-  } catch (error) {
-    console.error("Error:", error);
-    showMessage("Ocurrió un error durante el inicio de sesión.");
-  } finally {
-    hideLoader();
-  }
+
+    showLoader();
+
+    fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("Error en la respuesta de la API");
+            }
+            return response.json();
+        })
+        .then((data) => {
+            if (data.success) {
+                // Guardar todos los datos relevantes en localStorage
+                localStorage.setItem("currentUser", JSON.stringify(data.user));
+                localStorage.setItem("userRole", data.role);
+                localStorage.setItem("userCurrency", data.user.country);
+                localStorage.setItem("userEmail", data.user.email); // Guardar email para futuras verificaciones
+                localStorage.setItem("isLoggedIn", "true"); // Bandera de sesión activa
+                localStorage.setItem("lastActivity", Date.now()); // Registrar última actividad
+
+                currentUser = data.user.name;
+                userCurrency = data.user.country;
+                showMessage("Inicio de sesión exitoso!", false);
+                
+                window.location.href = "calculator.html";
+            } else {
+                showMessage("Credenciales inválidas: " + data.message);
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            showMessage("Ocurrió un error durante el inicio de sesión.");
+        })
+        .finally(() => {
+            hideLoader();
+        });
 }
 
 function register() {
@@ -1458,49 +1491,6 @@ async function setupProfilePage() {
     }
 }
 
-// Configurar notificaciones push
-async function setupPushNotifications(email) {
-  try {
-    // Verificar si el navegador soporta notificaciones
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      console.warn("Este navegador no soporta notificaciones push.");
-      return;
-    }
-
-    // Registrar el Service Worker
-    const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
-    console.log("Service Worker registrado:", registration.scope);
-
-    // Inicializar Firebase Messaging
-    const messaging = firebase.messaging(firebaseApp);
-
-    // Solicitar permiso para notificaciones
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-      console.warn("Permiso de notificaciones denegado.");
-      return;
-    }
-
-    // Obtener el token FCM
-    const token = await messaging.getToken({
-      vapidKey: "BIjUoTPCiMDAg7ILetFmwMw-EM4ootWd0LaumD9AEhFVFJodJeWj1Z94utg1oDV7qEx_U32t7YM1nS64mUcqJMY",
-      serviceWorkerRegistration: registration
-    });
-
-    console.log("Token FCM:", token);
-    await saveFCMToken(email, token);
-
-    // Escuchar mensajes en primer plano
-    messaging.onMessage((payload) => {
-      console.log("Notificación en primer plano:", payload);
-      showCustomNotification(payload.notification.title, payload.notification.body);
-    });
-
-  } catch (error) {
-    console.error("Error en setupPushNotifications:", error);
-  }
-}
-
 async function requestNotificationPermission() {
     // Verificar si el navegador soporta service workers
     if (!('serviceWorker' in navigator)) {
@@ -1613,21 +1603,50 @@ async function saveFCMToken(token) {
     }
 }
 
-function showCustomNotification(title, body) {
-  // Verificar si el navegador soporta notificaciones
-  if (!('Notification' in window)) {
-    console.warn("Este navegador no soporta notificaciones.");
-    return;
-  }
-
-  // Crear y mostrar la notificación
-  const options = {
-    body: body,
-    icon: 'logo.svg' // Asegúrate de tener este archivo en tu proyecto
-  };
-
-  new Notification(title, options).onclick = () => {
-    console.log("Notificación clickeada");
-    // Opcional: Redirigir a una página específica al hacer clic
-  };
+function showCustomNotification(title, message) {
+    // Crear elemento de notificación
+    const notification = document.createElement('div');
+    notification.className = 'custom-notification';
+    notification.innerHTML = `
+        <div class="notification-content">
+            <h4>${title}</h4>
+            <p>${message}</p>
+        </div>
+        <button class="close-notification">&times;</button>
+    `;
+    
+    // Estilos (puedes mover esto a tu CSS)
+    notification.style.position = 'fixed';
+    notification.style.bottom = '20px';
+    notification.style.right = '20px';
+    notification.style.backgroundColor = '#333';
+    notification.style.color = 'white';
+    notification.style.padding = '15px';
+    notification.style.borderRadius = '5px';
+    notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+    notification.style.zIndex = '1000';
+    notification.style.display = 'flex';
+    notification.style.justifyContent = 'space-between';
+    notification.style.alignItems = 'center';
+    notification.style.maxWidth = '300px';
+    
+    // Botón para cerrar
+    const closeBtn = notification.querySelector('.close-notification');
+    closeBtn.style.background = 'none';
+    closeBtn.style.border = 'none';
+    closeBtn.style.color = 'white';
+    closeBtn.style.fontSize = '20px';
+    closeBtn.style.cursor = 'pointer';
+    
+    closeBtn.addEventListener('click', () => {
+        notification.style.display = 'none';
+    });
+    
+    // Auto-ocultar después de 5 segundos
+    setTimeout(() => {
+        notification.style.display = 'none';
+    }, 5000);
+    
+    // Agregar al DOM
+    document.body.appendChild(notification);
 }
