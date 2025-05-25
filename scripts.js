@@ -18,7 +18,6 @@ let conversionTimeout;
 let updateButtonTimeout;
 const receiptCache = {};
 let userTransactions = [];
-let notificationsInitialized = false;
 
 // Configuración de Firebase para notificaciones push
 const firebaseConfig = {
@@ -71,6 +70,25 @@ document.addEventListener("DOMContentLoaded", async () => {
         const storedUser = localStorage.getItem("currentUser");
         const storedRole = localStorage.getItem("userRole");
 
+         // Inicializar notificaciones push si el usuario está logueado
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            try {
+                await requestNotificationPermission();
+                
+                // Escuchar mensajes en primer plano
+                messaging.onMessage((payload) => {
+                    console.log('Mensaje recibido en primer plano:', payload);
+                    
+                    // Mostrar notificación
+                    if (payload.notification) {
+                        const { title, body } = payload.notification;
+                        showCustomNotification(title, body);
+                    }
+                });
+            } catch (error) {
+                console.error('Error al inicializar notificaciones:', error);
+            }
+        }
     
 
         if (storedUser && storedRole) {
@@ -358,7 +376,6 @@ function login() {
                 showMessage("Inicio de sesión exitoso!", false);
                 
                 window.location.href = "calculator.html";
-                initializePushNotifications();
             } else {
                 showMessage("Credenciales inválidas: " + data.message);
             }
@@ -1474,35 +1491,6 @@ async function setupProfilePage() {
     }
 }
 
-// ==============================================
-// FUNCIONES DE NOTIFICACIONES PUSH
-// ==============================================
-
-async function initializePushNotifications() {
-    if (notificationsInitialized) return;
-    
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
-        try {
-            await requestNotificationPermission();
-            
-            // Escuchar mensajes en primer plano
-            messaging.onMessage((payload) => {
-                console.log('Mensaje recibido en primer plano:', payload);
-                
-                if (payload.notification) {
-                    const { title, body } = payload.notification;
-                    showCustomNotification(title, body);
-                }
-            });
-            
-            notificationsInitialized = true;
-        } catch (error) {
-            console.error('Error al inicializar notificaciones:', error);
-        }
-    }
-}
-
-
 async function requestNotificationPermission() {
     // Verificar si el navegador soporta service workers
     if (!('serviceWorker' in navigator)) {
@@ -1661,4 +1649,4 @@ function showCustomNotification(title, message) {
     
     // Agregar al DOM
     document.body.appendChild(notification);
-}
+} 
