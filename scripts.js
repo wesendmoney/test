@@ -70,27 +70,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         const storedUser = localStorage.getItem("currentUser");
         const storedRole = localStorage.getItem("userRole");
 
-         // Inicializar notificaciones push si el usuario está logueado
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-            try {
-                await requestNotificationPermission();
-                
-                // Escuchar mensajes en primer plano
-                messaging.onMessage((payload) => {
-                    console.log('Mensaje recibido en primer plano:', payload);
-                    
-                    // Mostrar notificación
-                    if (payload.notification) {
-                        const { title, body } = payload.notification;
-                        showCustomNotification(title, body);
-                    }
-                });
-            } catch (error) {
-                console.error('Error al inicializar notificaciones:', error);
-            }
-        }
-    
-
         if (storedUser && storedRole) {
             const user = JSON.parse(storedUser);
             currentUser = user.name;
