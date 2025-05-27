@@ -818,16 +818,3 @@ header {
 .amount-updated {
     animation: highlight 1.5s;
 }
-
-/* Ajuste para móviles */
-@media (max-width: 600px) {
-    .earnings-amount .label {
-        display: none;
-    }
-    .earnings-display {
-        padding: 6px 10px;
-    }
-    .logo-container h1 {
-        font-size: 1.1rem;
-    }
-}
