@@ -19,6 +19,7 @@ let updateButtonTimeout;
 const receiptCache = {};
 let userTransactions = [];
 const FCM_TOKEN_KEY = 'cached_fcm_token';
+const EARNINGS_CACHE_KEY = 'cached_user_earnings';
 
 // Configuración de Firebase para notificaciones push
 const firebaseConfig = {
@@ -71,6 +72,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const storedUser = localStorage.getItem("currentUser");
         const storedRole = localStorage.getItem("userRole");
 
+        await updateEarningsDisplay(); // Agrega esta línea
          // Inicializar notificaciones push si el usuario está logueado
         if ('serviceWorker' in navigator && 'PushManager' in window) {
             try {
@@ -425,6 +427,7 @@ function register() {
 
 function logout() {
 
+    localStorage.removeItem(EARNINGS_CACHE_KEY);
     localStorage.removeItem(FCM_TOKEN_KEY);
     localStorage.removeItem('last_sent_fcm_token');
     // Limpiar todas las variables globales
@@ -931,7 +934,6 @@ async function submitPayment() {
         return;
     }
 
-    // Deshabilitar botón y mostrar loader
     const submitBtn = document.getElementById("submitPayment");
     submitBtn.disabled = true;
     showLoader();
@@ -947,10 +949,11 @@ async function submitPayment() {
             `&receiptUrl=${encodeURIComponent(receiptUrl)}` +
             `&beneficiary=${encodeURIComponent(beneficiary)}`
         );
-        
+
         const data = await response.json();
-        
+
         if (data.status === 200) {
+            await updateEarningsDisplay(true); // Ahora funciona porque submitPayment es async
             alert("Pago enviado exitosamente");
             resetPaymentForm();
         } else {
@@ -960,14 +963,13 @@ async function submitPayment() {
         console.error("Error al enviar el pago:", error);
         alert(`Error: ${error.message}`);
     } finally {
-        // Restaurar botón y ocultar loader
         submitBtn.disabled = false;
         hideLoader();
-        fetchOrders(); // Actualizar lista de órdenes
+        fetchOrders();
     }
 }
 
-function validatePayment(orderId) {
+async function validatePayment(orderId) {
     const storedUser = localStorage.getItem("currentUser");
     if (!storedUser) {
         alert("No se pudo obtener la información del usuario. Por favor, inicia sesión nuevamente.");
@@ -980,20 +982,27 @@ function validatePayment(orderId) {
     const confirmation = confirm(`¿Está seguro de que desea validar el pago con Order ID: ${orderId}?`);
     if (!confirmation) return;
 
-    fetch(`${apiUrl}?path=validatePayment&paymentId=${encodeURIComponent(orderId)}&isValid=true&validatorUser=${encodeURIComponent(validatorUser)}`)
-        .then((response) => response.json())
-        .then((data) => {
-            if (data.status === 200) {
-                alert("Pago validado exitosamente.");
-                fetchPendingPayments();
-            } else {
-                alert("Error al validar el pago: " + data.message);
-            }
-        })
-        .catch((error) => {
-            console.error("Error validating payment:", error);
-            alert("Error al validar el pago.");
-        });
+    try {
+        const response = await fetch(
+            `${apiUrl}?path=validatePayment` +
+            `&paymentId=${encodeURIComponent(orderId)}` +
+            `&isValid=true` +
+            `&validatorUser=${encodeURIComponent(validatorUser)}`
+        );
+
+        const data = await response.json();
+
+        if (data.status === 200) {
+            await updateEarningsDisplay(true); // Correcto porque la función es async
+            alert("Pago validado exitosamente.");
+            fetchPendingPayments();
+        } else {
+            alert("Error al validar el pago: " + data.message);
+        }
+    } catch (error) {
+        console.error("Error validating payment:", error);
+        alert("Error al validar el pago.");
+    }
 }
 
 function rejectPayment(orderId, reason) {
@@ -1092,18 +1101,19 @@ async function markAsPaid(orderId, imgurUrls) {
     }
 
     const user = JSON.parse(storedUser);
-    
+
     try {
         const response = await fetch(
-            `${apiUrl}?path=markAsPaid` + 
+            `${apiUrl}?path=markAsPaid` +
             `&orderId=${encodeURIComponent(orderId)}` +
             `&takerName=${encodeURIComponent(user.name)}` +
             `&imgurUrls=${encodeURIComponent(JSON.stringify(imgurUrls))}`
         );
-        
+
         const data = await response.json();
-        
+
         if (data.status === 200) {
+            await updateEarningsDisplay(true); 
             alert("¡Orden marcada como pagada exitosamente!");
             return true;
         } else {
@@ -1390,28 +1400,78 @@ async function updateHistoryAfterTransaction(orderDetails) {
     return await recordTransaction(transactionData);
 }
 
-async function fetchUserEarnings() {
-    try {
-        const storedUser = localStorage.getItem("currentUser");
-        if (!storedUser) return null;
+async function fetchUserEarnings(forceUpdate = false) {
+    const storedUser = localStorage.getItem("currentUser");
+    if (!storedUser) return null;
 
-        const user = JSON.parse(storedUser);
-        
+    const user = JSON.parse(storedUser);
+    const cachedData = localStorage.getItem(EARNINGS_CACHE_KEY);
+
+    // Si NO se fuerza actualización y hay datos en caché, úsalos
+    if (!forceUpdate && cachedData) {
+        console.log("Usando earnings desde caché (persistente)");
+        return JSON.parse(cachedData).data;
+    }
+
+    // Si no, llama a la API
+    try {
         const [earningsResponse, fundsResponse] = await Promise.all([
             fetch(`${apiUrl}?path=getUserEarnings&email=${encodeURIComponent(user.email)}`),
             fetch(`${apiUrl}?path=getUserFunds&email=${encodeURIComponent(user.email)}`)
         ]);
-        
+
         const earningsData = await earningsResponse.json();
         const fundsData = await fundsResponse.json();
 
-        return {
+        const result = {
             earnings: earningsData,
             funds: fundsData
         };
+
+        // Guardar en caché (sin timestamp, ya que no expira)
+        localStorage.setItem(EARNINGS_CACHE_KEY, JSON.stringify({
+            data: result
+        }));
+
+        return result;
     } catch (error) {
-        console.error("Error fetching user data:", error);
+        console.error("Error al obtener earnings:", error);
+        // Si falla la API, usa caché si existe
+        if (cachedData) {
+            return JSON.parse(cachedData).data;
+        }
         return null;
+    }
+}
+
+async function updateEarningsDisplay(forceUpdate = false) {
+    try {
+        const userData = await fetchUserEarnings(forceUpdate);
+        const earningsElement = document.querySelector('.earnings-amount .amount');
+        
+        if (!earningsElement) return;
+
+        // Extraer el valor numérico (manejo seguro)
+        let earningsValue = 0;
+        if (userData?.earnings?.status === 200) {
+            earningsValue = parseFloat(userData.earnings.earnings) || 0;
+        } else if (userData?.earnings) {
+            earningsValue = parseFloat(userData.earnings) || 0;
+        }
+
+        // Formatear como "$XX.XX" (sin USD)
+        earningsElement.textContent = `$${earningsValue.toFixed(2)}`;
+        
+        // Animación de actualización
+        earningsElement.classList.add('amount-updated');
+        setTimeout(() => earningsElement.classList.remove('amount-updated'), 1500);
+
+    } catch (error) {
+        console.error("Error al actualizar earnings:", error);
+        const earningsElement = document.querySelector('.earnings-amount .amount');
+        if (earningsElement) {
+            earningsElement.textContent = "$0.00"; // Valor por defecto
+        }
     }
 }
 
