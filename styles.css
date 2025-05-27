@@ -694,68 +694,127 @@ header {
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeOut {
-    from { opacity: 1; transform: translateY(0); }
-    to { opacity: 0; transform: translateY(20px); }
-}
-
-.notification-permission-dialog {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.7);
+/* --- Estilo del Header --- */
+.modern-header {
     display: flex;
-    justify-content: center;
     align-items: center;
-    z-index: 10000;
+    justify-content: space-between;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, #0D1A30 0%, #1A2A40 100%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 }
 
-.notification-permission-dialog .dialog-content {
-    background-color: #222;
-    padding: 20px;
-    border-radius: 8px;
-    max-width: 400px;
-    text-align: center;
-    border: 1px solid #bb8a04;
-}
-
-.notification-permission-dialog h3 {
-    color: #bb8a04;
-    margin-bottom: 15px;
-}
-
-.notification-permission-dialog p {
-    margin-bottom: 20px;
-    color: #ddd;
-}
-
-.dialog-buttons {
+.logo-container {
     display: flex;
+    align-items: center;
     gap: 10px;
+}
+
+.logo-container h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 1px;
+    margin: 0;
+}
+
+/* --- Contenedor de Earnings --- */
+.earnings-display {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 30px;
+    padding: 8px 15px;
+    border: 1px solid rgba(187, 138, 4, 0.3);
+    transition: all 0.3s ease;
+    cursor: default;
+}
+
+.earnings-display:hover {
+    background: rgba(187, 138, 4, 0.1);
+    border-color: rgba(187, 138, 4, 0.6);
+}
+
+.earnings-icon {
+    font-size: 1.2rem;
+    color: #bb8a04;
+}
+
+.earnings-amount {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.earnings-amount .label {
+    font-size: 0.55rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.earnings-amount .amount {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    margin-top: 2px;
+    font-family: 'Courier New', monospace; /* Para alinear decimales */
+    letter-spacing: 0.5px;
+}
+/* --- Icono de Notificaciones --- */
+.notification-bell {
+    position: relative;
+    font-size: 1.2rem;
+    color: #e6e8e0;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+
+.notification-bell:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+}
+
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ff4757;
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
     justify-content: center;
 }
 
-.dialog-buttons button {
-    padding: 8px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    border: none;
-    font-weight: bold;
+/* --- Animaciones --- */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
 }
 
-#acceptNotifications {
-    background-color: #bb8a04;
-    color: white;
+.pulse {
+    animation: pulse 2s infinite;
 }
 
-#declineNotifications {
-    background-color: #444;
-    color: #ddd;
+/* --- Efecto de cambio en earnings --- */
+@keyframes highlight {
+    0% { color: #fff; }
+    50% { color: #bb8a04; }
+    100% { color: #fff; }
+}
+
+.amount-updated {
+    animation: highlight 1.5s;
 }
