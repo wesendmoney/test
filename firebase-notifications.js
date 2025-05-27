@@ -291,39 +291,18 @@ function showCustomNotification(title, message) {
 /**
  * Solicita permiso para notificaciones
  */
- async function requestNotificationPermission() {
+async function requestNotificationPermission() {
     try {
         if (!('serviceWorker' in navigator)) {
             throw new Error('Este navegador no soporta service workers');
         }
 
-        // Intentar múltiples rutas posibles para el Service Worker
-        const swPaths = [
-            '/firebase-messaging-sw.js',
-            './firebase-messaging-sw.js',
-            '/test/firebase-messaging-sw.js',  // Ruta específica para tu caso
-            'firebase-messaging-sw.js'
-        ];
+        // Ruta relativa al directorio actual
+        const swPath = '/test/firebase-messaging-sw.js';
+        const scope = '/test/'; // Scope coincidente con la ubicación
 
-        let registration;
-        let lastError;
-        
-        for (const path of swPaths) {
-            try {
-                registration = await navigator.serviceWorker.register(path, {
-                    scope: '/'
-                });
-                console.log(`Service Worker registrado desde: ${path}`);
-                break;
-            } catch (err) {
-                lastError = err;
-                console.warn(`Fallo en ${path}:`, err);
-            }
-        }
-
-        if (!registration) {
-            throw lastError || new Error('No se pudo registrar el Service Worker');
-        }
+        const registration = await navigator.serviceWorker.register(swPath, { scope });
+        console.log('Service Worker registrado correctamente');
 
         await navigator.serviceWorker.ready;
         
@@ -337,12 +316,26 @@ function showCustomNotification(title, message) {
     } catch (error) {
         console.error('Error en requestNotificationPermission:', error);
         
-        // Mejor manejo de errores para el usuario
-        if (error.message.includes('404') || error.message.includes('register')) {
-            console.error('Error técnico:', error);
-            // Considera usar tu sistema de notificaciones UI en lugar de alert()
+        if (error.message.includes('SecurityError')) {
+            console.error('Problema de scope:', error);
+            // Intenta con scope diferente
+            return await tryAlternativeRegistration();
         }
         
+        return false;
+    }
+}
+
+async function tryAlternativeRegistration() {
+    try {
+        const swPath = '/test/firebase-messaging-sw.js';
+        // Intenta con scope más restrictivo
+        const registration = await navigator.serviceWorker.register(swPath, { scope: '/test/firebase-cloud-messaging-push-scope/' });
+        
+        console.log('Registro alternativo exitoso');
+        return true;
+    } catch (fallbackError) {
+        console.error('Error en registro alternativo:', fallbackError);
         return false;
     }
 }
