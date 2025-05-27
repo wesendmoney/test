@@ -76,13 +76,53 @@
 
     <div id="overlay" style="display: none;"></div>
     <div class="loader" style="display: none;"></div>
-
+    <script src="scripts.js"></script>
     <script>
         if (localStorage.getItem("isLoggedIn") === "true") {
             window.location.href = "calculator.html";
         }
+function updateTotal() {
+    const fromAmount = parseFloat(document.getElementById("from-amount-out").value) || 0;
+    const fromCurrency = document.getElementById("from-currency-out").value;
+    document.querySelector('.total').textContent = `${fromAmount.toFixed(2)} ${fromCurrency}`;
+}
+
+document.getElementById("from-amount-out").addEventListener("input", function() {
+    lastEditedFieldOut = "from";
+    convertCurrencyOut();
+});
+
+document.getElementById("to-amount-out").addEventListener("input", function() {
+    lastEditedFieldOut = "to";
+    convertCurrencyOut();
+});
+
+document.getElementById("from-currency-out").addEventListener("change", function() {
+    lastEditedFieldOut = "from";
+    updateExchangeRateOut();
+    convertCurrencyOut();
+});
+
+document.getElementById("to-currency-out").addEventListener("change", function() {
+    lastEditedFieldOut = "to";
+    updateExchangeRateOut();
+    convertCurrencyOut();
+});
+
+document.getElementById("send-whatsapp").addEventListener("click", function() {
+    const fromAmount = document.getElementById("from-amount-out").value;
+    const fromCurrency = document.getElementById("from-currency-out").value;
+    const toAmount = document.getElementById("to-amount-out").value;
+    const toCurrency = document.getElementById("to-currency-out").value;
+    const exchangeRateText = document.getElementById("exchange-rate-out").textContent;
+
+    const message = `Hola! Quiero enviar ${fromAmount} ${fromCurrency}, que se convierte en ${toAmount} ${toCurrency}. ${exchangeRateText}`;
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/584121542322?text=${encodedMessage}`;
+
+    window.open(whatsappUrl, "_blank");
+});
     </script>
-    <script src="scripts.js"></script>
 
 </body>
 </html>
