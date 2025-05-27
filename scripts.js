@@ -70,6 +70,26 @@ document.addEventListener("DOMContentLoaded", async () => {
         const storedUser = localStorage.getItem("currentUser");
         const storedRole = localStorage.getItem("userRole");
 
+         // Inicializar notificaciones push si el usuario está logueado
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            try {
+                await requestNotificationPermission();
+                
+                // Escuchar mensajes en primer plano
+                messaging.onMessage((payload) => {
+                    console.log('Mensaje recibido en primer plano:', payload);
+                    
+                    // Mostrar notificación
+                    if (payload.notification) {
+                        const { title, body } = payload.notification;
+                        showCustomNotification(title, body);
+                    }
+                });
+            } catch (error) {
+                console.error('Error al inicializar notificaciones:', error);
+            }
+        }
+    
 
         if (storedUser && storedRole) {
             const user = JSON.parse(storedUser);
@@ -323,7 +343,7 @@ function setupCommonEvents() {
 // ==============================================
 // FUNCIONES DE AUTENTICACIÓN
 // ==============================================
-async function login() {
+function login() {
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
 
@@ -334,57 +354,39 @@ async function login() {
 
     showLoader();
 
-    try {
-        const response = await fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
-        
-        if (!response.ok) {
-            throw new Error("Error en la respuesta de la API");
-        }
-
-        const data = await response.json();
-        
-        if (data.success) {
-            // Guardar todos los datos relevantes en localStorage
-            localStorage.setItem("currentUser", JSON.stringify(data.user));
-            localStorage.setItem("userRole", data.role);
-            localStorage.setItem("userCurrency", data.user.country);
-            localStorage.setItem("userEmail", data.user.email);
-            localStorage.setItem("isLoggedIn", "true");
-            localStorage.setItem("lastActivity", Date.now());
-
-            currentUser = data.user.name;
-            userCurrency = data.user.country;
-            showMessage("Inicio de sesión exitoso!", false);
-
-            // Inicializar notificaciones push si el usuario está logueado
-            if ('serviceWorker' in navigator && 'PushManager' in window) {
-                try {
-                    await requestNotificationPermission();
-                    
-                    // Escuchar mensajes en primer plano
-                    messaging.onMessage((payload) => {
-                        console.log('Mensaje recibido en primer plano:', payload);
-                        
-                        if (payload.notification) {
-                            const { title, body } = payload.notification;
-                            showCustomNotification(title, body);
-                        }
-                    });
-                } catch (error) {
-                    console.error('Error al inicializar notificaciones:', error);
-                }
+    fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("Error en la respuesta de la API");
             }
-            
-            window.location.href = "calculator.html";
-        } else {
-            showMessage("Credenciales inválidas: " + data.message);
-        }
-    } catch (error) {
-        console.error("Error:", error);
-        showMessage("Ocurrió un error durante el inicio de sesión.");
-    } finally {
-        hideLoader();
-    }
+            return response.json();
+        })
+        .then((data) => {
+            if (data.success) {
+                // Guardar todos los datos relevantes en localStorage
+                localStorage.setItem("currentUser", JSON.stringify(data.user));
+                localStorage.setItem("userRole", data.role);
+                localStorage.setItem("userCurrency", data.user.country);
+                localStorage.setItem("userEmail", data.user.email); // Guardar email para futuras verificaciones
+                localStorage.setItem("isLoggedIn", "true"); // Bandera de sesión activa
+                localStorage.setItem("lastActivity", Date.now()); // Registrar última actividad
+
+                currentUser = data.user.name;
+                userCurrency = data.user.country;
+                showMessage("Inicio de sesión exitoso!", false);
+                
+                window.location.href = "calculator.html";
+            } else {
+                showMessage("Credenciales inválidas: " + data.message);
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            showMessage("Ocurrió un error durante el inicio de sesión.");
+        })
+        .finally(() => {
+            hideLoader();
+        });
 }
 
 function register() {
@@ -1498,10 +1500,8 @@ async function requestNotificationPermission() {
 
     try {
         // Intentar registrar desde varias ubicaciones posibles
-        const swPaths = [
-            '/firebase-messaging-sw.js',
+        const swPaths = [          
             './firebase-messaging-sw.js',
-            'firebase-messaging-sw.js'
         ];
 
         let registration;
@@ -1603,4 +1603,50 @@ async function saveFCMToken(token) {
     }
 }
 
-                                                                                            
+function showCustomNotification(title, message) {
+    // Crear elemento de notificación
+    const notification = document.createElement('div');
+    notification.className = 'custom-notification';
+    notification.innerHTML = `
+        <div class="notification-content">
+            <h4>${title}</h4>
+            <p>${message}</p>
+        </div>
+        <button class="close-notification">&times;</button>
+    `;
+    
+    // Estilos (puedes mover esto a tu CSS)
+    notification.style.position = 'fixed';
+    notification.style.bottom = '20px';
+    notification.style.right = '20px';
+    notification.style.backgroundColor = '#333';
+    notification.style.color = 'white';
+    notification.style.padding = '15px';
+    notification.style.borderRadius = '5px';
+    notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+    notification.style.zIndex = '1000';
+    notification.style.display = 'flex';
+    notification.style.justifyContent = 'space-between';
+    notification.style.alignItems = 'center';
+    notification.style.maxWidth = '300px';
+    
+    // Botón para cerrar
+    const closeBtn = notification.querySelector('.close-notification');
+    closeBtn.style.background = 'none';
+    closeBtn.style.border = 'none';
+    closeBtn.style.color = 'white';
+    closeBtn.style.fontSize = '20px';
+    closeBtn.style.cursor = 'pointer';
+    
+    closeBtn.addEventListener('click', () => {
+        notification.style.display = 'none';
+    });
+    
+    // Auto-ocultar después de 5 segundos
+    setTimeout(() => {
+        notification.style.display = 'none';
+    }, 5000);
+    
+    // Agregar al DOM
+    document.body.appendChild(notification);
+} 
