@@ -32,7 +32,7 @@
         <div class="mb-4">
             <label for="from-amount-out">Tú envías</label>
             <div class="input-group">
-                <input id="from-amount-out" type="number" min="0" step="any" placeholder="Cantidad" value="0">
+                <input id="from-amount-out" type="number" min="0" step="any" placeholder="Cantidad" value="">
                 <select id="from-currency-out">
                     <option value="CLP">CLP - Chile</option>
                     <option value="COP">COP - Colombia</option>
@@ -51,7 +51,7 @@
         <div class="mb-4">
             <label for="to-amount-out">Ellos reciben</label>
             <div class="input-group">
-                <input id="to-amount-out" type="number" min="0" step="any" placeholder="Cantidad" value="0">
+                <input id="to-amount-out" type="number" min="0" step="any" placeholder="Cantidad" value="">
                 <select id="to-currency-out">
                     <option value="CLP">CLP - Chile</option>
                     <option value="COP">COP - Colombia</option>
@@ -65,7 +65,7 @@
         </div>
         <div class="mb-4">
             <label>Total a pagar</label>
-            <p class="total">100.00 USD</p>
+            <p class="total">0.00 USD</p>
         </div>
         <button id="send-whatsapp" class="send-button">
             <i class="fab fa-whatsapp"></i>
@@ -76,7 +76,7 @@
 
     <div id="overlay" style="display: none;"></div>
     <div class="loader" style="display: none;"></div>
-    <script src="/scripts.js"></script>
+    <script src="./scripts.js"></script>
     <script>
         if (localStorage.getItem("isLoggedIn") === "true") {
             window.location.href = "calculator.html";
