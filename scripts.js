@@ -18,6 +18,7 @@ let conversionTimeout;
 let updateButtonTimeout;
 const receiptCache = {};
 let userTransactions = [];
+const FCM_TOKEN_KEY = 'cached_fcm_token';
 
 // Configuración de Firebase para notificaciones push
 const firebaseConfig = {
@@ -423,6 +424,9 @@ function register() {
 }
 
 function logout() {
+
+    localStorage.removeItem(FCM_TOKEN_KEY);
+    localStorage.removeItem('last_sent_fcm_token');
     // Limpiar todas las variables globales
     currentUser = "";
     userCurrency = "";
@@ -1449,76 +1453,86 @@ async function setupProfilePage() {
 }
 
 async function requestNotificationPermission() {
-    // Verificar si el navegador soporta service workers
-    if (!('serviceWorker' in navigator)) {
-        console.error('Este navegador no soporta service workers');
-        return null;
+    // 1. Verificar si ya tenemos un token en caché
+    const cachedToken = localStorage.getItem(FCM_TOKEN_KEY);
+    if (cachedToken) {
+        console.log('Usando token FCM desde caché');
+        return cachedToken;
     }
 
+    // 2. Si no hay token en caché, proceder con el flujo normal
     try {
-        // Intentar registrar desde varias ubicaciones posibles
         const swPaths = [          
             './firebase-messaging-sw.js',
         ];
 
         let registration;
-        let lastError;
         
         for (const path of swPaths) {
             try {
                 registration = await navigator.serviceWorker.register(path);
-                console.log(`Service Worker registrado correctamente desde: ${path}`);
+                console.log('Service Worker registrado desde:', path);
                 break;
             } catch (err) {
-                lastError = err;
                 console.warn(`No se pudo registrar desde ${path}:`, err);
             }
         }
 
         if (!registration) {
-            throw lastError || new Error('No se pudo registrar el Service Worker en ninguna ubicación probada');
+            throw new Error('No se pudo registrar el Service Worker');
         }
 
-        // Esperar a que el Service Worker esté activo
         await navigator.serviceWorker.ready;
         
-        // Solicitar permiso para notificaciones
         const permission = await Notification.requestPermission();
         if (permission !== 'granted') {
-            throw new Error('Permiso de notificación denegado por el usuario');
+            throw new Error('Permiso denegado');
         }
 
         console.log('Permiso de notificación concedido');
         
-        // Obtener el token FCM
+        // 3. Obtener el nuevo token
         const token = await messaging.getToken({ 
             vapidKey: 'BIjUoTPCiMDAg7ILetFmwMw-EM4ootWd0LaumD9AEhFVFJodJeWj1Z94utg1oDV7qEx_U32t7YM1nS64mUcqJMY',
             serviceWorkerRegistration: registration
         });
         
         if (!token) {
-            throw new Error('No se pudo obtener el token FCM');
+            throw new Error('No se obtuvo token FCM');
         }
 
-        console.log('Token FCM obtenido:', token);
-        await saveFCMToken(token);
+        console.log('Nuevo token FCM obtenido:', token);
+        
+        // 4. Guardar en caché y enviar al servidor solo si es diferente
+        await handleNewFCMToken(token);
+        
         return token;
 
     } catch (error) {
         console.error('Error en requestNotificationPermission:', error);
-        
-        // Mostrar mensaje al usuario si es relevante
-        if (error.message.includes('404')) {
-            alert('Error: No se encontró el archivo necesario para las notificaciones. Por favor, contacta al soporte.');
-        } else if (error.message.includes('denegado')) {
-            alert('Para recibir notificaciones, por favor habilita los permisos en tu navegador.');
-        }
-        
         return null;
     }
 }
 
-async function saveFCMToken(token) {
+async function handleNewFCMToken(token) {
+    // Guardar en caché local
+    localStorage.setItem(FCM_TOKEN_KEY, token);
+    
+    // Verificar si ya habíamos enviado este token al servidor
+    const lastSentToken = localStorage.getItem('last_sent_fcm_token');
+    if (lastSentToken === token) {
+        console.log('Token ya enviado al servidor, omitiendo');
+        return;
+    }
+    
+    // Si es un token nuevo, enviar al servidor
+    const success = await saveFCMTokenToServer(token);
+    if (success) {
+        localStorage.setItem('last_sent_fcm_token', token);
+    }
+}
+
+async function saveFCMTokenToServer(token) {
     const storedUser = localStorage.getItem("currentUser");
     if (!storedUser) {
         console.error('No hay usuario logueado');
@@ -1535,27 +1549,23 @@ async function saveFCMToken(token) {
     
     try {
         const url = `${apiUrl}?path=saveFCMToken&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`;
-        console.log('URL de la solicitud:', url); // Depuración
-        
         const response = await fetch(url);
         
         if (!response.ok) {
-            console.error('Error en la respuesta:', response.status, response.statusText);
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('Respuesta del servidor:', data); // Depuración
         
         if (data.status === 200) {
-            console.log('Token FCM guardado correctamente');
+            console.log('Token FCM guardado en servidor');
             return true;
         } else {
-            console.error('Error del servidor:', data.message || 'Sin mensaje de error');
+            console.error('Error del servidor:', data.message);
             return false;
         }
     } catch (error) {
-        console.error('Error en la solicitud:', error);
+        console.error('Error al guardar token:', error);
         return false;
     }
 }
