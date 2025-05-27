@@ -300,7 +300,7 @@ function showCustomNotification(title, message) {
         }
 
         // Registrar service worker
-        const registration = await navigator.serviceWorker.register('.test/firebase-messaging-sw.js');
+        const registration = await navigator.serviceWorker.register('./test/firebase-messaging-sw.js');
         console.log('Service Worker registrado correctamente');
 
         // Esperar a que esté activo
