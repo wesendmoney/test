@@ -19,69 +19,93 @@ let updateButtonTimeout;
 const receiptCache = {};
 let userTransactions = [];
 
+// Configuración de Firebase para notificaciones push
+const firebaseConfig = {
+    apiKey: "AIzaSyA0NDOIw9wTunNGyJTHgh8JHmMM__hUzrk",
+    authDomain: "wesm-6ce39.firebaseapp.com",
+    projectId: "wesm-6ce39",
+    storageBucket: "wesm-6ce39.firebasestorage.app",
+    messagingSenderId: "417323501500",
+    appId: "1:417323501500:web:2550c12546e7de0f4f8db9",
+    measurementId: "G-H2H6Y2WVSF"
+};
+
+// Inicializar Firebase
+const firebaseApp = firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging(firebaseApp);
 
 // ==============================================
 // FUNCIONES DE INICIO Y CARGA
 // ==============================================
 document.addEventListener("DOMContentLoaded", async () => {
-    // Verificar sesión activa (tu código existente)
-    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-    const lastActivity = parseInt(localStorage.getItem("lastActivity") || "0");
-    const sessionTimeout = 24 * 60 * 60 * 1000;
+    // Verificar si hay una sesión activa
+        const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+        const lastActivity = parseInt(localStorage.getItem("lastActivity") || "0");
+        const sessionTimeout = 24 * 60 * 60 * 1000; // 24 horas de timeout
     
-    const privatePages = ['calculator.html', 'orders.html', 'rates.html', 'bank-map.html', 'profile.html'];
-    const currentPage = window.location.pathname.split('/').pop();
-    
-    if (privatePages.includes(currentPage)) {
-        if (!isLoggedIn || (Date.now() - lastActivity > sessionTimeout)) {
-            localStorage.removeItem("isLoggedIn");
-            window.location.href = "index.html";
-            return;
-        }
-        localStorage.setItem("lastActivity", Date.now());
-    }
-
-    // Inicialización de notificaciones (nuevo código)
-    if (isLoggedIn && (Date.now() - lastActivity < sessionTimeout)) {
-        try {
-            // Esperar a que cargue el usuario
-            const storedUser = localStorage.getItem("currentUser");
-            const storedRole = localStorage.getItem("userRole");
-            
-            if (storedUser && storedRole) {
-                const user = JSON.parse(storedUser);
-                currentUser = user.name;
-                userCurrency = user.country;
-                
-                // Inicializar notificaciones después de tener los datos del usuario
-                await initializeFirebaseNotifications();
-                
-                // Resto de tu lógica...
-                if (window.location.pathname.includes("profile.html")) {
-                    document.getElementById("userName").textContent = user.name;
-                    document.getElementById("userRole").textContent = storedRole;
-                    document.getElementById("userCurrency").textContent = userCurrency;
-                    await setupProfilePage();
-                }
-                
-                await fetchAllExchangeRates();
-                
-                if (window.location.pathname.includes("calculator.html") || window.location.pathname === "/") {
-                    setupCalculatorPage();
-                } else if (window.location.pathname.includes("orders.html")) {
-                    setupOrdersPage();
-                }
+        // Páginas que requieren autenticación (excluye login, register e index)
+        const privatePages = [
+            'calculator.html',
+            'orders.html', 
+            'rates.html',
+            'bank-map.html',
+            'profile.html'
+        ];
+        
+        const currentPage = window.location.pathname.split('/').pop();
+        
+        // Redirigir si no está autenticado en una página privada
+        if (privatePages.includes(currentPage)) {
+            if (!isLoggedIn || (Date.now() - lastActivity > sessionTimeout)) {
+                localStorage.removeItem("isLoggedIn"); // Limpiar sesión inválida
+                window.location.href = "index.html";
+                return; // Detener ejecución
             }
-        } catch (error) {
-            console.error('Error initializing notifications:', error);
+            // Actualizar última actividad si la sesión es válida
+            localStorage.setItem("lastActivity", Date.now());
         }
-    } else if (!window.location.pathname.includes("login.html") && 
-               !window.location.pathname.includes("register.html") && 
-               !window.location.pathname.includes("index.html")) {
+
+    // Si hay sesión activa y no ha expirado
+    if (isLoggedIn && (Date.now() - lastActivity < sessionTimeout)) {
+        const storedUser = localStorage.getItem("currentUser");
+        const storedRole = localStorage.getItem("userRole");
+
+
+        if (storedUser && storedRole) {
+            const user = JSON.parse(storedUser);
+            currentUser = user.name;
+            userCurrency = user.country;
+
+            // Actualizar última actividad
+            localStorage.setItem("lastActivity", Date.now());
+
+            // Resto de tu lógica de carga...
+            if (window.location.pathname.includes("profile.html")) {
+                document.getElementById("userName").textContent = user.name;
+                document.getElementById("userRole").textContent = storedRole;
+                document.getElementById("userCurrency").textContent = userCurrency;
+                await setupProfilePage();
+            }
+
+            await fetchAllExchangeRates();
+
+            if (window.location.pathname.includes("calculator.html") || window.location.pathname === "/") {
+                setupCalculatorPage();
+            } else if (window.location.pathname.includes("orders.html")) {
+                setupOrdersPage();
+            }
+        }
+    } 
+    // Redirigir a login si no está autenticado en páginas privadas
+    else if (!window.location.pathname.includes("login.html") && 
+             !window.location.pathname.includes("register.html") && 
+             !window.location.pathname.includes("index.html")) {
+        // Limpiar datos de sesión inválidos
         localStorage.removeItem("isLoggedIn");
         window.location.href = "index.html";
     }
     
+    // Configurar eventos comunes
     setupCommonEvents();
 });
 
@@ -299,7 +323,7 @@ function setupCommonEvents() {
 // ==============================================
 // FUNCIONES DE AUTENTICACIÓN
 // ==============================================
-function login() {
+async function login() {
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
 
@@ -310,39 +334,57 @@ function login() {
 
     showLoader();
 
-    fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`)
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error("Error en la respuesta de la API");
-            }
-            return response.json();
-        })
-        .then((data) => {
-            if (data.success) {
-                // Guardar todos los datos relevantes en localStorage
-                localStorage.setItem("currentUser", JSON.stringify(data.user));
-                localStorage.setItem("userRole", data.role);
-                localStorage.setItem("userCurrency", data.user.country);
-                localStorage.setItem("userEmail", data.user.email); // Guardar email para futuras verificaciones
-                localStorage.setItem("isLoggedIn", "true"); // Bandera de sesión activa
-                localStorage.setItem("lastActivity", Date.now()); // Registrar última actividad
+    try {
+        const response = await fetch(`${apiUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
+        
+        if (!response.ok) {
+            throw new Error("Error en la respuesta de la API");
+        }
 
-                currentUser = data.user.name;
-                userCurrency = data.user.country;
-                showMessage("Inicio de sesión exitoso!", false);
-                
-                window.location.href = "calculator.html";
-            } else {
-                showMessage("Credenciales inválidas: " + data.message);
+        const data = await response.json();
+        
+        if (data.success) {
+            // Guardar todos los datos relevantes en localStorage
+            localStorage.setItem("currentUser", JSON.stringify(data.user));
+            localStorage.setItem("userRole", data.role);
+            localStorage.setItem("userCurrency", data.user.country);
+            localStorage.setItem("userEmail", data.user.email);
+            localStorage.setItem("isLoggedIn", "true");
+            localStorage.setItem("lastActivity", Date.now());
+
+            currentUser = data.user.name;
+            userCurrency = data.user.country;
+            showMessage("Inicio de sesión exitoso!", false);
+
+            // Inicializar notificaciones push si el usuario está logueado
+            if ('serviceWorker' in navigator && 'PushManager' in window) {
+                try {
+                    await requestNotificationPermission();
+                    
+                    // Escuchar mensajes en primer plano
+                    messaging.onMessage((payload) => {
+                        console.log('Mensaje recibido en primer plano:', payload);
+                        
+                        if (payload.notification) {
+                            const { title, body } = payload.notification;
+                            showCustomNotification(title, body);
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error al inicializar notificaciones:', error);
+                }
             }
-        })
-        .catch((error) => {
-            console.error("Error:", error);
-            showMessage("Ocurrió un error durante el inicio de sesión.");
-        })
-        .finally(() => {
-            hideLoader();
-        });
+            
+            window.location.href = "calculator.html";
+        } else {
+            showMessage("Credenciales inválidas: " + data.message);
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        showMessage("Ocurrió un error durante el inicio de sesión.");
+    } finally {
+        hideLoader();
+    }
 }
 
 function register() {
@@ -391,8 +433,6 @@ function logout() {
     localStorage.removeItem("userEmail");
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("lastActivity");
-
-    cleanupFirebase();
     
     // Redirigir a la página de inicio
     window.location.href = "index.html";
@@ -1449,3 +1489,118 @@ async function setupProfilePage() {
     }
 }
 
+async function requestNotificationPermission() {
+    // Verificar si el navegador soporta service workers
+    if (!('serviceWorker' in navigator)) {
+        console.error('Este navegador no soporta service workers');
+        return null;
+    }
+
+    try {
+        // Intentar registrar desde varias ubicaciones posibles
+        const swPaths = [
+            '/firebase-messaging-sw.js',
+            './firebase-messaging-sw.js',
+            'firebase-messaging-sw.js'
+        ];
+
+        let registration;
+        let lastError;
+        
+        for (const path of swPaths) {
+            try {
+                registration = await navigator.serviceWorker.register(path);
+                console.log(`Service Worker registrado correctamente desde: ${path}`);
+                break;
+            } catch (err) {
+                lastError = err;
+                console.warn(`No se pudo registrar desde ${path}:`, err);
+            }
+        }
+
+        if (!registration) {
+            throw lastError || new Error('No se pudo registrar el Service Worker en ninguna ubicación probada');
+        }
+
+        // Esperar a que el Service Worker esté activo
+        await navigator.serviceWorker.ready;
+        
+        // Solicitar permiso para notificaciones
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+            throw new Error('Permiso de notificación denegado por el usuario');
+        }
+
+        console.log('Permiso de notificación concedido');
+        
+        // Obtener el token FCM
+        const token = await messaging.getToken({ 
+            vapidKey: 'BIjUoTPCiMDAg7ILetFmwMw-EM4ootWd0LaumD9AEhFVFJodJeWj1Z94utg1oDV7qEx_U32t7YM1nS64mUcqJMY',
+            serviceWorkerRegistration: registration
+        });
+        
+        if (!token) {
+            throw new Error('No se pudo obtener el token FCM');
+        }
+
+        console.log('Token FCM obtenido:', token);
+        await saveFCMToken(token);
+        return token;
+
+    } catch (error) {
+        console.error('Error en requestNotificationPermission:', error);
+        
+        // Mostrar mensaje al usuario si es relevante
+        if (error.message.includes('404')) {
+            alert('Error: No se encontró el archivo necesario para las notificaciones. Por favor, contacta al soporte.');
+        } else if (error.message.includes('denegado')) {
+            alert('Para recibir notificaciones, por favor habilita los permisos en tu navegador.');
+        }
+        
+        return null;
+    }
+}
+
+async function saveFCMToken(token) {
+    const storedUser = localStorage.getItem("currentUser");
+    if (!storedUser) {
+        console.error('No hay usuario logueado');
+        return false;
+    }
+
+    const user = JSON.parse(storedUser);
+    const email = user.email;
+    
+    if (!email) {
+        console.error('No se pudo obtener el email del usuario');
+        return false;
+    }
+    
+    try {
+        const url = `${apiUrl}?path=saveFCMToken&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`;
+        console.log('URL de la solicitud:', url); // Depuración
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            console.error('Error en la respuesta:', response.status, response.statusText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Respuesta del servidor:', data); // Depuración
+        
+        if (data.status === 200) {
+            console.log('Token FCM guardado correctamente');
+            return true;
+        } else {
+            console.error('Error del servidor:', data.message || 'Sin mensaje de error');
+            return false;
+        }
+    } catch (error) {
+        console.error('Error en la solicitud:', error);
+        return false;
+    }
+}
+
+                                                                                            
