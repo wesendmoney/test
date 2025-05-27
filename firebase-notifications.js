@@ -29,28 +29,27 @@ let notificationListenersInitialized = false;
  */
 async function initializeFirebaseNotifications() {
     try {
-        // Verificar si el usuario está autenticado
-        const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-        if (!isLoggedIn) return;
+        if (localStorage.getItem("isLoggedIn") !== "true") return;
 
-        // Cargar scripts de Firebase si no están disponibles
+        // Carga condicional de scripts
         if (typeof firebase === 'undefined') {
             await loadFirebaseScripts();
         }
 
-        // Inicializar Firebase
         const messaging = getFirebaseMessaging();
         if (!messaging) return;
 
-        // Obtener y gestionar el token FCM
-        await manageFCMToken();
+        // Primero solicitar permisos
+        const permissionGranted = await requestNotificationPermission();
+        if (!permissionGranted) return;
 
-        // Configurar listeners de notificaciones
+        // Luego gestionar token y listeners
+        await manageFCMToken();
         setupNotificationListeners();
 
         console.log('Firebase Notifications inicializado correctamente');
     } catch (error) {
-        console.error('Error inicializando Firebase Notifications:', error);
+        console.error('Error inicializando Firebase:', error);
     }
 }
 
@@ -294,34 +293,54 @@ function showCustomNotification(title, message) {
  */
  async function requestNotificationPermission() {
     try {
-        // Verificar soporte de service workers
         if (!('serviceWorker' in navigator)) {
             throw new Error('Este navegador no soporta service workers');
         }
 
-        // Registrar service worker
-        const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
-        console.log('Service Worker registrado correctamente');
+        // Intentar múltiples rutas posibles para el Service Worker
+        const swPaths = [
+            '/firebase-messaging-sw.js',
+            './firebase-messaging-sw.js',
+            '/test/firebase-messaging-sw.js',  // Ruta específica para tu caso
+            'firebase-messaging-sw.js'
+        ];
 
-        // Esperar a que esté activo
-        await navigator.serviceWorker.ready;
+        let registration;
+        let lastError;
         
-        // Solicitar permiso
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') {
-            throw new Error('Permiso de notificación denegado por el usuario');
+        for (const path of swPaths) {
+            try {
+                registration = await navigator.serviceWorker.register(path, {
+                    scope: '/'
+                });
+                console.log(`Service Worker registrado desde: ${path}`);
+                break;
+            } catch (err) {
+                lastError = err;
+                console.warn(`Fallo en ${path}:`, err);
+            }
         }
 
-        console.log('Permiso de notificación concedido');
+        if (!registration) {
+            throw lastError || new Error('No se pudo registrar el Service Worker');
+        }
+
+        await navigator.serviceWorker.ready;
+        
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+            throw new Error('Permiso denegado por el usuario');
+        }
+
+        console.log('Permiso concedido');
         return true;
     } catch (error) {
         console.error('Error en requestNotificationPermission:', error);
         
-        // Mostrar mensaje al usuario si es relevante
-        if (error.message.includes('404')) {
-            alert('Error: No se encontró el archivo necesario para las notificaciones. Por favor, contacta al soporte.');
-        } else if (error.message.includes('denegado')) {
-            console.log('Usuario denegó los permisos de notificación');
+        // Mejor manejo de errores para el usuario
+        if (error.message.includes('404') || error.message.includes('register')) {
+            console.error('Error técnico:', error);
+            // Considera usar tu sistema de notificaciones UI en lugar de alert()
         }
         
         return false;
