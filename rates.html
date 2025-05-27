@@ -179,16 +179,25 @@
     </style>
 </head>
 <body>
-    <header>
-       <div class="logo-container">
-            <img src="logo.svg" alt="Logo" width="70" height="70">
-              <h1 style="margin-left: -20px; font-size: 15px; transform: translateY(4px);">
-        <span style="color: white;">E</span><span style="color: white;">SEND</span><span style="color: white;">MONEY</span></h1>
+     <header>
+    <div class="logo-container">
+        <img src="logo.svg" alt="Logo" width="80" height="80">
+        <h1 style="margin-left: -28px; font-size: 15px; transform: translateY(2px);">
+            <span style="color: white;">E</span><span style="color: white;">SEND</span><span style="color: white;">MONEY</span>
+        </h1>
+    </div>
+       <div class="earnings-display">
+        <div class="earnings-icon">
+            <i class="fas fa-coins pulse"></i>
         </div>
-        <span class="menu-icon" onclick="toggleMenu()">☰</span>
-        <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+        <div class="earnings-amount">
+            <span class="label">Ganancias</span>
+            <span id="userEarnings" class="amount">0.00 $</span>
+        </div>
+    </div>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js"></script>
-    </header>
+</header>
 
     <div id="menu" class="menu">
         <div class="menu-content">
