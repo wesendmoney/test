@@ -1677,3 +1677,86 @@ function showCustomNotification(title, message) {
     // Agregar al DOM
     document.body.appendChild(notification);
 } 
+
+// ==============================================
+// FUNCIONES PARA DIVISIÓN DE PAGOS
+// ==============================================
+
+function setupPaymentSplitter() {
+    const splitBtn = document.getElementById('splitPaymentBtn');
+    if (!splitBtn) return;
+
+    splitBtn.addEventListener('click', () => {
+        const container = document.getElementById('splitPaymentContainer');
+        container.style.display = container.style.display === 'none' ? 'block' : 'none';
+        
+        if (container.style.display === 'block') {
+            updateSplitDetails();
+        }
+    });
+
+    document.getElementById('splitCount').addEventListener('change', updateSplitDetails);
+    document.getElementById('generateBeneficiaryText').addEventListener('click', generateBeneficiaryText);
+}
+
+function updateSplitDetails() {
+    const count = parseInt(document.getElementById('splitCount').value);
+    const container = document.getElementById('splitDetails');
+    container.innerHTML = '';
+
+    const toAmount = parseFloat(document.getElementById('to-amount').value) || 0;
+    const toCurrency = document.getElementById('to-currency').value;
+    const fromCurrency = document.getElementById('from-currency').value;
+    const rate = exchangeRatesCache[`${fromCurrency}_${toCurrency}`] || 1;
+
+    for (let i = 0; i < count; i++) {
+        const div = document.createElement('div');
+        div.className = 'split-recipient';
+        div.innerHTML = `
+            <input type="text" class="recipient-name" placeholder="Datos del beneficiario ${i+1}" required>
+            <input type="number" class="recipient-amount" placeholder="Monto en ${fromCurrency}" min="0" step="0.01" required>
+            <div class="converted-amount">Recibirá: 0 ${toCurrency}</div>
+        `;
+        container.appendChild(div);
+    }
+
+    // Actualizar eventos para calcular automáticamente
+    document.querySelectorAll('.recipient-amount').forEach(input => {
+        input.addEventListener('input', function() {
+            const amount = parseFloat(this.value) || 0;
+            const converted = (amount * rate).toFixed(2);
+            this.parentElement.querySelector('.converted-amount').textContent = 
+                `Recibirá: ${converted} ${toCurrency}`;
+        });
+    });
+}
+
+function generateBeneficiaryText() {
+    const count = parseInt(document.getElementById('splitCount').value);
+    const toCurrency = document.getElementById('to-currency').value;
+    let beneficiaryText = '';
+    
+    document.querySelectorAll('.split-recipient').forEach((recipient, index) => {
+        const name = recipient.querySelector('.recipient-name').value;
+        const amountElement = recipient.querySelector('.converted-amount');
+        const amountText = amountElement.textContent.replace('Recibirá: ', '');
+        
+        if (name && amountText) {
+            beneficiaryText += `${name} ${amountText}`;
+            if (index < count - 1) beneficiaryText += ', ';
+        }
+    });
+
+    if (beneficiaryText) {
+        document.getElementById('beneficiaryData').value = beneficiaryText;
+        document.getElementById('splitPaymentContainer').style.display = 'none';
+    } else {
+        alert('Por favor complete todos los campos de los beneficiarios.');
+    }
+}
+
+// No olvides llamar a esta función en el DOMContentLoaded
+document.addEventListener("DOMContentLoaded", function() {
+    // ... otras inicializaciones
+    setupPaymentSplitter();
+});
