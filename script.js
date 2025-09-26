@@ -1,9 +1,31 @@
 // ==============================================
+// CONSTANTES Y VARIABLES GLOBALES
+// ==============================================
+let currentUser = "";
+let userCurrency = "";
+let lastFetchedOrders = [];
+let currentOrderId;
+let currentToAmount;
+let currentToCurrency;
+let uploadedImageUrl = "";
+let receiptUrl = "";
+let imageFile;
+let exchangeRatesCache = {};
+let lastEditedField = "";
+let lastEditedFieldOut = "";
+let conversionTimeout;
+let updateButtonTimeout;
+const receiptCache = {};
+let userTransactions = [];
+const FCM_TOKEN_KEY = 'cached_fcm_token';
+const EARNINGS_CACHE_KEY = 'cached_user_earnings';
+
+// ==============================================
 // CONSTANTES Y VARIABLES GLOBALES - MODIFICADO
 // ==============================================
 
 // URL original de tu Google Apps Script
-const GAS_BASE_URL = "https://script.google.com/macros/s/AKfycbwYg370TpVIpSj5dEh5nuAEG63evr5zdydCVQKU_R_kbEJ8WYxirFaSrEYb_FVa91DB8Q/exec";
+const GAS_BASE_URL = "https://script.google.com/macros/s/AKfycbw06wjoF5kAR6I3c9-X9zCyaNmzR1AWR1cpkn_dRvQV9QpfSPgl8YNCwkj0f63T9hmV8w/exec";
 
 // Lista de proxies CORS que funcionan
 const CORS_PROXIES = [
@@ -39,39 +61,6 @@ async function makeGasRequest(params = {}) {
 
 // Tu API URL original (se mantiene para compatibilidad)
 const apiUrl = GAS_BASE_URL;
-let currentUser = "";
-let userCurrency = "";
-let lastFetchedOrders = [];
-let currentOrderId;
-let currentToAmount;
-let currentToCurrency;
-let uploadedImageUrl = "";
-let receiptUrl = "";
-let imageFile;
-let exchangeRatesCache = {};
-let lastEditedField = "";
-let lastEditedFieldOut = "";
-let conversionTimeout;
-let updateButtonTimeout;
-const receiptCache = {};
-let userTransactions = [];
-const FCM_TOKEN_KEY = 'cached_fcm_token';
-const EARNINGS_CACHE_KEY = 'cached_user_earnings';
-
-// Configuración de Firebase para notificaciones push
-const firebaseConfig = {
-    apiKey: "AIzaSyA0NDOIw9wTunNGyJTHgh8JHmMM__hUzrk",
-    authDomain: "wesm-6ce39.firebaseapp.com",
-    projectId: "wesm-6ce39",
-    storageBucket: "wesm-6ce39.firebasestorage.app",
-    messagingSenderId: "417323501500",
-    appId: "1:417323501500:web:2550c12546e7de0f4f8db9",
-    measurementId: "G-H2H6Y2WVSF"
-};
-
-// Inicializar Firebase
-const firebaseApp = firebase.initializeApp(firebaseConfig);
-const messaging = firebase.messaging(firebaseApp);
 
 // ==============================================
 // FUNCIONES DE INICIO Y CARGA
