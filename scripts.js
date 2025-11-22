@@ -978,6 +978,25 @@ async function submitPayment() {
     }
 }
 
+function enableManualEditing() {
+    document.getElementById('beneficiaryData').readOnly = false;
+    document.getElementById('beneficiaryData').style.backgroundColor = 'transparent';
+    document.getElementById('editBeneficiaryBtn').style.display = 'none';
+    
+    // Limpiar todas las divisiones
+    document.getElementById('splitDetails').innerHTML = '';
+    document.getElementById('splitTotal').innerHTML = '';
+    document.getElementById('splitCount').value = '1';
+    document.getElementById('splitPaymentContainer').style.display = 'none';
+    
+    // Mostrar mensaje informativo
+    const currentText = document.getElementById('beneficiaryData').value;
+    if (currentText.includes('PAGO DIVIDIDO')) {
+        document.getElementById('beneficiaryData').value = '';
+        alert('Las divisiones han sido eliminadas. Ahora puedes editar manualmente el campo de beneficiario.');
+    }
+}
+
 async function validatePayment(orderId) {
     const storedUser = localStorage.getItem("currentUser");
     if (!storedUser) {
@@ -1139,11 +1158,19 @@ function resetPaymentForm() {
     document.getElementById("from-amount").value = "";
     document.getElementById("to-amount").value = "";
     document.getElementById("beneficiaryData").value = "";
+    document.getElementById("beneficiaryData").readOnly = false;
+    document.getElementById("beneficiaryData").style.backgroundColor = "transparent";
     document.getElementById("imageInput").value = "";
     document.getElementById("imagePreviewContainer").style.display = "none";
     document.getElementById("usdSenderInfo").value = "";
     document.getElementById("usdSenderContainer").style.display = "none";
     document.getElementById("splitPaymentContainer").style.display = "none";
+    document.getElementById("splitDetails").innerHTML = "";
+    document.getElementById("splitTotal").innerHTML = "";
+    document.getElementById("splitCount").value = "1";
+    document.getElementById("editBeneficiaryBtn").style.display = "none";
+    document.getElementById("generateBeneficiaryText").disabled = false;
+    document.getElementById("generateBeneficiaryText").style.backgroundColor = "#bb8a04";
     receiptUrl = "";
 
     const tabs = document.querySelectorAll(".tab");
@@ -1693,7 +1720,6 @@ function showCustomNotification(title, message) {
 // ==============================================
 // FUNCIONES PARA DIVISIÓN DE PAGOS
 // ==============================================
-
 function setupPaymentSplitter() {
     const splitBtn = document.getElementById('splitPaymentBtn');
     if (!splitBtn) return;
@@ -1709,6 +1735,7 @@ function setupPaymentSplitter() {
 
     document.getElementById('splitCount').addEventListener('change', updateSplitDetails);
     document.getElementById('generateBeneficiaryText').addEventListener('click', generateBeneficiaryText);
+    document.getElementById('editBeneficiaryBtn').addEventListener('click', enableManualEditing);
     
     // Monitorear cambios en la moneda de origen para mostrar/ocultar campo USD
     document.getElementById('from-currency').addEventListener('change', toggleUsdSenderField);
@@ -1719,9 +1746,9 @@ function updateSplitDetails() {
     const container = document.getElementById('splitDetails');
     container.innerHTML = '';
 
-    const toAmount = parseFloat(document.getElementById('to-amount').value) || 0;
-    const toCurrency = document.getElementById('to-currency').value;
+    const fromAmount = parseFloat(document.getElementById('from-amount').value) || 0;
     const fromCurrency = document.getElementById('from-currency').value;
+    const toCurrency = document.getElementById('to-currency').value;
     const rate = exchangeRatesCache[`${fromCurrency}_${toCurrency}`] || 1;
 
     for (let i = 0; i < count; i++) {
@@ -1729,21 +1756,25 @@ function updateSplitDetails() {
         div.className = 'split-recipient';
         div.innerHTML = `
             <input type="text" class="recipient-name" placeholder="Datos del beneficiario ${i+1}" required>
-            <input type="number" class="recipient-amount" placeholder="Monto en ${fromCurrency}" min="0" step="0.01" required>
+            <input type="number" class="recipient-amount" placeholder="Monto en ${fromCurrency}" min="0" step="0.01" max="${fromAmount}" required>
             <div class="converted-amount">Recibirá: 0 ${toCurrency}</div>
         `;
         container.appendChild(div);
     }
 
-    // Actualizar eventos para calcular automáticamente
+    // Actualizar eventos para calcular automáticamente y validar suma
     document.querySelectorAll('.recipient-amount').forEach(input => {
         input.addEventListener('input', function() {
             const amount = parseFloat(this.value) || 0;
             const converted = (amount * rate).toFixed(2);
             this.parentElement.querySelector('.converted-amount').textContent = 
                 `Recibirá: ${converted} ${toCurrency}`;
+            
+            validateTotalAmount();
         });
     });
+
+    validateTotalAmount();
 }
 
 function toggleUsdSenderField() {
@@ -1761,6 +1792,18 @@ function generateBeneficiaryText() {
     const count = parseInt(document.getElementById('splitCount').value);
     const toCurrency = document.getElementById('to-currency').value;
     const fromCurrency = document.getElementById('from-currency').value;
+    const fromAmount = parseFloat(document.getElementById('from-amount').value) || 0;
+    
+    // Validar suma final
+    let totalDivided = 0;
+    document.querySelectorAll('.recipient-amount').forEach(input => {
+        totalDivided += parseFloat(input.value) || 0;
+    });
+
+    if (Math.abs(totalDivided - fromAmount) > 0.01) {
+        alert(`La suma de las divisiones (${totalDivided.toFixed(2)} ${fromCurrency}) no coincide con el monto total (${fromAmount.toFixed(2)} ${fromCurrency}).`);
+        return;
+    }
     
     let beneficiaryText = '';
     
@@ -1777,22 +1820,57 @@ function generateBeneficiaryText() {
     // Agregar información de división
     beneficiaryText += 'PAGO DIVIDIDO:\n';
     
+    let allFieldsValid = true;
     document.querySelectorAll('.split-recipient').forEach((recipient, index) => {
         const name = recipient.querySelector('.recipient-name').value.trim();
         const amountElement = recipient.querySelector('.converted-amount');
         const amountText = amountElement.textContent.replace('Recibirá: ', '');
         
-        if (name && amountText) {
-            beneficiaryText += `${index + 1}. ${name} - ${amountText}`;
-            if (index < count - 1) beneficiaryText += '\n';
+        if (!name || !amountText || amountText === `0 ${toCurrency}`) {
+            allFieldsValid = false;
+            return;
         }
+        
+        beneficiaryText += `${index + 1}. ${name} - ${amountText}`;
+        if (index < count - 1) beneficiaryText += '\n';
     });
 
-    if (beneficiaryText.includes('PAGO DIVIDIDO')) {
+    if (allFieldsValid && beneficiaryText.includes('PAGO DIVIDIDO')) {
         document.getElementById('beneficiaryData').value = beneficiaryText;
+        document.getElementById('beneficiaryData').readOnly = true;
+        document.getElementById('beneficiaryData').style.backgroundColor = '#2c3e50';
+        document.getElementById('editBeneficiaryBtn').style.display = 'block';
         document.getElementById('splitPaymentContainer').style.display = 'none';
     } else {
-        alert('Por favor complete todos los campos de los beneficiarios.');
+        alert('Por favor complete todos los campos de los beneficiarios correctamente.');
+    }
+}
+
+
+function validateTotalAmount() {
+    const fromAmount = parseFloat(document.getElementById('from-amount').value) || 0;
+    const fromCurrency = document.getElementById('from-currency').value;
+    const totalElement = document.getElementById('splitTotal');
+    
+    let totalDivided = 0;
+    document.querySelectorAll('.recipient-amount').forEach(input => {
+        totalDivided += parseFloat(input.value) || 0;
+    });
+
+    const difference = fromAmount - totalDivided;
+    
+    if (difference < 0) {
+        totalElement.innerHTML = `<span style="color: #ff6b6b;">❌ Excede por: ${Math.abs(difference).toFixed(2)} ${fromCurrency}</span>`;
+        document.getElementById('generateBeneficiaryText').disabled = true;
+        document.getElementById('generateBeneficiaryText').style.backgroundColor = '#666';
+    } else if (difference === 0) {
+        totalElement.innerHTML = `<span style="color: #4CAF50;">✓ Total exacto: ${totalDivided.toFixed(2)} ${fromCurrency}</span>`;
+        document.getElementById('generateBeneficiaryText').disabled = false;
+        document.getElementById('generateBeneficiaryText').style.backgroundColor = '#bb8a04';
+    } else {
+        totalElement.innerHTML = `<span style="color: #bb8a04;">Total: ${totalDivided.toFixed(2)} ${fromCurrency} (Faltan: ${difference.toFixed(2)} ${fromCurrency})</span>`;
+        document.getElementById('generateBeneficiaryText').disabled = false;
+        document.getElementById('generateBeneficiaryText').style.backgroundColor = '#bb8a04';
     }
 }
 
