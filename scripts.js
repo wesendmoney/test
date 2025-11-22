@@ -929,6 +929,15 @@ async function submitPayment() {
     const toCurrency = document.getElementById("to-currency").value;
     const beneficiary = document.getElementById("beneficiaryData").value;
 
+    // Validar campo obligatorio para USD
+    if (fromCurrency === 'USD') {
+        const usdSenderInfo = document.getElementById('usdSenderInfo').value.trim();
+        if (!usdSenderInfo) {
+            alert("Para envíos desde USD es obligatorio completar la información del remitente.");
+            return;
+        }
+    }
+
     if (!fromAmount || !fromCurrency || !toAmount || !toCurrency || !beneficiary || !receiptUrl) {
         alert("Por favor complete todos los campos y suba una imagen.");
         return;
@@ -953,7 +962,7 @@ async function submitPayment() {
         const data = await response.json();
 
         if (data.status === 200) {
-            await updateEarningsDisplay(true); // Ahora funciona porque submitPayment es async
+            await updateEarningsDisplay(true);
             alert("Pago enviado exitosamente");
             resetPaymentForm();
         } else {
@@ -1132,6 +1141,9 @@ function resetPaymentForm() {
     document.getElementById("beneficiaryData").value = "";
     document.getElementById("imageInput").value = "";
     document.getElementById("imagePreviewContainer").style.display = "none";
+    document.getElementById("usdSenderInfo").value = "";
+    document.getElementById("usdSenderContainer").style.display = "none";
+    document.getElementById("splitPaymentContainer").style.display = "none";
     receiptUrl = "";
 
     const tabs = document.querySelectorAll(".tab");
@@ -1697,6 +1709,9 @@ function setupPaymentSplitter() {
 
     document.getElementById('splitCount').addEventListener('change', updateSplitDetails);
     document.getElementById('generateBeneficiaryText').addEventListener('click', generateBeneficiaryText);
+    
+    // Monitorear cambios en la moneda de origen para mostrar/ocultar campo USD
+    document.getElementById('from-currency').addEventListener('change', toggleUsdSenderField);
 }
 
 function updateSplitDetails() {
@@ -1731,23 +1746,49 @@ function updateSplitDetails() {
     });
 }
 
+function toggleUsdSenderField() {
+    const fromCurrency = document.getElementById('from-currency').value;
+    const usdSenderContainer = document.getElementById('usdSenderContainer');
+    
+    if (fromCurrency === 'USD') {
+        usdSenderContainer.style.display = 'block';
+    } else {
+        usdSenderContainer.style.display = 'none';
+    }
+}
+
 function generateBeneficiaryText() {
     const count = parseInt(document.getElementById('splitCount').value);
     const toCurrency = document.getElementById('to-currency').value;
+    const fromCurrency = document.getElementById('from-currency').value;
+    
     let beneficiaryText = '';
     
+    // Verificar si es USD y tiene información del remitente
+    if (fromCurrency === 'USD') {
+        const usdSenderInfo = document.getElementById('usdSenderInfo').value.trim();
+        if (!usdSenderInfo) {
+            alert('Para envíos desde USD es obligatorio completar la información del remitente.');
+            return;
+        }
+        beneficiaryText += `Remitente: ${usdSenderInfo}\n\n`;
+    }
+    
+    // Agregar información de división
+    beneficiaryText += 'PAGO DIVIDIDO:\n';
+    
     document.querySelectorAll('.split-recipient').forEach((recipient, index) => {
-        const name = recipient.querySelector('.recipient-name').value;
+        const name = recipient.querySelector('.recipient-name').value.trim();
         const amountElement = recipient.querySelector('.converted-amount');
         const amountText = amountElement.textContent.replace('Recibirá: ', '');
         
         if (name && amountText) {
-            beneficiaryText += `${name} ${amountText}`;
-            if (index < count - 1) beneficiaryText += ', ';
+            beneficiaryText += `${index + 1}. ${name} - ${amountText}`;
+            if (index < count - 1) beneficiaryText += '\n';
         }
     });
 
-    if (beneficiaryText) {
+    if (beneficiaryText.includes('PAGO DIVIDIDO')) {
         document.getElementById('beneficiaryData').value = beneficiaryText;
         document.getElementById('splitPaymentContainer').style.display = 'none';
     } else {
@@ -1759,4 +1800,5 @@ function generateBeneficiaryText() {
 document.addEventListener("DOMContentLoaded", function() {
     // ... otras inicializaciones
     setupPaymentSplitter();
+    toggleUsdSenderField(); // Inicializar estado del campo USD
 });
