@@ -178,7 +178,7 @@
                 </div>
             </div>
             <div class="tab" data-tab="beneficiary">3. Envia a tu beneficiario</div>
-            <div id="beneficiary" class="tab-content">
+           <div id="beneficiary" class="tab-content">
     <!-- Herramienta de división de pagos -->
     <div class="form-group" style="margin-bottom: 15px;">
         <button type="button" id="splitPaymentBtn">Dividir pago</button>
@@ -190,6 +190,7 @@
             </div>
             
             <div id="splitDetails"></div>
+            <div id="splitTotal" style="color: #bb8a04; font-weight: bold; margin: 10px 0; text-align: center;"></div>
             
             <button type="button" id="generateBeneficiaryText">Generar texto de beneficiario</button>
         </div>
@@ -197,13 +198,18 @@
     
     <!-- Campo para remitente USD -->
     <div id="usdSenderContainer">
-        <label for="usdSenderInfo">Información del Remitente:</label>
-        <input type="text" id="usdSenderInfo" placeholder="Nombre completo del titular de la cuenta remitente">
+        <label for="usdSenderInfo">Información del Remitente (obligatorio para envíos desde USD):</label>
+        <input type="text" id="usdSenderInfo" placeholder="Nombre completo y documento de identidad del remitente">
     </div>
     
     <!-- Campo de beneficiario principal -->
-    <div class="form-group" style="margin-bottom: 10px;">
-        <label for="beneficiaryData">Datos del Beneficiario:</label>
+    <div class="form-group" style="margin-bottom: 10px; position: relative;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+            <label for="beneficiaryData">Datos del Beneficiario:</label>
+            <button type="button" id="editBeneficiaryBtn" style="display: none; width: auto; padding: 5px 10px; font-size: 12px; background-color: #2c3e50;">
+                Editar Manualmente
+            </button>
+        </div>
         <textarea id="beneficiaryData" rows="5" placeholder="Nombre Apellido, CI: xxxxxxxxx, Teléfono: (xxxx) xxxxxxx, Banco: Nombre del Banco, N. de Cuenta: xxxxxxxxx" required></textarea>
     </div>
     <div style="text-align: center; margin-top: 20px;">
